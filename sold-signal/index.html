@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sold Signal</title>
+<meta name="description" content="Measures whether the sold-signal join can be built, one leg at a time, and prints where the chain breaks.">
+<style>
+  :root{
+    --bg:#fbfaf8; --card:#fff; --ink:#16130f; --muted:#6b6358; --line:#e5e0d8;
+    --good:#1f7a4d; --bad:#a8322a; --warn:#9a6b11; --accent:#1c4f8f;
+    --fill:#2d2a26; --track:#e9e4db;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#14120f; --card:#1d1a16; --ink:#f2efe9; --muted:#a39a8c; --line:#302b25;
+      --good:#5fbf8c; --bad:#e8857c; --warn:#d9ac4f; --accent:#7fb0e8;
+      --fill:#d8d2c8; --track:#302b25;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14120f; --card:#1d1a16; --ink:#f2efe9; --muted:#a39a8c; --line:#302b25;
+    --good:#5fbf8c; --bad:#e8857c; --warn:#d9ac4f; --accent:#7fb0e8;
+    --fill:#d8d2c8; --track:#302b25;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:28px 16px 64px}
+  h1{font-size:1.5rem; line-height:1.2; margin:0 0 6px; letter-spacing:-.01em}
+  .sub{color:var(--muted); font-size:.9rem; margin:0 0 26px}
+  h2{font-size:1.05rem; margin:34px 0 10px; letter-spacing:-.01em}
+  p{margin:0 0 12px}
+  .lede{font-size:1.08rem}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:14px 0}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.82rem}
+  .muted{color:var(--muted)}
+  .small{font-size:.86rem}
+  table{width:100%; border-collapse:collapse; font-size:.86rem}
+  th,td{text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-weight:600; color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.n,th.n{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .meter{display:block; height:7px; background:var(--track); border-radius:4px; overflow:hidden; margin-top:5px}
+  .meter i{display:block; height:100%; background:var(--fill); border-radius:4px}
+  .row{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+  .row b{font-variant-numeric:tabular-nums; white-space:nowrap}
+  .tag{display:inline-block; font-size:.72rem; padding:2px 7px; border-radius:99px; border:1px solid var(--line); white-space:nowrap}
+  .tag.good{color:var(--good); border-color:currentColor}
+  .tag.bad{color:var(--bad); border-color:currentColor}
+  .tag.warn{color:var(--warn); border-color:currentColor}
+  .hit{border-left:3px solid var(--line); padding:10px 0 10px 12px; margin:12px 0}
+  .hit.resolved{border-left-color:var(--good)}
+  .hit.silent{border-left-color:var(--warn)}
+  .hit.amb{border-left-color:var(--bad)}
+  .hit .head{font-weight:600; font-size:.92rem}
+  .hit .q{color:var(--muted); font-size:.86rem; font-style:italic}
+  .hit .to{font-size:.86rem; margin-top:4px}
+  .arrow{color:var(--muted)}
+  .switch{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 4px}
+  button{
+    font:inherit; font-size:.84rem; padding:7px 12px; border-radius:99px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer;
+  }
+  button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  a{color:var(--accent)}
+  .note{font-size:.84rem; color:var(--muted); border-left:3px solid var(--line); padding-left:12px; margin:14px 0}
+  footer{margin-top:40px; padding-top:18px; border-top:1px solid var(--line); font-size:.84rem; color:var(--muted)}
+  footer a{display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Sold Signal</h1>
+  <p class="sub">Night&nbsp;3/5 &middot; does the join exist, and where does the chain break?</p>
+
+  <p class="lede">Night 1 called leg A dead: a blind broker listing hides the business
+  name on purpose, so there is nothing to match on. That is still true for almost
+  every listing. <strong>It is not true for one kind.</strong></p>
+
+  <p>A franchise resale cannot hide what it is — the brand <em>is</em> most of what's
+  being sold, so it stays in the headline. And the SBA loan row carries that brand in a
+  field of its own, sitting right beside the legal entity the listing is withholding.
+  So tonight the join runs brand&nbsp;to&nbsp;brand instead of name&nbsp;to&nbsp;name.</p>
+
+  <h2>Pick a file</h2>
+  <div class="switch" role="group" aria-label="Dataset">
+    <button type="button" data-ds="main" aria-pressed="true">The main sample</button>
+    <button type="button" data-ds="slice" aria-pressed="false">The franchise slice</button>
+  </div>
+  <p class="small muted" id="ds-note"></p>
+
+  <h2>What the lane did</h2>
+  <div id="outcomes"></div>
+
+  <h2>The rows it reached &mdash; and what the purpose field then said</h2>
+  <p class="small muted">Reaching a row is leg A solved. Whether the row <em>answers</em>
+  is leg B. Collapsing those two into one number is exactly the mistake night 1 made.</p>
+  <div id="hits"></div>
+
+  <h2>The ceiling, from the loan file alone</h2>
+  <p class="small muted">No listings, no matching, no scraper. This is the share of
+  franchise rows a brand&nbsp;+&nbsp;city key could <em>ever</em> point at
+  unambiguously. It is the number to run against the real extract before anyone
+  builds anything.</p>
+  <div id="ceiling"></div>
+
+  <h2>The brand list comes out of the loan file itself</h2>
+  <div id="vocab"></div>
+  <p class="note">No external brand list is used. The SBA Franchise Directory came
+  back on 1 June 2025 and gives every brand an identifier code, which is the right
+  source — and <span class="mono">sba.gov</span> has been unreachable from the build
+  container for three nights. Bootstrapping from the file has a cost: a brand enters
+  the list only once some row carries it, so a resale of a brand the extract never
+  mentions is invisible here, not unmatched. One third-party analysis puts
+  FranchiseName coverage at 8.7% of FY2010–2019 records. Unconfirmed at source.</p>
+
+  <h2>Still true, and still the thing that matters</h2>
+  <p>No price. Not the asking price, not what it sold for, not the multiple. This is a
+  confirmed <em>sale</em>, never a comp — nothing public carries the number.</p>
+  <p>And nobody has yet been asked whether they'd pay for it. Three nights of building
+  haven't touched that, and a fourth won't either.</p>
+
+  <footer>
+    <p><a href="https://github.com/soferdani/sold-signal">soferdani/sold-signal</a>
+    &middot; <span class="mono">npm&nbsp;install&nbsp;&amp;&amp;&nbsp;npm&nbsp;run&nbsp;franchise</span>
+    &middot; 98 tests, zero dependencies</p>
+    <p>Everything on this page is computed in your browser from the same synthetic
+    sample CSVs that ship with the repo. All names, addresses, filing numbers and
+    amounts are invented. Field names are the real SBA 7(a) FOIA and UCC-1 ones, so
+    the tool points at real files unchanged.</p>
+  </footer>
+
+</div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var pct = function (n) { return Math.round(n * 100) + '%'; };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  var NOTES = {
+    main: 'The 24-row sample the earlier nights measured. One listing in it names a '
+      + 'franchise brand, so the lane has exactly one case here — a case, not a rate.',
+    slice: 'A slice built to exercise every way the lane can fail, one listing per '
+      + 'mode. It is not a sample of anything, so no rate taken from it means anything.'
+  };
+
+  var OUTCOMES = [
+    ['unique-city', 'resolved — one unit of that brand in that city', 'good'],
+    ['unique-state', 'resolved — city missed, one unit in the state', 'good'],
+    ['ambiguous-city', 'two or more units of the brand in that city', 'bad'],
+    ['ambiguous-state', 'units in the state, none in the city', 'bad'],
+    ['brand-elsewhere-only', 'brand is in the file, but not in this state', 'bad'],
+    ['no-brand', 'no brand from this file appears in the listing', ''],
+    ['name-already', 'listing named a legal entity — ordinary leg A', '']
+  ];
+
+  function renderOutcomes(lane) {
+    var html = '<div class="card"><div class="row"><span>Removed listings in this file</span>'
+      + '<b>' + lane.removedTotal + '</b></div>'
+      + '<div class="row"><span>…that name a brand this file knows</span><b>'
+      + lane.brandBearing + '</b></div>'
+      + '<div class="row"><span>…that resolved to exactly one loan row</span><b>'
+      + lane.resolved + '</b></div>'
+      + '<div class="row"><span>…whose row then <em>answered</em> the purpose question</span><b>'
+      + lane.answered + '</b></div>'
+      + '<div class="row"><span>…that said a change of ownership</span><b>'
+      + lane.acquisitions + '</b></div>'
+      + '<p class="small muted" style="margin:12px 0 0">Counts, never rates. On any sample '
+      + 'this size a percentage would be a decoration.</p></div><table><thead><tr>'
+      + '<th class="n">n</th><th>outcome</th></tr></thead><tbody>';
+    OUTCOMES.forEach(function (o) {
+      var n = lane.counts[o[0]];
+      if (!n) return;
+      html += '<tr><td class="n">' + n + '</td><td><span class="tag ' + o[2] + '">'
+        + o[0] + '</span><br><span class="small muted">' + o[1] + '</span></td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+
+  function said(legB) {
+    if (!legB) return ['no answer looked up', ''];
+    if (legB.cls === 'blank') return ['the field is <strong>empty</strong>', 'silent'];
+    if (legB.cls === 'unanswered') return ['the field says nobody answered', 'silent'];
+    if (legB.acquisition) return ['&ldquo;' + esc(legB.raw) + '&rdquo; &mdash; a sale', 'resolved'];
+    return ['&ldquo;' + esc(legB.raw) + '&rdquo;', ''];
+  }
+
+  function renderHits(lane) {
+    var html = '';
+    lane.rows.forEach(function (r) {
+      if (r.matched) {
+        var s = said(r.legB);
+        html += '<div class="hit ' + s[1] + '">'
+          + '<div class="head">' + esc(r.brand) + ' <span class="small muted">'
+          + esc(r.listing) + '</span></div>'
+          + '<div class="q">&ldquo;' + esc(r.headline) + '&rdquo;</div>'
+          + '<div class="to"><span class="arrow">&rarr;</span> <strong>'
+          + esc(r.matched.BorrName) + '</strong>, ' + esc(r.matched.BorrCity) + ' '
+          + esc(r.matched.BorrState) + ' &middot; ' + esc(r.matched.ApprovalDate)
+          + ' &middot; $' + Math.round(Number(r.matched.GrossApproval || 0) / 1000) + 'k</div>'
+          + '<div class="to small">purpose field: ' + s[0] + '</div></div>';
+      } else if (r.outcome.indexOf('ambiguous') === 0 || r.outcome === 'brand-elsewhere-only') {
+        html += '<div class="hit amb"><div class="head">' + esc(r.brand)
+          + ' <span class="small muted">' + esc(r.listing) + '</span></div>'
+          + '<div class="q">&ldquo;' + esc(r.headline) + '&rdquo;</div>';
+        r.candidates.forEach(function (c) {
+          html += '<div class="to small muted">candidate: ' + esc(c.BorrName) + ', '
+            + esc(c.BorrCity) + ' &middot; ' + esc(c.ApprovalDate) + '</div>';
+        });
+        html += '<div class="to small">not counted &mdash; a coin flip is not a match</div></div>';
+      }
+    });
+    if (!html) html = '<p class="small muted">No listing in this file resolved to a row.</p>';
+    return html;
+  }
+
+  function renderCeiling(lane) {
+    var c = lane.ceiling;
+    var html = '<div class="card">'
+      + '<div class="row"><span>Unique brand + city keys</span><b>' + c.unique + '/' + c.pairs
+      + ' &middot; ' + pct(c.uniqueShare) + '</b></div>'
+      + '<span class="meter"><i style="width:' + (c.uniqueShare * 100) + '%"></i></span>'
+      + '<div class="row" style="margin-top:14px"><span>Franchise rows reachable</span><b>'
+      + c.reachable + '/' + c.franchiseRows + ' &middot; ' + pct(c.rowShare) + '</b></div>'
+      + '<span class="meter"><i style="width:' + (c.rowShare * 100) + '%"></i></span>'
+      + '</div>';
+    if (c.perBrand.length) {
+      html += '<table><thead><tr><th>brand</th><th class="n">units</th>'
+        + '<th class="n">cities</th><th>worst city</th></tr></thead><tbody>';
+      c.perBrand.forEach(function (b) {
+        html += '<tr><td>' + esc(b.brand) + '</td><td class="n">' + b.units
+          + '</td><td class="n">' + b.cities + '</td><td class="small '
+          + (b.maxUnitsInOneCity > 1 ? '' : 'muted') + '">'
+          + (b.maxUnitsInOneCity > 1 ? b.maxUnitsInOneCity + ' in one city' : 'one each')
+          + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    return html + '<p class="small" style="margin-top:12px"><strong>The lane\'s real limit '
+      + 'is not fuzzy matching. It is unit density.</strong> A brand plus a city points at '
+      + 'one business only where the brand has one unit in that city.</p>';
+  }
+
+  function renderVocab(lane, legB) {
+    var v = lane.vocab;
+    var html = '<div class="card"><div class="row"><span>Rows carrying a FranchiseName</span>'
+      + '<b>' + v.carried + '/' + v.total + '</b></div>'
+      + '<div class="row"><span>Distinct brands</span><b>' + v.brands.length + '</b></div>'
+      + '<p class="mono small" style="margin:10px 0 0">' + (v.brands.length
+        ? v.brands.map(esc).join(' &middot; ') : '(none)') + '</p>';
+    if (v.rejected.length) {
+      html += '<p class="small muted" style="margin:10px 0 0">Rejected as too generic to '
+        + 'join on: ' + v.rejected.map(esc).join(', ') + ' &mdash; a one-word industry noun '
+        + 'would match the whole category.</p>';
+    }
+    html += '</div>';
+    html += '<p class="small muted">For context, leg B across this whole file: it can '
+      + 'answer on <strong>' + pct(legB.answerable) + '</strong> of rows ('
+      + legB.answeredCount + '/' + legB.total + '), and <strong>'
+      + legB.acquisitionCount + '</strong> of them say a change of ownership. '
+      + 'Answerability is whether the leg is alive; the other number is only its yield.</p>';
+    return html;
+  }
+
+  function show(key) {
+    var r = window.SoldSignal.analyse(key);
+    document.getElementById('ds-note').textContent = NOTES[key];
+    document.getElementById('outcomes').innerHTML = renderOutcomes(r.lane);
+    document.getElementById('hits').innerHTML = renderHits(r.lane);
+    document.getElementById('ceiling').innerHTML = renderCeiling(r.lane);
+    document.getElementById('vocab').innerHTML = renderVocab(r.lane, r.legB);
+  }
+
+  var buttons = [].slice.call(document.querySelectorAll('[data-ds]'));
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      buttons.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      show(b.getAttribute('data-ds'));
+    });
+  });
+
+  show('main');
+})();
+</script>
+</body>
+</html>
