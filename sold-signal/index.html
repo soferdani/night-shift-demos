@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sold Signal</title>
-<meta name="description" content="Measures whether the sold-signal join can be built, one leg at a time, and prints where the chain breaks.">
+<meta name="description" content="The sale price is not in the SBA loan file. The rule that bounds the loan is published, so the floor is proven, the band is assumed, and the page prints them apart.">
 <style>
   :root{
     --bg:#fbfaf8; --card:#fff; --ink:#16130f; --muted:#6b6358; --line:#e5e0d8;
@@ -70,69 +70,145 @@
   .note{font-size:.84rem; color:var(--muted); border-left:3px solid var(--line); padding-left:12px; margin:14px 0}
   footer{margin-top:40px; padding-top:18px; border-top:1px solid var(--line); font-size:.84rem; color:var(--muted)}
   footer a{display:inline-block}
+  .ident{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8rem;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:14px; overflow-x:auto; white-space:pre; margin:14px 0}
+  .pr{border-left:3px solid var(--good); padding:10px 0 10px 12px; margin:12px 0}
+  .pr.no{border-left-color:var(--bad)}
+  .pr .who{font-weight:600; font-size:.92rem}
+  .pr .meta{color:var(--muted); font-size:.82rem; margin-top:2px}
+  .pr .num{font-size:.88rem; margin-top:6px; font-variant-numeric:tabular-nums}
+  .pr .why{font-size:.84rem; color:var(--muted); margin-top:4px}
+  .lbl{font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+  ul.disc{list-style:disc; padding-left:22px; color:var(--muted); font-size:.86rem}
+  details{border-top:1px solid var(--line); margin-top:36px; padding-top:16px}
+  details>summary{cursor:pointer; font-size:1.02rem; font-weight:600; letter-spacing:-.01em}
+  details[open]>summary{margin-bottom:10px}
+  details h2{font-size:.98rem; margin:24px 0 8px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <h1>Sold Signal</h1>
-  <p class="sub">Night&nbsp;3/5 &middot; does the join exist, and where does the chain break?</p>
+  <p class="sub">Night&nbsp;4/5 &middot; what the loan amount will say about the price, and where it stops</p>
 
-  <p class="lede">Night 1 called leg A dead: a blind broker listing hides the business
-  name on purpose, so there is nothing to match on. That is still true for almost
-  every listing. <strong>It is not true for one kind.</strong></p>
+  <p class="lede">Three nights ended on the same sentence: a confirmed sale, <strong>never a
+  comp</strong>. That is still true. Nothing in the loan file is a price, and no join puts one
+  there.</p>
 
-  <p>A franchise resale cannot hide what it is — the brand <em>is</em> most of what's
-  being sold, so it stays in the headline. And the SBA loan row carries that brand in a
-  field of its own, sitting right beside the legal entity the listing is withholding.
-  So tonight the join runs brand&nbsp;to&nbsp;brand instead of name&nbsp;to&nbsp;name.</p>
+  <p>But the rule the loan had to satisfy <em>is</em> published. On a complete change of
+  ownership the SBA requires a minimum <strong>10% equity injection measured against total
+  project cost</strong>. So the loan amount stops being only a loan amount:</p>
+
+  <div class="ident">loan  &le;  (1 &minus; 0.10) &times; project cost
+      &rarr;  project cost  &ge;  loan / 0.90</div>
+
+  <p>That is arithmetic on a published rule, not an estimate, and it needs nothing but the loan
+  amount. Going from the project cost to the <em>price</em> needs assumptions &mdash; so this page
+  keeps the two apart and never prints one in the other's clothes.</p>
 
   <h2>Pick a file</h2>
   <div class="switch" role="group" aria-label="Dataset">
     <button type="button" data-ds="main" aria-pressed="true">The main sample</button>
+    <button type="button" data-ds="price" aria-pressed="false">The pricing slice</button>
     <button type="button" data-ds="slice" aria-pressed="false">The franchise slice</button>
   </div>
   <p class="small muted" id="ds-note"></p>
 
-  <h2>What the lane did</h2>
-  <div id="outcomes"></div>
+  <h2>How many confirmed sales may be priced at all</h2>
+  <div id="pricecount"></div>
 
-  <h2>The rows it reached &mdash; and what the purpose field then said</h2>
-  <p class="small muted">Reaching a row is leg A solved. Whether the row <em>answers</em>
-  is leg B. Collapsing those two into one number is exactly the mistake night 1 made.</p>
-  <div id="hits"></div>
+  <h2>Three columns that are not about price</h2>
+  <p class="small muted">What the data decides is not the price. It is whether you may estimate
+  one on this row at all. Not one of these three fields is about price.</p>
+  <table>
+    <thead><tr><th>field</th><th>what it is for</th><th>what it decides here</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ApprovalDate</td><td class="small muted">when the loan was approved</td>
+        <td class="small">The 10% rule starts <strong>1 June 2025</strong>. Before it, the standard
+        in force since 2021 permitted zero-down structures &mdash; so on an older row the loan may
+        be the whole project and <strong>the floor collapses</strong>.</td></tr>
+      <tr><td class="mono">TermInMonths</td><td class="small muted">repayment</td>
+        <td class="small">On a change of ownership the term is capped at 10 years <strong>unless
+        commercial real estate is &ge;51% of the purchase price</strong>, which allows 25. A
+        300-month row is mostly a building.</td></tr>
+      <tr><td class="mono">GrossApproval</td><td class="small muted">the loan</td>
+        <td class="small">At the <strong>$5M per-loan cap</strong> the loan stops tracking the
+        deal. A capped loan says &ldquo;at least this big&rdquo; and nothing more, so the band is
+        <strong>void, not wider</strong>.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">The maturity column is a <em>repayment</em> field, and it is the only thing in
+  the file that bounds how much of a purchase was property. Same shape as night 2's finding: the
+  answer sits in a column nobody would read for it.</p>
 
-  <h2>The ceiling, from the loan file alone</h2>
-  <p class="small muted">No listings, no matching, no scraper. This is the share of
-  franchise rows a brand&nbsp;+&nbsp;city key could <em>ever</em> point at
-  unambiguously. It is the number to run against the real extract before anyone
-  builds anything.</p>
-  <div id="ceiling"></div>
+  <h2>The rows it will price</h2>
+  <p class="small muted">Two kinds of number, never mixed. The floor is arithmetic on the rule.
+  The band is an assumption set, stated so you can disagree with it.</p>
+  <div id="priced"></div>
 
-  <h2>The brand list comes out of the loan file itself</h2>
-  <div id="vocab"></div>
-  <p class="note">No external brand list is used. The SBA Franchise Directory came
-  back on 1 June 2025 and gives every brand an identifier code, which is the right
-  source — and <span class="mono">sba.gov</span> has been unreachable from the build
-  container for three nights. Bootstrapping from the file has a cost: a brand enters
-  the list only once some row carries it, so a resale of a brand the extract never
-  mentions is invisible here, not unmatched. One third-party analysis puts
-  FranchiseName coverage at 8.7% of FY2010–2019 records. Unconfirmed at source.</p>
+  <h2>The rows it refuses to price, and why</h2>
+  <p class="small muted">A blocked row is not a failed match. It is a row where printing a price
+  would be printing the wrong thing &mdash; and the file says so by itself.</p>
+  <div id="blocked"></div>
 
-  <h2>Still true, and still the thing that matters</h2>
-  <p>No price. Not the asking price, not what it sold for, not the multiple. This is a
-  confirmed <em>sale</em>, never a comp — nothing public carries the number.</p>
-  <p>And nobody has yet been asked whether they'd pay for it. Three nights of building
-  haven't touched that, and a fourth won't either.</p>
+  <h2>The one place the band can be falsified</h2>
+  <p class="small muted">Nothing public carries the sale price. A broker listing carries an
+  <em>asking</em> price, so wherever leg A happens to work &mdash; a listing that named its legal
+  entity &mdash; the band meets a number it did not produce.</p>
+  <div id="check"></div>
+
+  <h2>Careful about the floor</h2>
+  <p>The floor is on the <em>project</em>, not on the price. The price is one use inside the
+  project, so a price <strong>below</strong> the floor is entirely possible. It just means the
+  loan also funded something that was not the purchase.</p>
+
+  <h2>What the file cannot settle, at any sample size</h2>
+  <ul class="disc">
+    <li>whether the change of ownership was complete or partial &mdash; the label does not say,
+    and the injection rules for a partial change are not the same</li>
+    <li>how much of the loan was the purchase and how much was working capital</li>
+    <li>whether a seller note on full standby carried part of the injection (it may cover up to
+    half of it)</li>
+  </ul>
+  <p>So a priced row is a confirmed sale with a <strong>bounded deal size</strong>. Still not a
+  comp: the price is estimated rather than observed, and there is no cash flow and no multiple
+  anywhere on it.</p>
+
+  <details>
+    <summary>Night 3: the one listing type that can&rsquo;t hide what it is</summary>
+    <p class="small">A blind listing hides the legal entity on purpose. A franchise resale
+    cannot: the brand <em>is</em> most of what is being sold, so it stays in the headline, and the
+    loan row carries that brand in a field of its own. So the join runs brand to brand instead of
+    name to name.</p>
+
+    <h2>What the lane did</h2>
+    <div id="outcomes"></div>
+
+    <h2>The rows it reached &mdash; and what the purpose field then said</h2>
+    <p class="small muted">Reaching a row is leg A solved. Whether the row <em>answers</em> is
+    leg B. Collapsing those two into one number is the mistake night 1 made.</p>
+    <div id="hits"></div>
+
+    <h2>The ceiling, from the loan file alone</h2>
+    <p class="small muted">No listings, no matching, no scraper. The share of franchise rows a
+    brand&nbsp;+&nbsp;city key could <em>ever</em> point at unambiguously.</p>
+    <div id="ceiling"></div>
+
+    <h2>The brand list comes out of the loan file itself</h2>
+    <div id="vocab"></div>
+  </details>
 
   <footer>
     <p><a href="https://github.com/soferdani/sold-signal">soferdani/sold-signal</a>
-    &middot; <span class="mono">npm&nbsp;install&nbsp;&amp;&amp;&nbsp;npm&nbsp;run&nbsp;franchise</span>
-    &middot; 98 tests, zero dependencies</p>
-    <p>Everything on this page is computed in your browser from the same synthetic
-    sample CSVs that ship with the repo. All names, addresses, filing numbers and
-    amounts are invented. Field names are the real SBA 7(a) FOIA and UCC-1 ones, so
-    the tool points at real files unchanged.</p>
+    &middot; <span class="mono">npm&nbsp;install&nbsp;&amp;&amp;&nbsp;npm&nbsp;run&nbsp;price</span>
+    &middot; 133 tests, zero dependencies</p>
+    <p>Everything on this page is computed in your browser from the same synthetic sample CSVs
+    that ship with the repo. All names, addresses, filing numbers and amounts are invented. Field
+    names are the real SBA 7(a) FOIA and UCC-1 ones, so the tool points at real files unchanged.
+    The rules above come from third-party sources: <span class="mono">sba.gov</span> has refused
+    this container for four nights, so the SOP text itself is still unread here.</p>
   </footer>
 
 </div>
@@ -143,6 +219,8 @@
 (function () {
   'use strict';
   var pct = function (n) { return Math.round(n * 100) + '%'; };
+  var money = function (n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+  var k = function (n) { return '$' + Math.round(n / 1000).toLocaleString('en-US') + 'k'; };
   var esc = function (s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -150,32 +228,160 @@
   };
 
   var NOTES = {
-    main: 'The 24-row sample the earlier nights measured. One listing in it names a '
-      + 'franchise brand, so the lane has exactly one case here — a case, not a rate.',
-    slice: 'A slice built to exercise every way the lane can fail, one listing per '
-      + 'mode. It is not a sample of anything, so no rate taken from it means anything.'
+    main: 'The 24-row sample the earlier nights measured. Nine rows state a change of '
+      + 'ownership, and every one of them is a business-only purchase in the vintage the rule '
+      + 'covers, so nothing here is blocked.',
+    price: 'A slice built to exercise every way a price inference breaks, one row per refusal. '
+      + 'It is not a sample of anything, so no rate taken from it means anything.',
+    slice: 'Night 3 built this one to exercise the franchise lane, one listing per failure mode. '
+      + 'Also not a sample of anything.'
   };
 
+  var WHY = {
+    'real-estate-majority': 'the 25-year term says real estate is \u226551% of the price',
+    blended: 'blended maturity \u2014 part business, part property',
+    'term-missing': 'no term on the row, so nothing bounds the real-estate share',
+    'at-cap': 'the loan is at the per-loan maximum, so it no longer tracks the deal',
+    'pre-rule-vintage': 'approved before the injection rule, so there is no floor',
+    'date-unreadable': 'no readable approval date to place against the rule change',
+    'amount-missing': 'no loan amount on the row'
+  };
+
+  function renderCount(p) {
+    var share = p.total ? p.priceableCount / p.total : 0;
+    var html = '<div class="card">'
+      + '<div class="row"><span>Confirmed sales in this file</span><b>' + p.total + '</b></div>'
+      + '<div class="row" style="margin-top:12px"><span>\u2026the lane will price</span><b>'
+      + p.priceableCount + '/' + p.total + ' &middot; ' + pct(share) + '</b></div>'
+      + '<span class="meter"><i style="width:' + (share * 100) + '%"></i></span>';
+    html += '<div class="row" style="margin-top:16px"><span class="lbl">proven</span></div>'
+      + '<div class="row"><span>Total project cost, at least</span><b>' + money(p.floorTotal)
+      + '</b></div>'
+      + '<p class="small muted" style="margin:4px 0 0">From ' + money(p.loanTotal) + ' of loans '
+      + 'across ' + p.floorCount + ' row(s) and the 10% minimum injection. Arithmetic, not an '
+      + 'estimate.</p>'
+      + '<div class="row" style="margin-top:16px"><span class="lbl">assumed</span></div>'
+      + '<div class="row"><span>Band width, every row</span><b>'
+      + p.bandWidthRatio.toFixed(2) + '\u00d7</b></div>'
+      + '<p class="small muted" style="margin:4px 0 0">Injection ' + pct(p.assumptions.injectionLow)
+      + '\u2013' + pct(p.assumptions.injectionHigh) + ', and up to '
+      + pct(p.assumptions.otherUsesHigh) + ' of the project going to things that are not the '
+      + 'purchase. The band scales with the loan, so that width is the assumption range and the '
+      + 'data has no say in it.</p>'
+      + '</div>';
+
+    var keys = Object.keys(p.byBlocker);
+    if (!keys.length) {
+      html += '<p class="small muted">Nothing in this file is blocked.</p>';
+      return html;
+    }
+    html += '<table><thead><tr><th class="n">n</th><th>refused because</th></tr></thead><tbody>';
+    keys.forEach(function (key) {
+      html += '<tr><td class="n">' + p.byBlocker[key] + '</td><td><span class="tag bad">'
+        + esc(key) + '</span><br><span class="small muted">' + WHY[key] + '</span></td></tr>';
+    });
+    return html + '</tbody></table>';
+  }
+
+  function renderPriced(p) {
+    if (!p.priceable.length) return '<p class="small muted">No row in this file may be priced.</p>';
+    var html = '';
+    p.priceable.forEach(function (r) {
+      html += '<div class="pr"><div class="who">' + esc(r.name) + '</div>'
+        + '<div class="meta">' + esc(r.city) + ', ' + esc(r.state) + ' &middot; ' + esc(r.date)
+        + ' &middot; ' + esc(r.lender) + ' &middot; ' + r.term + ' months &middot; loan '
+        + k(r.loan) + '</div>'
+        + '<div class="num"><span class="lbl">proven</span> project cost at least <strong>'
+        + money(r.floor) + '</strong></div>'
+        + '<div class="num"><span class="lbl">assumed</span> price <strong>' + money(r.band.low)
+        + ' \u2013 ' + money(r.band.high) + '</strong> <span class="muted">(mid '
+        + money(r.band.mid) + ')</span></div></div>';
+    });
+    return html;
+  }
+
+  function renderBlocked(p) {
+    if (!p.blocked.length) {
+      return '<p class="small muted">Nothing in this file is refused \u2014 every confirmed sale '
+        + 'is a business-only purchase, under the cap, in the vintage the rule covers.</p>';
+    }
+    var html = '';
+    p.blocked.forEach(function (r) {
+      var note = r.blockedBy === 'at-cap' ? r.atCapNote
+        : (r.blockedBy === 'pre-rule-vintage' || r.blockedBy === 'date-unreadable') ? r.vintageNote
+          : r.reNote;
+      html += '<div class="pr no"><div class="who">' + esc(r.name)
+        + ' <span class="tag bad">' + esc(r.blockedBy) + '</span></div>'
+        + '<div class="meta">' + esc(r.city) + ', ' + esc(r.state) + ' &middot; '
+        + (r.date ? esc(r.date) : 'no date') + ' &middot; loan ' + k(r.loan)
+        + (r.term ? ' &middot; ' + r.term + ' months' : ' &middot; no term') + '</div>'
+        + '<div class="why">' + esc(note) + '</div>'
+        + (r.floor ? '<div class="num"><span class="lbl">still proven</span> project cost at '
+          + 'least <strong>' + money(r.floor) + '</strong></div>' : '')
+        + '</div>';
+    });
+    return html;
+  }
+
+  function renderCheck(p) {
+    var c = p.check;
+    if (!c.checked.length) {
+      return '<p class="small muted">No listing in this file carries both a business name and an '
+        + 'asking price, which is the normal case \u2014 blind listings withhold the name by '
+        + 'design.</p>';
+    }
+    var html = '';
+    c.checked.forEach(function (ch) {
+      var verdict;
+      var cls;
+      if (!ch.band) {
+        verdict = 'this row is refused a band (' + ch.blockedBy + '), so there is nothing to test';
+        cls = ' no';
+      } else if (ch.contains) {
+        verdict = '<strong>inside the band</strong>, ' + pct(ch.position) + ' of the way up';
+        cls = '';
+      } else if (ch.direction === 'above-band') {
+        verdict = '<strong>above the band</strong> \u2014 the buyer put in more than the assumed range';
+        cls = ' no';
+      } else {
+        verdict = '<strong>below the band</strong> \u2014 the loan funded more than the purchase, '
+          + 'so the other-uses assumption is too tight here';
+        cls = ' no';
+      }
+      html += '<div class="pr' + cls + '"><div class="who">' + esc(ch.name) + '</div>'
+        + '<div class="meta">' + esc(ch.listing) + ' &ldquo;' + esc(ch.headline) + '&rdquo;</div>'
+        + '<div class="num">loan ' + k(ch.loan) + ' &middot; asking ' + money(ch.asking)
+        + (ch.band ? ' &middot; band ' + money(ch.band.low) + ' \u2013 ' + money(ch.band.high) : '')
+        + '</div><div class="why">' + verdict + '</div></div>';
+    });
+    html += '<p class="note">Three things stop this being a validation. An asking price is not a '
+      + 'sale price, and small businesses sell under ask more often than over, so a band sitting '
+      + '<em>above</em> the ask is the suspicious result rather than a reassuring one. This page '
+      + 'joins on the name more loosely than the product would. And on synthetic data it grades '
+      + 'numbers the Intern wrote.</p>';
+    return html;
+  }
+
   var OUTCOMES = [
-    ['unique-city', 'resolved — one unit of that brand in that city', 'good'],
-    ['unique-state', 'resolved — city missed, one unit in the state', 'good'],
+    ['unique-city', 'resolved \u2014 one unit of that brand in that city', 'good'],
+    ['unique-state', 'resolved \u2014 city missed, one unit in the state', 'good'],
     ['ambiguous-city', 'two or more units of the brand in that city', 'bad'],
     ['ambiguous-state', 'units in the state, none in the city', 'bad'],
     ['brand-elsewhere-only', 'brand is in the file, but not in this state', 'bad'],
     ['no-brand', 'no brand from this file appears in the listing', ''],
-    ['name-already', 'listing named a legal entity — ordinary leg A', '']
+    ['name-already', 'listing named a legal entity \u2014 ordinary leg A', '']
   ];
 
   function renderOutcomes(lane) {
     var html = '<div class="card"><div class="row"><span>Removed listings in this file</span>'
       + '<b>' + lane.removedTotal + '</b></div>'
-      + '<div class="row"><span>…that name a brand this file knows</span><b>'
+      + '<div class="row"><span>\u2026that name a brand this file knows</span><b>'
       + lane.brandBearing + '</b></div>'
-      + '<div class="row"><span>…that resolved to exactly one loan row</span><b>'
+      + '<div class="row"><span>\u2026that resolved to exactly one loan row</span><b>'
       + lane.resolved + '</b></div>'
-      + '<div class="row"><span>…whose row then <em>answered</em> the purpose question</span><b>'
+      + '<div class="row"><span>\u2026whose row then <em>answered</em> the purpose question</span><b>'
       + lane.answered + '</b></div>'
-      + '<div class="row"><span>…that said a change of ownership</span><b>'
+      + '<div class="row"><span>\u2026that said a change of ownership</span><b>'
       + lane.acquisitions + '</b></div>'
       + '<p class="small muted" style="margin:12px 0 0">Counts, never rates. On any sample '
       + 'this size a percentage would be a decoration.</p></div><table><thead><tr>'
@@ -277,6 +483,10 @@
   function show(key) {
     var r = window.SoldSignal.analyse(key);
     document.getElementById('ds-note').textContent = NOTES[key];
+    document.getElementById('pricecount').innerHTML = renderCount(r.price);
+    document.getElementById('priced').innerHTML = renderPriced(r.price);
+    document.getElementById('blocked').innerHTML = renderBlocked(r.price);
+    document.getElementById('check').innerHTML = renderCheck(r.price);
     document.getElementById('outcomes').innerHTML = renderOutcomes(r.lane);
     document.getElementById('hits').innerHTML = renderHits(r.lane);
     document.getElementById('ceiling').innerHTML = renderCeiling(r.lane);

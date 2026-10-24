@@ -1,10 +1,10 @@
 'use strict';
 
-// A browser port of the franchise lane from soferdani/sold-signal (src/
-// franchise.js, src/purpose.js, src/normalize.js). The repo holds the tested
-// implementation — 98 tests — and this file exists so the page computes its
-// numbers from the baked-in CSVs instead of printing numbers typed by hand.
-// If a figure on the page disagrees with `npm run franchise`, the repo wins.
+// A browser port of the franchise and price lanes from soferdani/sold-signal
+// (src/franchise.js, src/price.js, src/purpose.js, src/normalize.js). The repo
+// holds the tested implementation — 133 tests — and this file exists so the page
+// computes its numbers from the baked-in CSVs instead of printing numbers typed
+// by hand. If a figure on the page disagrees with `npm run price`, the repo wins.
 
 /* global DATASETS */
 
@@ -245,14 +245,173 @@ function legB(sba) {
   };
 }
 
+// --- the price lane (a port of src/price.js) --------------------------------
+// The rules, verbatim from the repo: a 10% minimum equity injection against
+// total project cost on a complete change of ownership, in force since
+// 2025-06-01; a $5M per-loan maximum; a 10-year maturity cap unless commercial
+// real estate is >=51% of the purchase price, which allows 25 years.
+
+const PRICE_RULES = {
+  minInjection: 0.10,
+  effectiveFrom: '2025-06-01',
+  cap: 5000000,
+  termBusinessOnlyMax: 120,
+  termRealEstate: 300,
+};
+
+const ASSUMPTIONS = { injectionLow: 0.10, injectionHigh: 0.30, otherUsesHigh: 0.15 };
+
+function projectCostFloor(loan) {
+  if (!loan || loan <= 0) return null;
+  return loan / (1 - PRICE_RULES.minInjection);
+}
+
+function injectionRuleApplies(date) {
+  const raw = String(date || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return { applies: false, reason: 'date-unreadable',
+      note: 'No readable approval date, so the row cannot be placed either side of the rule change.' };
+  }
+  const applies = raw.slice(0, 10) >= PRICE_RULES.effectiveFrom;
+  return {
+    applies,
+    reason: applies ? 'covered' : 'pre-rule-vintage',
+    note: applies
+      ? 'Approved on or after 1 June 2025, so the 10% minimum injection applies.'
+      : 'Approved before 1 June 2025. Under the sourcing standard then in force a zero-down '
+        + 'structure was permitted, so the loan may be the whole project and there is no floor.',
+  };
+}
+
+function realEstateRead(term) {
+  const t = Number(String(term == null ? '' : term).trim());
+  if (!isFinite(t) || t <= 0) {
+    return { cls: 'term-missing', note: 'No term on the row, so nothing bounds how much of the purchase was property.' };
+  }
+  if (t <= PRICE_RULES.termBusinessOnlyMax) {
+    return { cls: 'business-only', note: t + ' months is inside the 10-year cap, which is the maximum '
+      + 'unless real estate is ≥51% of the purchase price. So this price is the business.' };
+  }
+  if (t >= PRICE_RULES.termRealEstate) {
+    return { cls: 'real-estate-majority', note: t + ' months is only available when commercial real estate '
+      + 'is ≥51% of the purchase price. Most of this number is a building, so it is not a business sale price.' };
+  }
+  return { cls: 'blended', note: t + ' months is a blended maturity: real estate under 51% of the price, '
+    + 'and assets in the purchase with a useful life past 10 years. Part business, part property.' };
+}
+
+function priceBand(loan, a) {
+  const as = a || ASSUMPTIONS;
+  if (!loan || loan <= 0) return null;
+  const low = (loan / (1 - as.injectionLow)) * (1 - as.otherUsesHigh);
+  const high = loan / (1 - as.injectionHigh);
+  return { low, high, mid: Math.sqrt(low * high), widthRatio: high / low };
+}
+
+function priceRow(r) {
+  const loan = Number(r.GrossApproval || 0);
+  const vintage = injectionRuleApplies(r.ApprovalDate);
+  const re = realEstateRead(r.TermInMonths);
+  const atCap = loan > 0 && loan >= PRICE_RULES.cap * 0.98;
+
+  const flags = [];
+  if (!loan) flags.push('amount-missing');
+  if (!vintage.applies) flags.push(vintage.reason);
+  if (atCap) flags.push('at-cap');
+  if (re.cls !== 'business-only') flags.push(re.cls);
+
+  const priceable = Boolean(loan) && vintage.applies && !atCap && re.cls === 'business-only';
+  return {
+    name: r.BorrName, city: r.BorrCity, state: r.BorrState, date: r.ApprovalDate,
+    lender: r.BankName, term: r.TermInMonths ? Number(r.TermInMonths) : null,
+    label: r.BusinessAge, loan: loan,
+    floor: loan && vintage.applies ? projectCostFloor(loan) : null,
+    band: priceable ? priceBand(loan) : null,
+    priceable: priceable,
+    blockedBy: priceable ? null : (flags[0] || null),
+    atCapNote: '$5,000,000 is at the per-loan maximum. A capped loan says the deal was at least '
+      + 'this big and nothing about how much bigger, so the band is void, not wide.',
+    vintageNote: vintage.note,
+    reNote: re.note,
+  };
+}
+
+// The falsification path. The repo joins with its tested matcher; this page
+// uses plain name containment inside the same state, which is looser — it is
+// here to find a row where an independent price exists, not to be the product's
+// join. Both agree on every row in the baked-in files.
+function bandCheck(sales, listings) {
+  const named = listings.filter(function (l) {
+    return (l.BusinessName || '').trim() && Number(l.AskingPrice || 0) > 0;
+  });
+  const checked = [];
+  named.forEach(function (l) {
+    const ln = coarse(l.BusinessName);
+    const hit = sales.filter(function (s) {
+      const sn = coarse(s.BorrName);
+      return (s.BorrState || '').toUpperCase() === (l.State || '').toUpperCase()
+        && (sn.indexOf(ln) === 0 || ln.indexOf(sn) === 0);
+    });
+    if (hit.length !== 1) return;
+    const row = priceRow(hit[0]);
+    const asking = Number(l.AskingPrice || 0);
+    checked.push({
+      name: row.name, listing: l.ListingId, headline: l.Headline,
+      loan: row.loan, asking: asking, band: row.band, blockedBy: row.blockedBy,
+      contains: row.band ? asking >= row.band.low && asking <= row.band.high : null,
+      position: row.band ? (asking - row.band.low) / (row.band.high - row.band.low) : null,
+      direction: !row.band ? null
+        : asking > row.band.high ? 'above-band'
+          : asking < row.band.low ? 'below-band' : 'inside',
+    });
+  });
+  const testable = checked.filter(function (c) { return c.band; });
+  return { checked: checked, testable: testable.length,
+    contained: testable.filter(function (c) { return c.contains === true; }).length };
+}
+
+function priceLane(sba, listings) {
+  const sales = sba.filter(function (r) { return classifyBusinessAge(r.BusinessAge).acquisition; });
+  const rows = sales.map(priceRow);
+  const priceable = rows.filter(function (r) { return r.priceable; });
+  const blocked = rows.filter(function (r) { return !r.priceable; });
+  const byBlocker = {};
+  blocked.forEach(function (r) { byBlocker[r.blockedBy] = (byBlocker[r.blockedBy] || 0) + 1; });
+  const withFloor = rows.filter(function (r) { return r.floor; });
+  return {
+    rules: PRICE_RULES,
+    assumptions: ASSUMPTIONS,
+    total: rows.length,
+    priceableCount: priceable.length,
+    blockedCount: blocked.length,
+    byBlocker: byBlocker,
+    floorCount: withFloor.length,
+    floorTotal: withFloor.reduce(function (s, r) { return s + r.floor; }, 0),
+    loanTotal: rows.reduce(function (s, r) { return s + r.loan; }, 0),
+    bandWidthRatio: priceBand(1000000).widthRatio,
+    rows: rows,
+    priceable: priceable,
+    blocked: blocked,
+    check: bandCheck(sales, listings),
+  };
+}
+
 function analyse(key) {
   const d = DATASETS[key];
   const sba = readTable(d.sba);
   const listings = readTable(d.listings);
   const ucc = readTable(d.ucc);
   return {
-    sba, listings, ucc, lane: franchiseLane(sba, listings), legB: legB(sba),
+    sba,
+    listings,
+    ucc,
+    lane: franchiseLane(sba, listings),
+    legB: legB(sba),
+    price: priceLane(sba, listings),
   };
 }
 
-window.SoldSignal = { analyse, classifyBusinessAge, isUsableBrand, coarse };
+window.SoldSignal = {
+  analyse, classifyBusinessAge, isUsableBrand, coarse,
+  priceLane, priceRow, priceBand, projectCostFloor, realEstateRead, injectionRuleApplies,
+};
