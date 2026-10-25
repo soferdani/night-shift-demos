@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>send-rail — the card on the phone</title>
+<style>
+  :root{--bg:#fbfaf8;--card:#fff;--ink:#16130f;--muted:#6b6358;--line:#e5e0d8;--accent:#1c4f8f;
+    --tg:#eef3f8;--tgink:#16130f;--quote:#f4f1ec;--code:#f1eee8;--ok:#1f6b3f;--warn:#8a5a12;--dead:#8a2f2f}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;--line:#302b25;--accent:#7fb0e8;
+    --tg:#222b33;--tgink:#f2efe9;--quote:#262219;--code:#262219;--ok:#86d8a6;--warn:#e3b566;--dead:#ea9a9a}}
+  :root[data-theme="dark"]{--bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;--line:#302b25;
+    --accent:#7fb0e8;--tg:#222b33;--tgink:#f2efe9;--quote:#262219;--code:#262219;--ok:#86d8a6;--warn:#e3b566;--dead:#ea9a9a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:36px 16px 72px}
+  h1{font-size:1.55rem;margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 8px;max-width:62ch}
+  .back{display:inline-block;margin:0 0 22px;font-size:.85rem;color:var(--accent);text-decoration:none}
+  .cols{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+  @media (max-width:760px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    margin:0 0 12px;font-weight:600}
+  .phone{background:var(--tg);color:var(--tgink);border-radius:14px;padding:14px 14px 12px;
+    font-size:.9rem;border:1px solid var(--line)}
+  .who{font-weight:700}
+  .why{font-style:italic;color:var(--muted);margin:2px 0 10px;font-size:.86rem}
+  blockquote{margin:0 0 10px;padding:8px 11px;background:var(--quote);border-radius:9px;
+    border-left:3px solid var(--accent);white-space:pre-wrap;font-size:.86rem}
+  blockquote[dir="rtl"]{border-left:0;border-right:3px solid var(--accent)}
+  .caveat{font-size:.83rem;margin:0 0 10px}
+  .src{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;color:var(--muted);
+    word-break:break-all;margin:0 0 10px}
+  .ask{font-size:.82rem;color:var(--muted);margin:0 0 10px}
+  .taps{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+  .tap{display:block;text-align:center;padding:9px;border-radius:9px;background:var(--card);
+    border:1px solid var(--line);color:var(--accent);font-size:.85rem;font-weight:600;
+    text-decoration:none;cursor:pointer}
+  .tap:hover{border-color:var(--accent)}
+  .carry{margin:8px 0 0;padding:9px 11px;background:var(--code);border-radius:9px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;white-space:pre-wrap;
+    max-height:120px;overflow:auto}
+  .carrynote{font-size:.76rem;color:var(--muted);margin:5px 0 0}
+  .reply{display:flex;gap:8px;margin:14px 0 0}
+  .reply button{flex:1;padding:10px 4px;border-radius:9px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer}
+  .reply button:hover{border-color:var(--accent);color:var(--accent)}
+  .hint{font-size:.78rem;color:var(--muted);margin:10px 0 0;text-align:center}
+  .note{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.7;
+    white-space:pre-wrap;background:var(--code);border-radius:10px;padding:14px;overflow-x:auto}
+  .note .added{background:rgba(127,176,232,.22);border-radius:3px;display:inline-block;width:100%}
+  .count{font-size:.84rem;color:var(--muted);margin:12px 0 0}
+  .reset{font-size:.82rem;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;
+    text-decoration:underline;font-family:inherit}
+  .empty{color:var(--muted);font-size:.9rem;padding:16px 0}
+  .log{margin:14px 0 0;font-size:.8rem;color:var(--muted)}
+  .log div{padding:3px 0;border-top:1px solid var(--line)}
+  .k-sent{color:var(--ok);font-weight:700}
+  .k-skip{color:var(--warn);font-weight:700}
+  .k-dead{color:var(--dead);font-weight:700}
+  footer{margin:34px 0 0;padding:16px 0 0;border-top:1px solid var(--line);
+    font-size:.84rem;color:var(--muted);max-width:68ch}
+  footer a{color:var(--accent)}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">&larr; Night Shift demos</a>
+  <h1>One card a night, and the answer goes back into the vault</h1>
+  <p class="sub">send-rail finds the messages that are written, addressed to a real person and
+  never sent. The page version waits on a laptop. This is the other front end: the single
+  message to open now, pushed to a phone, with the taps on it.</p>
+  <p class="sub">Answer with one word, and watch the note: the answer is written under the draft, because that is the only part of this that is still here tomorrow.
+  <strong>Nothing is ever sent by the program.</strong></p>
+
+  <div class="cols">
+    <div class="panel">
+      <h2>Telegram, 22:00</h2>
+      <div id="phone"></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="panel">
+      <h2>The note in the vault</h2>
+      <div class="note" id="note"></div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Sample data, a made-up vault — the real one is private. Everything you see runs in
+    this page; the actual tool is Node, zero dependencies, 193 tests, and it reads the vault
+    without writing to it except for the one verdict line you tap here.</p>
+    <p><strong>Why a draft sometimes arrives in two messages.</strong> A 652-character Hebrew
+    email percent-encodes to about 5,800 characters of URL, and no Telegram button takes a
+    link that long. Those get an addressed compose window plus the text as a tap-to-copy
+    message. The invoice card below shows it.</p>
+    <p><code>sent</code> writes a mark the scanner has read since night 1, so the draft
+    leaves the list by the road that was already there. <code>skip</code> must not look like
+    that mark — a skipped draft that quietly stops being offered is the exact failure this
+    tool exists to prevent — so it holds the card for fourteen days and then the draft is
+    back. <code>dead</code> is still not a delete.</p>
+  </footer>
+</div>
+
+<script>
+const CARDS = [
+  { recipient:"Rita", days:0, bucket:"someone is waiting",
+    why:"Rita asked for this today. The message exists.",
+    ask:"Rita asked for one page before the procurement meeting.",
+    path:"30_Projects/Acme/Acme — pilot follow-up.md", line:11, rtl:false,
+    channel:"whatsapp", caveat:null,
+    body:"Hi Rita, good talking today. Short version of what we agreed: two weeks, one\nprocess, one number at the end. I'll bring the one-pager to the procurement\nmeeting so nobody has to read a deck.\n\nIf the date moves, tell me and I'll shift the week.",
+    note:["**The message (copy-paste, WhatsApp)**","",
+      "> Hi Rita, good talking today. Short version of what we agreed: two weeks, one",
+      "> process, one number at the end. I'll bring the one-pager to the procurement",
+      "> meeting so nobody has to read a deck.",">",
+      "> If the date moves, tell me and I'll shift the week."],
+    shape:"blockquote" },
+
+  { recipient:"Maya", days:17, bucket:"read it again first",
+    why:"Maya asked for this, 17 days ago, and it is not settled.",
+    ask:"You wrote under this draft: “the onboarding hours are wrong in this — it's 9 not 12, I checked the log”. Nothing under that says it was fixed.",
+    path:"30_Projects/Northwind/Northwind — renewal quote.md", line:10, rtl:false,
+    channel:"email", to:"maya@northwind.example", subject:"Northwind renewal — revised numbers",
+    caveat:"The vault kept writing about this person after the draft — newest 2026-10-14. The conversation may have moved.",
+    body:"Hi Maya,\n\nRevised renewal quote attached. Two changes from the draft you saw: 14 seats\ninstead of 11, and the onboarding hours folded into the licence line rather\nthan billed separately.\n\nNet effect is a smaller invoice than the version you were working from.",
+    note:["**The email (copy-paste)**","","**To:** maya@northwind.example",
+      "**Subject:** Northwind renewal — revised numbers","",
+      "```","Hi Maya,","","Revised renewal quote attached. Two changes from the draft you saw: 14 seats",
+      "instead of 11, and the onboarding hours folded into the licence line rather",
+      "than billed separately.","",
+      "Net effect is a smaller invoice than the version you were working from.","```"],
+    shape:"fenced" },
+
+  { recipient:"Rita", days:40, bucket:"read it again first",
+    why:"Rita asked for this, 40 days ago, and a date in it has gone by.",
+    ask:"“before the 26th” was 11 days ahead when you wrote this. It was 29 days ago.",
+    path:"30_Projects/Acme/Acme — invoice 7.md", line:11, rtl:false,
+    channel:"email", to:"rita@acme.example", subject:"Invoice 7 — pilot hours attached",
+    caveat:null, long:true,
+    body:"Hi Rita,\n\nThe pilot period was 16.8–30.9 and it wraps on 30.9, so I'm getting invoice 7\nready. Hours attached, 11 days across August and September, billed under\nclause 4.2 of the order.\n\nOne thing from your side: if your day count differs from mine, tell me before\nthe 26th and I'll reissue rather than credit.\n\nThanks,\nD",
+    note:["**The email (copy-paste)**","","**To:** rita@acme.example",
+      "**Subject:** Invoice 7 — pilot hours attached","",
+      "Hi Rita,","",
+      "The pilot period was 16.8–30.9 and it wraps on 30.9, so I'm getting invoice 7",
+      "ready. Hours attached, 11 days across August and September, billed under",
+      "clause 4.2 of the order.","",
+      "One thing from your side: if your day count differs from mine, tell me before",
+      "the 26th and I'll reissue rather than credit.","","Thanks,","D"],
+    shape:"plain" },
+
+  { recipient:"Dalia", days:0, bucket:"clear to send",
+    why:"Nobody wrote down an ask for this one. It reads as written.",
+    ask:null,
+    path:"20_Areas/Partners/Intro — Dalia to the fund.md", line:9, rtl:false,
+    channel:"email", to:"dalia@example.com", subject:"the intro you offered",
+    caveat:"You wrote “‘six of them this quarter’ is wrong, it's four” under this draft, and the answer under it says it was changed to four.",
+    body:"Hi Dalia,\n\nYou offered to introduce me to the team at the fund. I'd still like that, if\nthe offer stands.\n\nOne line you can forward: I build the data layer and the agent on top of it,\nand I've shipped four of them this quarter.\n\nThanks either way.",
+    note:["**The email (copy-paste)**","","**To:** dalia@example.com","**Subject:** the intro you offered","",
+      "> Hi Dalia,",">",
+      "> You offered to introduce me to the team at the fund. I'd still like that, if",
+      "> the offer stands.",">",
+      "> One line you can forward: I build the data layer and the agent on top of it,",
+      "> and I've shipped four of them this quarter.",">","> Thanks either way."],
+    shape:"blockquote" },
+];
+
+const TODAY = "2026-10-25";
+const LINES = {
+  sent: '> [!done] 📲 Telegram card — sent on ' + TODAY + '.',
+  skip: '> [!note] 📲 Telegram card — skip ' + TODAY + '. Not now.',
+  dead: '> [!warning] 📲 Telegram card — dead ' + TODAY + '. Closed.',
+};
+// The three block shapes scan.js can read, and where a line may be written
+// under each without the scanner reading it as part of the draft.
+const SEPARATOR = { blockquote: [''], fenced: [], plain: ['', '---'] };
+
+let answered = [];
+// The card just answered, held on screen while its line lands in the note.
+let pending = null;
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const waited = (d) => d <= 0 ? 'today' : d === 1 ? '1 day' : d < 21 ? d + ' days' : Math.round(d/7) + ' weeks';
+const current = () => CARDS.find((c) => !answered.some((a) => a.path === c.path));
+
+function render() {
+  const c = pending ? pending.card : current();
+  const phone = document.getElementById('phone');
+  const note = document.getElementById('note');
+  const log = document.getElementById('log');
+
+  document.getElementById('count').innerHTML =
+    (CARDS.length - answered.length) + ' waiting · ' + answered.length + ' answered'
+    + (answered.length ? ' · <button class="reset" id="reset">start over</button>' : '');
+
+  if (!c && !pending) {
+    phone.innerHTML = '<div class="phone"><div class="who">Nothing waiting tonight.</div>'
+      + '<div class="why">' + answered.length + ' drafts answered already.</div></div>';
+    note.textContent = 'Every draft in the sample vault has an answer under it now.\nThe real one has nine.';
+  } else {
+    const done = pending && pending.card.path === c.path ? pending : null;
+    const taps = [];
+    if (c.channel === 'whatsapp') taps.push('Open WhatsApp, typed');
+    else if (c.long) taps.push('Open Gmail — paste the text');
+    else { taps.push('Open Gmail, typed'); taps.push('Mail app'); }
+
+    phone.innerHTML = '<div class="phone">'
+      + '<div class="who">' + esc(c.recipient) + ' · waiting ' + waited(c.days) + '</div>'
+      + '<div class="why">' + esc(c.why) + '</div>'
+      + '<blockquote' + (c.rtl ? ' dir="rtl"' : '') + '>' + esc(c.body) + '</blockquote>'
+      + (c.ask ? '<p class="ask">' + esc(c.ask) + '</p>' : '')
+      + (c.caveat ? '<p class="caveat">' + esc(c.caveat) + '</p>' : '')
+      + '<p class="src">' + esc(c.path) + ':' + c.line + '</p>'
+      + '<div class="taps">' + taps.map((t) => '<a class="tap" href="#" onclick="return false">' + esc(t) + '</a>').join('') + '</div>'
+      + (c.long ? '<div class="carry">' + esc(c.body) + '</div>'
+          + '<p class="carrynote">Second message, tap to copy. The typed link for this one is about 5,800 characters — too long for a button.</p>' : '')
+      + (done
+        ? '<div class="reply"><button disabled class="k-' + done.kind + '">you replied: ' + done.kind + '</button></div>'
+          + '<p class="hint">Written under the draft \u2192</p>'
+        : '<div class="reply">'
+          + '<button data-k="sent">sent</button>'
+          + '<button data-k="skip">skip</button>'
+          + '<button data-k="dead">dead</button>'
+          + '</div>'
+          + '<p class="hint">Nothing goes out from here.</p>')
+      + '</div>';
+
+    const body = c.note.slice();
+    if (done) body.push(...SEPARATOR[c.shape], LINES[done.kind]);
+    note.innerHTML = '<span style="color:var(--muted)">' + esc(c.path) + '</span>\n\n'
+      + body.map((l, i) => (done && i >= c.note.length && l.trim())
+        ? '<span class="added">' + esc(l) + '</span>' : esc(l)).join('\n');
+  }
+
+  log.innerHTML = answered.map((a) =>
+    '<div><span class="k-' + a.kind + '">' + a.kind + '</span> · '
+    + esc(a.recipient) + ' · <span style="opacity:.8">' + esc(LINES[a.kind]) + '</span></div>').join('');
+
+  phone.querySelectorAll('.reply button[data-k]').forEach((b) => {
+    b.onclick = () => answer(current(), b.dataset.k);
+  });
+  const r = document.getElementById('reset');
+  if (r) r.onclick = () => { answered = []; pending = null; render(); };
+}
+
+function answer(card, kind) {
+  // The line lands in the note first, and only then does the next card come
+  // up. That is the order the nightly run uses too: collect yesterday's
+  // answer, commit it, then pick tonight's card — so a draft answered last
+  // night can never be the card tonight.
+  if (!card || pending) return;
+  answered.push({ path: card.path, recipient: card.recipient, kind });
+  pending = { card, kind };
+  render();
+  setTimeout(() => { pending = null; render(); }, 1400);
+}
+
+render();
+</script>
+</body>
+</html>
