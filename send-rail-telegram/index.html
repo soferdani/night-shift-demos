@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>send-rail — the card on the phone</title>
+<title>send-rail — one tap from bed</title>
 <style>
   :root{--bg:#fbfaf8;--card:#fff;--ink:#16130f;--muted:#6b6358;--line:#e5e0d8;--accent:#1c4f8f;
     --tg:#eef3f8;--tgink:#16130f;--quote:#f4f1ec;--code:#f1eee8;--ok:#1f6b3f;--warn:#8a5a12;--dead:#8a2f2f}
@@ -49,6 +49,22 @@
     background:var(--card);color:var(--ink);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer}
   .reply button:hover{border-color:var(--accent);color:var(--accent)}
   .hint{font-size:.78rem;color:var(--muted);margin:10px 0 0;text-align:center}
+  .kbd{margin:12px 0 0;padding:10px 8px 8px;background:var(--code);border-radius:10px;
+    border:1px solid var(--line)}
+  .kbd h3{margin:0 0 8px;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);font-weight:600;text-align:center}
+  .kbd .row{display:flex;flex-direction:column;gap:6px}
+  .kbd button{width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+  .kbd button:hover{border-color:var(--accent)}
+  .kbd button:disabled{opacity:.45;cursor:default}
+  .kbd .cmd{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.68rem;color:var(--muted);word-break:break-all}
+  .mine{margin:10px 0 0;padding:8px 11px;background:var(--accent);color:#fff;border-radius:9px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;word-break:break-all}
+  .doorman{margin:6px 0 0;padding:8px 11px;background:var(--card);border:1px solid var(--line);
+    border-radius:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;
+    word-break:break-all}
   .note{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.7;
     white-space:pre-wrap;background:var(--code);border-radius:10px;padding:14px;overflow-x:auto}
   .note .added{background:rgba(127,176,232,.22);border-radius:3px;display:inline-block;width:100%}
@@ -70,11 +86,15 @@
 <body>
 <div class="wrap">
   <a class="back" href="../">&larr; Night Shift demos</a>
-  <h1>One card a night, and the answer goes back into the vault</h1>
+  <h1>One card a night, and one tap writes the answer into the vault</h1>
   <p class="sub">send-rail finds the messages that are written, addressed to a real person and
   never sent. The page version waits on a laptop. This is the other front end: the single
   message to open now, pushed to a phone, with the taps on it.</p>
-  <p class="sub">Answer with one word, and watch the note: the answer is written under the draft, because that is the only part of this that is still here tomorrow.
+  <p class="sub"><strong>Night 2.</strong> The answer used to need a second Telegram bot —
+  one program at a time may read a bot's replies, and Doorman, the bridge already on the box,
+  holds that. It doesn't need one. The card arrives with a keyboard whose buttons
+  <em>are</em> shell lines, so a tap sends a line Doorman already knows how to run, and the
+  answer is written under the draft and committed. Tap one and watch the note.
   <strong>Nothing is ever sent by the program.</strong></p>
 
   <div class="cols">
@@ -92,8 +112,21 @@
 
   <footer>
     <p>Sample data, a made-up vault — the real one is private. Everything you see runs in
-    this page; the actual tool is Node, zero dependencies, 193 tests, and it reads the vault
+    this page; the actual tool is Node, zero dependencies, 227 tests, and it reads the vault
     without writing to it except for the one verdict line you tap here.</p>
+    <p><strong>Why the button is a shell line.</strong> Telegram lets one program at a time
+    read a bot's replies, and Doorman — the bridge that has been on the box since September —
+    holds that. A reply-keyboard button is neither a link nor a callback: tapping it sends its
+    own text into the chat, from you. So the button's text is a line Doorman already runs, and
+    the loop closes with no second bot, no token to create and no file of Doorman's to patch.
+    The token the card is posted with is Doorman's own; posting was never the exclusive part.</p>
+    <p><strong>What the run found in last night's code.</strong> The verdict line was being
+    welded onto the last line of the message whenever the note already had a blank line after
+    the draft — which is most of them — so Obsidian drew <code>sent on …</code> as a callout
+    nested inside the signature. Last night's tests could not see it: they all went through
+    the scanner, and the scanner is the one reader that refuses to absorb a callout. Separately,
+    the nightly script's once-a-night guard searched its log for a line it could never match,
+    because the logger stamps the time in front of everything it writes.</p>
     <p><strong>Why a draft sometimes arrives in two messages.</strong> A 652-character Hebrew
     email percent-encodes to about 5,800 characters of URL, and no Telegram button takes a
     link that long. Those get an addressed compose window plus the text as a tap-to-copy
@@ -169,7 +202,9 @@ const CARDS = [
     shape:"blockquote" },
 ];
 
-const TODAY = "2026-10-25";
+const TODAY = "2026-10-26";
+// The text of the button, which is also the line Doorman runs.
+const SR = "!bash /home/dani-agent/send-rail/telegram/sr";
 const LINES = {
   sent: '> [!done] 📲 Telegram card — sent on ' + TODAY + '.',
   skip: '> [!note] 📲 Telegram card — skip ' + TODAY + '. Not now.',
@@ -217,16 +252,17 @@ function render() {
       + '<div class="taps">' + taps.map((t) => '<a class="tap" href="#" onclick="return false">' + esc(t) + '</a>').join('') + '</div>'
       + (c.long ? '<div class="carry">' + esc(c.body) + '</div>'
           + '<p class="carrynote">Second message, tap to copy. The typed link for this one is about 5,800 characters — too long for a button.</p>' : '')
+      + '<p class="hint">One tap below. Nothing goes out from here.</p>'
+      + '</div>'
       + (done
-        ? '<div class="reply"><button disabled class="k-' + done.kind + '">you replied: ' + done.kind + '</button></div>'
-          + '<p class="hint">Written under the draft \u2192</p>'
-        : '<div class="reply">'
-          + '<button data-k="sent">sent</button>'
-          + '<button data-k="skip">skip</button>'
-          + '<button data-k="dead">dead</button>'
-          + '</div>'
-          + '<p class="hint">Nothing goes out from here.</p>')
-      + '</div>';
+        ? '<div class="mine">' + esc(SR + ' ' + done.kind) + '</div>'
+          + '<div class="doorman">' + esc(doormanSays(done)) + '</div>'
+        : '')
+      + '<div class="kbd"><h3>' + (done ? 'keyboard, used' : 'Telegram keyboard') + '</h3><div class="row">'
+      + ['sent', 'skip', 'dead'].map((k) =>
+          '<button data-k="' + k + '"' + (done ? ' disabled' : '') + '><strong>' + k + '</strong>'
+          + '<span class="cmd">' + esc(SR + ' ' + k) + '</span></button>').join('')
+      + '</div></div>';
 
     const body = c.note.slice();
     if (done) body.push(...SEPARATOR[c.shape], LINES[done.kind]);
@@ -239,23 +275,30 @@ function render() {
     '<div><span class="k-' + a.kind + '">' + a.kind + '</span> · '
     + esc(a.recipient) + ' · <span style="opacity:.8">' + esc(LINES[a.kind]) + '</span></div>').join('');
 
-  phone.querySelectorAll('.reply button[data-k]').forEach((b) => {
+  phone.querySelectorAll('.kbd button[data-k]').forEach((b) => {
     b.onclick = () => answer(current(), b.dataset.k);
   });
   const r = document.getElementById('reset');
   if (r) r.onclick = () => { answered = []; pending = null; render(); };
 }
 
+// What comes back in the chat: sr's single line of output, which is the only
+// thing it prints. The path is the file it committed, not a folder it guessed.
+function doormanSays(done) {
+  const at = done.card.note.length + SEPARATOR[done.card.shape].length + 1;
+  return done.kind + ' · ' + done.card.path + ':' + at + ' · pushed';
+}
+
 function answer(card, kind) {
   // The line lands in the note first, and only then does the next card come
-  // up. That is the order the nightly run uses too: collect yesterday's
-  // answer, commit it, then pick tonight's card — so a draft answered last
-  // night can never be the card tonight.
+  // up. That is the order on the box too, and it no longer needs the nightly
+  // run to collect anything: the tap writes and commits the answer there and
+  // then, so a draft answered last night cannot be the card tonight.
   if (!card || pending) return;
   answered.push({ path: card.path, recipient: card.recipient, kind });
   pending = { card, kind };
   render();
-  setTimeout(() => { pending = null; render(); }, 1400);
+  setTimeout(() => { pending = null; render(); }, 2600);
 }
 
 render();
