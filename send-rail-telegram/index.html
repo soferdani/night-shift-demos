@@ -81,6 +81,16 @@
     font-size:.84rem;color:var(--muted);max-width:68ch}
   footer a{color:var(--accent)}
   code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.85em}
+  .ledger{margin:22px 0 0}
+  .ledger .sub{margin:0 0 12px}
+  .ledger table{width:100%;border-collapse:collapse;font-size:.86rem;margin:0 0 14px}
+  .ledger th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);font-weight:600;padding:0 10px 6px 0;border-bottom:1px solid var(--line)}
+  .ledger td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  .ledger td:last-child{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ledger tr.ok td:first-child{color:var(--ok);font-weight:600}
+  .ledger tr.no td:first-child{color:var(--muted)}
+  @media (max-width:560px){.ledger td,.ledger th{font-size:.8rem}}
 </style>
 </head>
 <body>
@@ -90,12 +100,16 @@
   <p class="sub">send-rail finds the messages that are written, addressed to a real person and
   never sent. The page version waits on a laptop. This is the other front end: the single
   message to open now, pushed to a phone, with the taps on it.</p>
-  <p class="sub"><strong>Night 2.</strong> The answer used to need a second Telegram bot —
-  one program at a time may read a bot's replies, and Doorman, the bridge already on the box,
-  holds that. It doesn't need one. The card arrives with a keyboard whose buttons
-  <em>are</em> shell lines, so a tap sends a line Doorman already knows how to run, and the
-  answer is written under the draft and committed. Tap one and watch the note.
-  <strong>Nothing is ever sent by the program.</strong></p>
+  <p class="sub"><strong>Night 3.</strong> Until tonight the rail read one convention: a
+  heading saying the text below it is ready to paste. That convention is also the horizon —
+  a finished thing addressed to a named person is not always a message. Sometimes it is the
+  document itself, and there is nothing to paste because the note <em>is</em> the deliverable.
+  Four of those were sitting in the real vault, the oldest written 87 days ago and marked
+  <em>ready to send</em>, and no run before tonight had ever looked at them. The last card
+  below is one. <strong>Nothing is ever sent by the program.</strong></p>
+  <p class="sub">The card arrives with a keyboard whose buttons <em>are</em> shell lines, so a
+  tap sends a line Doorman already runs and the answer is written under the draft and
+  committed. Tap one and watch the note.</p>
 
   <div class="cols">
     <div class="panel">
@@ -110,9 +124,35 @@
     </div>
   </div>
 
+  <div class="panel ledger">
+    <h2>The deliverables ledger, on the real vault</h2>
+    <p class="sub">Four accepted, seven refused, every refusal with the reason and the note it
+    came from. The README has carried “eight of them in this vault” as an eyeball estimate
+    since night 2 of phase 1. This is what counting found.</p>
+    <table>
+      <tr><th>what</th><th>who says so</th><th>days</th></tr>
+      <tr class="ok"><td>an implementation path</td><td><code>audience:</code> a person, full name</td><td>87</td></tr>
+      <tr class="ok"><td>a one-page brief</td><td>the document's own <code>For:</code> line</td><td>84</td></tr>
+      <tr class="ok"><td>a guide</td><td><code>audience:</code> a person</td><td>53</td></tr>
+      <tr class="ok"><td>a pitch</td><td>a two-word name in the file name — read it again first</td><td>66</td></tr>
+      <tr class="no"><td>a partner document</td><td><code>status: published-to-google-docs</code> — it left</td><td>—</td></tr>
+      <tr class="no"><td>the same brief, in a send-package folder</td><td>byte-identical to one already on the rail</td><td>—</td></tr>
+      <tr class="no"><td>an implementation path, general</td><td><code>audience:</code> “smart people with no Obsidian experience” is a category</td><td>—</td></tr>
+      <tr class="no"><td>a solution-principles document</td><td>the only name-shaped string is Hebrew, and a caseless script carries no evidence of a name</td><td>—</td></tr>
+      <tr class="no"><td>a blog draft, a customer pitch, a channel post</td><td>nobody named in a field, a title or the first lines</td><td>—</td></tr>
+    </table>
+    <p class="sub">Coursework is refused on the vault's own <code>course:</code> field, and
+    that test earns its place on the shape of what it stops rather than on a count here: this
+    vault keeps thirteen notes of a classroom crisis simulation, each a finished document
+    addressed to a named person who does not exist, and the rail's config happens to skip
+    that whole folder already. A card addressed to one of them at 22:00 is how a man learns
+    to stop reading the card, so the test stays — for the next piece of coursework filed
+    somewhere the config does not cover.</p>
+  </div>
+
   <footer>
     <p>Sample data, a made-up vault — the real one is private. Everything you see runs in
-    this page; the actual tool is Node, zero dependencies, 227 tests, and it reads the vault
+    this page; the actual tool is Node, zero dependencies, 259 tests, and it reads the vault
     without writing to it except for the one verdict line you tap here.</p>
     <p><strong>Why the button is a shell line.</strong> Telegram lets one program at a time
     read a bot's replies, and Doorman — the bridge that has been on the box since September —
@@ -120,6 +160,17 @@
     own text into the chat, from you. So the button's text is a line Doorman already runs, and
     the loop closes with no second bot, no token to create and no file of Doorman's to patch.
     The token the card is posted with is Doorman's own; posting was never the exclusive part.</p>
+    <p><strong>Three things tonight's run found in its own detector.</strong> The first
+    version read <code>בלוג — סוכן AI פרץ ל-Hugging Face (עברית)</code> and reported that
+    somebody called Hebrew had been waiting 79 days for a blog draft — a bare word in brackets
+    is a language, a version or a variant as often as a surname, so a name found there now
+    has to carry a first name and a last name. Fixing that let the next one through: the same
+    lane accepted a Hebrew solution-principles document as owed to a person called
+    “עקרונות הפתרון”, which is the words “solution principles”. Every test under it leaned on
+    a capital letter, and Hebrew has none — so the title lane is Latin-script only now, and
+    that is a stated limit rather than a silent one. And the write-back would have stacked a
+    second footer under the first on every repeat answer to a document, because the record of
+    what was posted never said which of the two kinds the card was.</p>
     <p><strong>What the run found in last night's code.</strong> The verdict line was being
     welded onto the last line of the message whenever the note already had a blank line after
     the draft — which is most of them — so Obsidian drew <code>sent on …</code> as a callout
@@ -127,6 +178,13 @@
     the scanner, and the scanner is the one reader that refuses to absorb a callout. Separately,
     the nightly script's once-a-night guard searched its log for a line it could never match,
     because the logger stamps the time in front of everything it writes.</p>
+    <p><strong>Why a document does not compete for the top card on age alone.</strong> The
+    rail's own rule in <em>clear to send</em> is freshest first, because an old unsent message
+    has probably stopped being true. That is a claim about text, and the three detectors that
+    make it — a date that has gone by, a sentence about now, a line written under the block —
+    are deliberately not run on a document: a ten-thousand-character implementation path
+    contains “this week” somewhere and is not thereby unsendable. So documents sort oldest
+    first among themselves, and take no position in front of a message.</p>
     <p><strong>Why a draft sometimes arrives in two messages.</strong> A 652-character Hebrew
     email percent-encodes to about 5,800 characters of URL, and no Telegram button takes a
     link that long. Those get an addressed compose window plus the text as a tap-to-copy
@@ -186,6 +244,24 @@ const CARDS = [
       "the 26th and I'll reissue rather than credit.","","Thanks,","D"],
     shape:"plain" },
 
+  { recipient:"Rita Vance", days:87, bucket:"clear to send", kind:"package",
+    why:"Written for Rita Vance 87 days ago and marked ready to send. Finished, addressed, and nothing in the vault records it leaving. Nobody wrote down an ask for it either.",
+    ask:"A document, not a message: there is nothing to paste, the note is the deliverable. 742 characters, and audience: Rita Vance (ops lead, running the pilot herself) says who it is for.",
+    path:"30_Projects/Northwind/Onboarding Path — Rita Vance (v1).md", line:1, rtl:false,
+    channel:"copy", caveat:null,
+    body:"# The onboarding path, v1. You're running it first.\n\nRita, here's the thing I said I'd write up.\n\nSix steps, no week numbers, because the calendar isn't what moves this forward — the first clean export is. Some steps do nothing until you have a pile of data behind them, so they're ordered by what they need, not by when.",
+    note:["---","type: deliverable","deliverable: true","status: ready-to-send","created: 2026-07-14",
+      "audience: Rita Vance (ops lead, running the pilot herself)","---","",
+      "# The onboarding path, v1. You're running it first.","",
+      "Rita, here's the thing I said I'd write up.","",
+      "Six steps, no week numbers, because the calendar isn't what moves this",
+      "forward — the first clean export is.","",
+      "## Step 1 — one export, by hand","",
+      "Pull last month's orders as CSV. Don't automate it yet.","",
+      "## Step 2 — name the three fields you actually read","",
+      "Everything else is noise you can add back later."],
+    shape:"document" },
+
   { recipient:"Dalia", days:0, bucket:"clear to send",
     why:"Nobody wrote down an ask for this one. It reads as written.",
     ask:null,
@@ -202,7 +278,7 @@ const CARDS = [
     shape:"blockquote" },
 ];
 
-const TODAY = "2026-10-26";
+const TODAY = "2026-10-27";
 // The text of the button, which is also the line Doorman runs.
 const SR = "!bash /home/dani-agent/send-rail/telegram/sr";
 const LINES = {
@@ -212,13 +288,27 @@ const LINES = {
 };
 // The three block shapes scan.js can read, and where a line may be written
 // under each without the scanner reading it as part of the draft.
-const SEPARATOR = { blockquote: [''], fenced: [], plain: ['', '---'] };
+// A document is a fourth shape, and the simplest: there is no block inside
+// it to write under, so the verdict goes after a rule at the very bottom of
+// the file — the one place in a note that is never inside Dani's own prose.
+const SEPARATOR = { blockquote: [''], fenced: [], plain: ['', '---'], document: ['', '---'] };
 
 let answered = [];
 // The card just answered, held on screen while its line lands in the note.
 let pending = null;
 const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const waited = (d) => d <= 0 ? 'today' : d === 1 ? '1 day' : d < 21 ? d + ' days' : Math.round(d/7) + ' weeks';
+// The same label the card prints, to the character. The page used to stop at
+// weeks and showed the 87-day document as "12 weeks" where the real card
+// says "3 months" — a demo that renders a different string than the thing it
+// is demonstrating is a small lie about the thing.
+const waited = (d) => {
+  if (d == null) return 'no date on it';
+  if (d <= 0) return 'today';
+  if (d === 1) return '1 day';
+  if (d < 21) return d + ' days';
+  const w = Math.round(d / 7);
+  return w < 9 ? w + ' weeks' : Math.round(d / 30) + ' months';
+};
 const current = () => CARDS.find((c) => !answered.some((a) => a.path === c.path));
 
 function render() {
@@ -234,13 +324,16 @@ function render() {
   if (!c && !pending) {
     phone.innerHTML = '<div class="phone"><div class="who">Nothing waiting tonight.</div>'
       + '<div class="why">' + answered.length + ' drafts answered already.</div></div>';
-    note.textContent = 'Every draft in the sample vault has an answer under it now.\nThe real one has nine.';
+    note.textContent = 'Every draft in the sample vault has an answer under it now.\nThe real one has thirteen: nine messages and four documents.';
   } else {
     const done = pending && pending.card.path === c.path ? pending : null;
     const taps = [];
+    // A document's first tap opens the note, because that is where the thing
+    // to send actually is. Said as two taps, not dressed up as one.
+    if (c.kind === 'package') taps.push('Open the note in Obsidian');
     if (c.channel === 'whatsapp') taps.push('Open WhatsApp, typed');
     else if (c.long) taps.push('Open Gmail — paste the text');
-    else { taps.push('Open Gmail, typed'); taps.push('Mail app'); }
+    else if (c.kind !== 'package') { taps.push('Open Gmail, typed'); taps.push('Mail app'); }
 
     phone.innerHTML = '<div class="phone">'
       + '<div class="who">' + esc(c.recipient) + ' · waiting ' + waited(c.days) + '</div>'
