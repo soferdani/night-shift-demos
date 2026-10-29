@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>רישום סוכני AI</title>
+<style>
+  :root{--bg:#fbfaf8;--card:#fff;--ink:#16130f;--muted:#6b6358;--line:#e5e0d8;
+    --accent:#1c4f8f;--open:#a8421f;--ok:#2d6a4f}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;--line:#302b25;
+    --accent:#7fb0e8;--open:#e8956f;--ok:#79bb9b}}
+  :root[data-theme="dark"]{--bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;
+    --line:#302b25;--accent:#7fb0e8;--open:#e8956f;--ok:#79bb9b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
+    font:16px/1.55 "Segoe UI","Noto Sans Hebrew",ui-sans-serif,system-ui,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:24px 16px 72px}
+  h1{font-size:1.4rem;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 18px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+  button{font:inherit;font-size:.9rem;background:var(--card);color:var(--ink);
+    border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.primary:hover{opacity:.9;color:#fff}
+  .counts{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin:0 0 16px;font-size:.9rem;color:var(--muted)}
+  .counts b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .counts .gap{color:var(--open);font-weight:600}
+  details.agent{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:0;margin:0 0 10px;overflow:hidden}
+  details.agent>summary{padding:13px 14px;cursor:pointer;font-weight:600;
+    display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  details.agent>summary::-webkit-details-marker{display:none}
+  summary .tag{font-weight:400;font-size:.78rem;color:var(--muted);white-space:nowrap}
+  summary .tag.open{color:var(--open)}
+  .body{padding:0 14px 14px;border-top:1px solid var(--line)}
+  .sect{font-size:.74rem;color:var(--muted);letter-spacing:.03em;margin:14px 0 6px}
+  label.q{display:block;margin:0 0 11px}
+  label.q .t{display:block;font-size:.88rem;margin:0 0 3px}
+  label.q .h{display:block;font-size:.78rem;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;font:inherit;font-size:.9rem;background:transparent;
+    color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+  input:focus,select,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+  textarea{min-height:52px;resize:vertical}
+  .refs{margin:3px 0 0}
+  .ref{display:inline-block;font-size:.68rem;border:1px solid var(--line);border-radius:99px;
+    padding:1px 7px;margin:3px 0 0 4px;color:var(--muted)}
+  .ref.draft,.ref.opinion{border-style:dashed}
+  .rm{background:none;border:0;color:var(--muted);font-size:.8rem;padding:2px 0;cursor:pointer}
+  .rm:hover{color:var(--open)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin:22px 0 0}
+  .panel h2{font-size:1rem;margin:0 0 8px}
+  .panel p{margin:0 0 8px;font-size:.88rem;color:var(--muted)}
+  .panel ul{margin:0;padding-right:18px;font-size:.88rem}
+  .panel li{margin:0 0 4px}
+  .foot{color:var(--muted);font-size:.8rem;margin:26px 0 0;border-top:1px solid var(--line);
+    padding-top:12px}
+  @media (max-width:420px){.bar button{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>רישום סוכני AI</h1>
+  <p class="sub">מה כל סוכן יכול לעשות, בשם מי, ובאיזה מידע הוא נוגע. ממלאים תוך כדי שיחה,
+  מדפיסים שני דפים: הרישום שהארגון שומר, והשאלות שאף אחד בחדר לא ידע לענות.</p>
+
+  <div class="bar">
+    <button class="primary" id="print-register">הדפסת הרישום</button>
+    <button id="print-questions">הדפסת השאלות הפתוחות</button>
+    <button id="add">הוספת סוכן</button>
+    <button id="export">ייצוא JSON</button>
+    <button id="load-sample">נתוני דוגמה</button>
+    <button id="clear">התחלה מאפס</button>
+  </div>
+
+  <div class="counts" id="counts"></div>
+  <div id="org"></div>
+  <div id="agents"></div>
+
+  <div class="panel" id="coverage"></div>
+
+  <p class="foot">הדף לא קובע אם משהו חוקי, תקין או מאובטח — הוא רושם עובדות ושאלות.
+  הכל נשאר בדפדפן; אין שרת ואין שליחה.</p>
+</div>
+
+<script type="module">
+import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './core/questions.js';
+import { LAW, LAW_STATUS_HE, ASI } from './core/refs.js';
+import { readRegister, openQuestions, stats, hookCoverage, isEmpty } from './core/register.js';
+import { renderRegister, renderQuestions } from './core/render.js';
+import { SAMPLE } from './core/sample.js';
+
+const KEY = 'agent-register/v1';
+const blank = () => ({ org: { name: '', date: today(), answers: {} }, agents: [] });
+function today() { return new Date().toISOString().slice(0, 10); }
+
+let doc = load() || structuredClone(SAMPLE);
+
+function load() {
+  try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }
+  catch { return null; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(doc)); } catch { /* private window */ }
+}
+
+const el = (tag, attrs = {}, kids = []) => {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const kid of [].concat(kids)) if (kid) node.append(kid);
+  return node;
+};
+
+function refs(question) {
+  const box = el('div', { class: 'refs' });
+  for (const key of question.law || []) {
+    const law = LAW[key]; if (!law) continue;
+    box.append(el('span', { class: `ref ${law.status}`, title: law.full,
+      text: `${law.short} · ${LAW_STATUS_HE[law.status]}` }));
+  }
+  for (const key of question.asi || []) {
+    if (!ASI[key]) continue;
+    box.append(el('span', { class: 'ref', title: ASI[key], text: key }));
+  }
+  return box;
+}
+
+function field(question, answers, onChange) {
+  const label = el('label', { class: 'q' });
+  label.append(el('span', { class: 't', text: question.he }));
+  if (question.hint) label.append(el('span', { class: 'h', text: question.hint }));
+  let input;
+  if (question.type === 'choice') {
+    input = el('select');
+    input.append(el('option', { value: '', text: '— בחרו —' }));
+    for (const option of question.options) {
+      input.append(el('option', { value: option, text: option }));
+    }
+    input.value = answers[question.id] || '';
+  } else if (question.type === 'list') {
+    input = el('textarea', { placeholder: 'שורה לכל פריט. "אין" היא תשובה — שדה ריק הוא שאלה פתוחה' });
+    const current = answers[question.id];
+    input.value = Array.isArray(current) ? current.join('\n') : (current || '');
+  } else {
+    input = el('textarea');
+    input.value = answers[question.id] || '';
+  }
+  input.addEventListener('input', () => {
+    const raw = input.value;
+    answers[question.id] = question.type === 'list'
+      ? raw.split('\n').map((s) => s.trim()).filter(Boolean)
+      : raw;
+    onChange();
+  });
+  input.addEventListener('change', () => {
+    answers[question.id] = input.value;
+    onChange();
+  });
+  label.append(input, refs(question));
+  return label;
+}
+
+function sectionsFor(questions, answers, onChange) {
+  const out = [];
+  for (const section of SECTIONS) {
+    const mine = questions.filter((x) => x.section === section.id && applies(x, answers));
+    if (!mine.length) continue;
+    out.push(el('p', { class: 'sect', text: section.he }));
+    for (const question of mine) out.push(field(question, answers, onChange));
+  }
+  return out;
+}
+
+function drawOrg() {
+  const host = document.getElementById('org');
+  host.textContent = '';
+  const box = el('details', { class: 'agent', open: 'open' });
+  const openCount = ORG_QUESTIONS.filter((x) => isEmpty(doc.org.answers[x.id])).length;
+  box.append(el('summary', {}, [
+    el('span', { text: 'הארגון' }),
+    el('span', { class: `tag${openCount ? ' open' : ''}`,
+      text: openCount ? `${openCount} פתוחות` : 'הושלם' }),
+  ]));
+  const body = el('div', { class: 'body' });
+  const name = el('label', { class: 'q' });
+  name.append(el('span', { class: 't', text: 'שם הארגון והתאריך' }));
+  const nameInput = el('input', { value: doc.org.name || '' });
+  nameInput.addEventListener('input', () => { doc.org.name = nameInput.value; redraw(false); });
+  const dateInput = el('input', { type: 'date', value: doc.org.date || today() });
+  dateInput.addEventListener('change', () => { doc.org.date = dateInput.value; redraw(false); });
+  name.append(nameInput, dateInput);
+  body.append(name, ...sectionsFor(ORG_QUESTIONS, doc.org.answers, () => redraw(false)));
+  box.append(body);
+  host.append(box);
+}
+
+function drawAgents() {
+  const host = document.getElementById('agents');
+  host.textContent = '';
+  const read = readRegister(doc);
+  doc.agents.forEach((agent, index) => {
+    const info = read.agents[index];
+    const box = el('details', { class: 'agent' });
+    box.append(el('summary', {}, [
+      el('span', { text: agent.name || 'סוכן בלי שם' }),
+      el('span', { class: `tag${info.open.length ? ' open' : ''}`,
+        text: info.open.length ? `${info.open.length} פתוחות` : 'הושלם' }),
+    ]));
+    const body = el('div', { class: 'body' });
+    const name = el('label', { class: 'q' });
+    name.append(el('span', { class: 't', text: 'שם הסוכן' }));
+    const nameInput = el('input', { value: agent.name || '' });
+    nameInput.addEventListener('input', () => { agent.name = nameInput.value; save(); drawCounts(); });
+    name.append(nameInput);
+    body.append(name, ...sectionsFor(AGENT_QUESTIONS, agent.answers, () => redraw(false)));
+    const rm = el('button', { class: 'rm', text: 'הסרת הסוכן מהרישום' });
+    rm.addEventListener('click', () => { doc.agents.splice(index, 1); redraw(true); });
+    body.append(rm);
+    box.append(body);
+    host.append(box);
+  });
+}
+
+function drawCounts() {
+  const s = stats(doc);
+  const host = document.getElementById('counts');
+  host.textContent = '';
+  const line = el('div');
+  line.innerHTML = `בטבלה <b>${s.agents}</b> סוכנים · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b>`
+    + ` · <b>${s.lines}</b> שאלות פתוחות (על ${s.open} מקרים)`;
+  host.append(line);
+  if (s.believed !== null && Number(s.believed) !== s.agents && !Number.isNaN(Number(s.believed))) {
+    host.append(el('div', { class: 'gap',
+      text: `הארגון העריך ${s.believed} סוכנים. בטבלה ${s.agents}.` }));
+  }
+}
+
+function drawCoverage() {
+  const cover = hookCoverage();
+  const host = document.getElementById('coverage');
+  host.textContent = '';
+  host.append(el('h2', { text: 'למה זה לא טופס עמידה בדרישות' }));
+  host.append(el('p', { text:
+    `מתוך ${AGENT_QUESTIONS.length} השאלות על סוכן, ל-${cover.binding.length} יש עוגן מחייב בדין הישראלי. `
+    + `${cover.riskOnly.length} שאלות — אלה שמתארות מה הסוכן מורשה לעשות — לא מופיעות באף חובה: `
+    + `החוק מדבר על מסדי מידע ועל מי נוגע בהם, לא על עצמאות, קריאה לכלים או הרצת קוד. `
+    + `עוד ${cover.softLaw.length} תלויה בטיוטת הנחיה שפורסמה באפריל 2025 ולא נחתמה.` }));
+  const list = el('ul');
+  for (const id of cover.riskOnly) {
+    const question = AGENT_QUESTIONS.find((x) => x.id === id);
+    list.append(el('li', { text: question.he }));
+  }
+  host.append(list);
+}
+
+function redraw(full = true) {
+  save();
+  if (full) { drawOrg(); drawAgents(); }
+  drawCounts();
+}
+
+function openDoc(html, name) {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const tab = window.open(url, '_blank');
+  if (!tab) {
+    const a = el('a', { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+document.getElementById('print-register').addEventListener('click',
+  () => openDoc(renderRegister(doc), 'agent-register.html'));
+document.getElementById('print-questions').addEventListener('click',
+  () => openDoc(renderQuestions(doc), 'open-questions.html'));
+document.getElementById('add').addEventListener('click', () => {
+  doc.agents.push({ name: '', answers: {} });
+  redraw(true);
+  const boxes = document.querySelectorAll('#agents details');
+  const last = boxes[boxes.length - 1];
+  if (last) { last.open = true; last.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+document.getElementById('export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: 'agent-register.json' });
+  document.body.append(a); a.click(); a.remove();
+});
+document.getElementById('load-sample').addEventListener('click', () => {
+  doc = structuredClone(SAMPLE); redraw(true);
+});
+document.getElementById('clear').addEventListener('click', () => {
+  doc = blank(); redraw(true);
+});
+
+drawOrg(); drawAgents(); drawCounts(); drawCoverage();
+</script>
+</body>
+</html>
