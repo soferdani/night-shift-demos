@@ -80,6 +80,7 @@
   <div id="org"></div>
   <div id="agents"></div>
 
+  <div class="panel" id="accounts"></div>
   <div class="panel" id="coverage"></div>
 
   <p class="foot">הדף לא קובע אם משהו חוקי, תקין או מאובטח — הוא רושם עובדות ושאלות.
@@ -89,7 +90,8 @@
 <script type="module">
 import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './core/questions.js';
 import { LAW, LAW_STATUS_HE, ASI } from './core/refs.js';
-import { readRegister, openQuestions, stats, hookCoverage, isEmpty } from './core/register.js';
+import { readRegister, stats, hookCoverage, isEmpty } from './core/register.js';
+import { readIdentities, identityStats, sheetCounts } from './core/identities.js';
 import { renderRegister, renderQuestions } from './core/render.js';
 import { SAMPLE } from './core/sample.js';
 
@@ -97,7 +99,17 @@ const KEY = 'agent-register/v1';
 const blank = () => ({ org: { name: '', date: today(), answers: {} }, agents: [] });
 function today() { return new Date().toISOString().slice(0, 10); }
 
-let doc = load() || structuredClone(SAMPLE);
+// Night 1's visitors have night 1's sample sitting in their browser, and it has
+// no account names in it — so the page would open showing none. An untouched
+// sample is nobody's work; anything typed over it is, and that stays.
+function untouchedOldSample(saved) {
+  return !!saved && Array.isArray(saved.agents) && saved.agents.length === 6
+    && String((saved.org && saved.org.name) || '').startsWith('דוגמה —')
+    && saved.agents.every((a) => !a.answers || a.answers.identity_name === undefined);
+}
+
+const saved = load();
+let doc = saved && !untouchedOldSample(saved) ? saved : structuredClone(SAMPLE);
 
 function load() {
   try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }
@@ -232,14 +244,50 @@ function drawCounts() {
   const s = stats(doc);
   const host = document.getElementById('counts');
   host.textContent = '';
+  const sheet = sheetCounts(doc);
+  const ids = identityStats(doc);
   const line = el('div');
-  line.innerHTML = `בטבלה <b>${s.agents}</b> סוכנים · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b>`
-    + ` · <b>${s.lines}</b> שאלות פתוחות (על ${s.open} מקרים)`;
+  line.innerHTML = `בטבלה ${s.agents === 1 ? 'סוכן אחד' : `<b>${s.agents}</b> סוכנים`} · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b>`
+    + ` · <b>${sheet.lines}</b> שאלות פתוחות (על ${sheet.cases} מקרים)`;
   host.append(line);
+  if (s.agents) {
+    const accounts = el('div');
+    accounts.innerHTML = `פועלים בשם <b>${ids.identities}</b> ${ids.identities === 1 ? 'חשבון' : 'חשבונות'}`
+      + (ids.widest > 1 ? ` · חשבון אחד נושא <b>${ids.widest}</b> סוכנים` : '')
+      + (ids.unnamed ? ` · <b>${ids.unnamed}</b> בלי חשבון רשום` : '');
+    host.append(accounts);
+  }
   if (s.believed !== null && Number(s.believed) !== s.agents && !Number.isNaN(Number(s.believed))) {
     host.append(el('div', { class: 'gap',
       text: `הארגון העריך ${s.believed} סוכנים. בטבלה ${s.agents}.` }));
   }
+}
+
+// The register read by account instead of by agent. Computed, never typed: the
+// room counts agents, the access log counts accounts.
+function drawAccounts() {
+  const host = document.getElementById('accounts');
+  host.textContent = '';
+  const ids = readIdentities(doc);
+  host.append(el('h2', { text: 'מי הסוכנים האלה, מבחינת יומן הגישה' }));
+  if (!ids.length) {
+    host.append(el('p', { text: 'אין סוכנים ברישום.' }));
+    return;
+  }
+  host.append(el('p', { text:
+    'סוכן אחד הוא שורה בטבלה. חשבון אחד יכול לשאת כמה סוכנים — וזה מה שיומן הגישה רואה.' }));
+  const list = el('ul');
+  for (const id of ids) {
+    const item = el('li');
+    item.append(el('b', { text: id.named ? id.name : 'בלי חשבון רשום' }));
+    const tail = [];
+    tail.push(id.agents.length > 1 ? `${id.agents.length} סוכנים` : '1 סוכן');
+    if (id.kinds.length) tail.push(id.kinds.join(' / '));
+    if (id.writeTools.length) tail.push(`כתיבה: ${id.writeTools.join(', ')}`);
+    item.append(document.createTextNode(` — ${tail.join(' · ')}`));
+    list.append(item);
+  }
+  host.append(list);
 }
 
 function drawCoverage() {
@@ -264,6 +312,7 @@ function redraw(full = true) {
   save();
   if (full) { drawOrg(); drawAgents(); }
   drawCounts();
+  drawAccounts();
 }
 
 function openDoc(html, name) {
@@ -300,7 +349,7 @@ document.getElementById('clear').addEventListener('click', () => {
   doc = blank(); redraw(true);
 });
 
-drawOrg(); drawAgents(); drawCounts(); drawCoverage();
+drawOrg(); drawAgents(); drawCounts(); drawAccounts(); drawCoverage();
 </script>
 </body>
 </html>

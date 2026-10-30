@@ -1,6 +1,7 @@
 import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './questions.js';
 import { LAW, LAW_STATUS_HE, ASI } from './refs.js';
-import { readRegister, openQuestions, stats, isEmpty, asList } from './register.js';
+import { readRegister, stats, isEmpty, asList } from './register.js';
+import { readIdentities, identityStats, sheetLines, sheetCounts } from './identities.js';
 
 const RLM = '‏'; // Chromium prints a list of Latin names inside a Hebrew
 // sentence in reverse order. Fencing every separator with a right-to-left mark
@@ -67,6 +68,15 @@ li .hint{color:var(--muted);font-size:.8rem}
   padding:1px 7px;margin:3px 0 0 4px;color:var(--muted)}
 .ref.law.binding{border-color:#8d8375;color:#4a4238}
 .ref.law.draft,.ref.law.opinion{border-style:dashed}
+.ids{margin:0 0 14px}
+.ids table{border-collapse:collapse}
+.ids tr{border-bottom:1px solid var(--line);break-inside:avoid;page-break-inside:avoid}
+.ids tr:first-child{break-after:avoid;page-break-after:avoid}
+.ids th.h{width:auto;font-size:.74rem;color:var(--muted);padding:0 0 4px;text-align:right}
+.ids td{padding:6px 0;font-size:.84rem}
+.ids td.who{color:var(--muted)}
+.ids .n{font-weight:600}
+.ids .carry{color:var(--open);font-weight:600}
 .counts{font-size:.84rem;color:var(--muted);margin:0 0 16px}
 .counts b{color:var(--ink)}
 @media print{
@@ -95,7 +105,7 @@ export function renderRegister(doc) {
   const head = `<h1>רישום סוכני AI</h1>
 <p class="meta">${esc(reg.org.name || 'ארגון')} · ${esc(reg.org.date || '')}</p>
 <div class="note">${esc(DISCLAIMER)}</div>
-<p class="counts">בטבלה <b>${s.agents}</b> סוכנים · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b> שאלות${
+<p class="counts">בטבלה ${s.agents === 1 ? 'סוכן אחד' : `<b>${s.agents}</b> סוכנים`} · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b> שאלות${
     s.believed ? ` · הארגון העריך <b>${esc(s.believed)}</b> סוכנים` : ''
   }</p>`;
 
@@ -124,18 +134,76 @@ export function renderRegister(doc) {
 
   return shell('רישום סוכני AI', `${head}
 <h2>הארגון</h2><table>${orgBlock}</table>
+${identityBlock(doc)}
 <h2>הסוכנים</h2>${agents || '<p class="open">לא נרשם אף סוכן.</p>'}`);
+}
+
+/**
+ * The rollup: the same register read by account instead of by agent. A CISO
+ * counts agents; the access log counts accounts, and the two numbers are
+ * rarely the same.
+ */
+export function identityLine(doc) {
+  const s = identityStats(doc);
+  const agents = (doc.agents || []).length;
+  if (!agents) return '';
+  const bits = [
+    `${agents === 1 ? 'סוכן אחד פועל' : `<b>${agents}</b> סוכנים פועלים`} בשם ${
+      s.identities === 1 ? 'חשבון אחד' : `<b>${s.identities}</b> חשבונות`}`,
+  ];
+  if (s.widest > 1) {
+    bits.push(`חשבון אחד נושא <b>${s.widest}</b> סוכנים${s.widestName ? ` (${esc(s.widestName)})` : ''}`);
+  }
+  if (s.onHumanCredentials) {
+    bits.push(s.onHumanCredentials === 1
+      ? 'חשבון אחד הוא הרשאות של עובד'
+      : `<b>${s.onHumanCredentials}</b> מהחשבונות הם הרשאות של עובד`);
+  }
+  if (s.unnamed) {
+    bits.push(s.unnamed === 1
+      ? 'סוכן אחד בלי חשבון רשום'
+      : `<b>${s.unnamed}</b> סוכנים בלי חשבון רשום`);
+  }
+  return bits.join(`${RLM} · ${RLM}`);
+}
+
+export function identityBlock(doc) {
+  const ids = readIdentities(doc);
+  if (!ids.length) return '';
+  const rows = ids.map((id) => {
+    const name = id.named
+      ? `<span class="n">${esc(id.name)}</span>`
+      : '<span class="open">לא נרשם חשבון</span>';
+    const carry = id.agents.length > 1
+      ? `<span class="carry">${id.agents.length}</span> · ${joinHe(id.agents)}`
+      : joinHe(id.agents);
+    const kinds = id.kinds.length ? joinHe(id.kinds) : '<span class="open">—</span>';
+    const write = id.writeTools.length ? joinHe(id.writeTools) : '<span class="open">—</span>';
+    const subjects = id.subjects.length ? joinHe(id.subjects) : '';
+    const data = id.touchesPersonalData
+      ? `כן${subjects ? `${RLM} · ${RLM}${subjects}` : ''}`
+      : (id.personalData.length ? joinHe(id.personalData) : '<span class="open">—</span>');
+    const who = id.owners.length ? joinHe(id.owners) : '<span class="open">אין אדם אחראי רשום</span>';
+    return `<tr><td>${name}</td><td>${carry}</td><td>${kinds}</td><td>${write}</td>`
+      + `<td>${data}</td><td class="who">${who}</td></tr>`;
+  }).join('');
+  return `<h2>החשבונות שבשמם הסוכנים פועלים</h2>
+<p class="counts">${identityLine(doc)}</p>
+<div class="ids"><table><tr>
+<th class="h">החשבון</th><th class="h">הסוכנים שפועלים בשמו</th><th class="h">הסוג כפי שנרשם</th>
+<th class="h">כתיבה למערכות</th><th class="h">מידע אישי</th><th class="h">מי עונה</th>
+</tr>${rows}</table></div>`;
 }
 
 /** Document 2 — the open questions. What nobody in the room could answer. */
 export function renderQuestions(doc) {
-  const lines = openQuestions(doc);
+  const lines = sheetLines(doc);
   const reg = readRegister(doc);
-  const s = stats(doc);
+  const counts = sheetCounts(doc);
   const head = `<h1>שאלות פתוחות</h1>
 <p class="meta">${esc(reg.org.name || 'ארגון')} · ${esc(reg.org.date || '')}</p>
 <div class="note">${esc(DISCLAIMER)}</div>
-<p class="counts"><b>${s.lines}</b> שאלות, על <b>${s.open}</b> מקרים — אותה שאלה על כמה סוכנים היא שורה אחת</p>`;
+<p class="counts"><b>${counts.lines}</b> שאלות, על <b>${counts.cases}</b> מקרים — אותה שאלה על כמה סוכנים היא שורה אחת</p>`;
 
   const bySection = SECTIONS.map((section) => {
     const mine = lines.filter((line) => line.section === section.id);
@@ -144,6 +212,15 @@ export function renderQuestions(doc) {
       const names = line.scope === 'org'
         ? '<span class="names">ברמת הארגון</span>'
         : `<span class="names">${joinHe(line.agents)}</span>`;
+      // A line the grouping raised has no entry in the question catalogue, so
+      // it carries its own text and no references — it is not a question
+      // somebody wrote, it is one the register noticed.
+      if (line.scope === 'identity') {
+        const hint = line.hint ? `<div class="hint">${esc(line.hint)}</div>` : '';
+        return `<li>${esc(line.he)}<div>${names}${
+          line.ask.length ? `<span class="names"> · לשאול: ${joinHe(line.ask)}</span>` : ''
+        }</div>${hint}</li>`;
+      }
       const ask = line.ask.length ? `<span class="names"> · לשאול: ${joinHe(line.ask)}</span>` : '';
       const hint = line.hint ? `<div class="hint">${esc(line.hint)}</div>` : '';
       const why = whyHtml({ law: byRef(line.id, 'law'), asi: byRef(line.id, 'asi') });

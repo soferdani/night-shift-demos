@@ -1,7 +1,9 @@
 // Sample data, so the page does something the first time it opens.
 // Invented company, invented agents — the shapes are the realistic part: an
 // agent on a shared login, one an employee set up alone, one that can run code,
-// and an organisation that believes it has half the agents the table holds.
+// and an organisation that believes it has half the agents the table holds. Two
+// of the six name the same shared mailbox, spelled two ways — that is the point
+// of naming the account instead of its kind.
 export const SAMPLE = {
   org: {
     name: 'דוגמה — חברת שירות, כ-180 עובדים (נתוני המחשה)',
@@ -20,6 +22,7 @@ export const SAMPLE = {
         owner: 'יניב ל׳, מנהל שירות',
         autonomy: 'מבצע לבד בתוך גבולות מוגדרים',
         identity_used: 'חשבון משותף',
+        identity_name: 'support@',
         permissions_reviewed: 'לא נבדק מאז ההקמה (פברואר 2026)',
         tools: ['Zendesk', 'Stripe', 'מחסן נתוני לקוחות'],
         write_actions: ['Zendesk', 'Stripe'],
@@ -47,6 +50,7 @@ export const SAMPLE = {
         owner: 'שירה א׳, HR',
         autonomy: 'מציע בלבד, אדם מבצע',
         identity_used: 'ההרשאות של עובד מסוים',
+        identity_name: 'shira.a@',
         permissions_reviewed: '',
         tools: ['Comeet', 'Gmail'],
         write_actions: ['Comeet'],
@@ -73,6 +77,7 @@ export const SAMPLE = {
         owner: 'אבי מ׳, כספים',
         autonomy: 'מבצע לבד בתוך גבולות מוגדרים',
         identity_used: 'חשבון שירות משלו, על שמו',
+        identity_name: 'svc-recon',
         permissions_reviewed: 'יולי 2026, אבי + IT',
         tools: ['חשבשבת', 'קבצי בנק', 'Google Sheets'],
         write_actions: ['Google Sheets'],
@@ -100,6 +105,7 @@ export const SAMPLE = {
         owner: '',
         autonomy: 'מבצע לבד, בלי גבולות מוגדרים',
         identity_used: 'לא ידוע',
+        identity_name: '',
         permissions_reviewed: '',
         tools: ['דפדפן', 'LinkedIn', 'HubSpot'],
         write_actions: ['HubSpot'],
@@ -126,6 +132,7 @@ export const SAMPLE = {
         owner: 'תום ר׳, DevOps',
         autonomy: 'מבצע אחרי אישור אדם לכל פעולה',
         identity_used: 'חשבון שירות משלו, על שמו',
+        identity_name: 'svc-cicd',
         permissions_reviewed: 'ספטמבר 2026, תום',
         tools: ['GitHub', 'AWS', 'PagerDuty'],
         write_actions: ['GitHub', 'AWS'],
@@ -148,6 +155,7 @@ export const SAMPLE = {
         owner: 'אבי מ׳, כספים',
         autonomy: 'מבצע לבד בתוך גבולות מוגדרים',
         identity_used: 'חשבון משותף',
+        identity_name: 'Support@ ',
         permissions_reviewed: '',
         tools: ['חשבשבת', 'WhatsApp Business', 'Gmail'],
         write_actions: ['חשבשבת', 'WhatsApp Business'],
