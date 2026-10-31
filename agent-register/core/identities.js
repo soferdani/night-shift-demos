@@ -8,6 +8,7 @@
 // two, and the register could not tell. `identity_name` is the field that makes
 // the rollup possible, and this module is what it is for.
 import { readRegister, openQuestions, isEmpty, asList } from './register.js';
+import { reachOf, parseReach } from './reach.js';
 
 export const EMPLOYEE_CREDENTIAL = 'ההרשאות של עובד מסוים';
 
@@ -47,12 +48,16 @@ export function readIdentities(doc) {
         agents: [], kinds: [], owners: [],
         tools: [], writeTools: [], subjects: [], special: [], volumes: [],
         personalData: [],
+        // The agents behind this account, kept whole: how far one credential
+        // reaches into people is arithmetic over the agents, not over a field.
+        entries: [],
         open: 0,
       });
       order.push(key);
     }
     const id = seen.get(key);
     id.agents.push(agent.name);
+    id.entries.push({ name: agent.name, answers: agent.answers });
     id.open += agent.open.length;
     addAll(id.kinds, listOf(agent.answers.identity_used));
     if (agent.owner) addAll(id.owners, [agent.owner]);
@@ -75,6 +80,9 @@ export function readIdentities(doc) {
       // the register, which is a question for the room.
       conflict: id.kinds.length > 1,
       touchesPersonalData: id.personalData.includes('כן'),
+      // How many people this one account can reach. Floor and ceiling, and the
+      // reasons when there is no ceiling — never a single invented number.
+      reach: reachOf(id.entries),
     };
   });
 }
@@ -155,13 +163,71 @@ export function nearMissQuestions(ids) {
 }
 
 /**
+ * The questions the arithmetic itself raises. Each one exists because a number
+ * the room would want is missing or cannot be added — and the register asks
+ * instead of filling it in.
+ */
+export function reachQuestions(doc) {
+  const ids = readIdentities(doc);
+  const out = [];
+
+  // One account, two audiences. The sum is only the truth if they are different
+  // people, and only the room knows that.
+  for (const id of ids) {
+    if (!id.reach.overlapUnknown) continue;
+    const who = id.reach.figures.map((f) => `${f.agent} (${f.text})`).join(' / ');
+    out.push({
+      id: `reach_overlap:${id.key}`,
+      he: 'האם אותו חשבון מגיע לאותם אנשים בשני הסוכנים, או לשני קהלים שונים',
+      hint: `${id.named ? id.name : 'בלי חשבון רשום'} — ${who}. בלי התשובה הזו הרישום לא מחבר את המספרים`,
+      section: 'data',
+      agents: id.agents,
+      ask: id.owners,
+      scope: 'identity',
+    });
+  }
+
+  // A figure per period is not a headcount. 2,000 candidates a year is not 2,000
+  // people after three years, and it is not 6,000 either.
+  const rates = ids.flatMap((id) => id.reach.rates);
+  if (rates.length) {
+    out.push({
+      id: 'reach_rate',
+      he: 'המספר נרשם לפי תקופה — על כמה אנשים שונים מדובר בסך הכול',
+      hint: rates.map((r) => `${r.agent}: ${r.text}`).join(' · '),
+      section: 'data',
+      agents: rates.map((r) => r.agent),
+      ask: [],
+      scope: 'identity',
+    });
+  }
+
+  // Something was written and no number came out of it. The field looks answered
+  // and the arithmetic cannot use it, which is exactly the case a form hides.
+  const unreadable = ids.flatMap((id) => id.reach.unreadable);
+  if (unreadable.length) {
+    out.push({
+      id: 'reach_unreadable',
+      he: 'בתשובה על מספר האנשים לא נמצא מספר — מה סדר הגודל',
+      hint: unreadable.map((u) => `${u.agent}: ${u.text}`).join(' · '),
+      section: 'data',
+      agents: unreadable.map((u) => u.agent),
+      ask: [],
+      scope: 'identity',
+    });
+  }
+
+  return out;
+}
+
+/**
  * Every line that goes on the open-questions sheet: the question set's own,
  * plus the ones the identity grouping raises. Both printed numbers on that
  * sheet are counted off this one array, so the count and the rows can never
  * disagree.
  */
 export function sheetLines(doc) {
-  return [...openQuestions(doc), ...identityQuestions(doc)];
+  return [...openQuestions(doc), ...identityQuestions(doc), ...reachQuestions(doc)];
 }
 
 /** Lines on the sheet, and the cases behind them — one question open about

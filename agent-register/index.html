@@ -92,7 +92,8 @@ import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './core/questi
 import { LAW, LAW_STATUS_HE, ASI } from './core/refs.js';
 import { readRegister, stats, hookCoverage, isEmpty } from './core/register.js';
 import { readIdentities, identityStats, sheetCounts } from './core/identities.js';
-import { renderRegister, renderQuestions } from './core/render.js';
+import { renderRegister, renderQuestions, reachLine } from './core/render.js';
+import { reachPhrase } from './core/reach.js';
 import { SAMPLE } from './core/sample.js';
 
 const KEY = 'agent-register/v1';
@@ -257,6 +258,12 @@ function drawCounts() {
       + (ids.unnamed ? ` · <b>${ids.unnamed}</b> בלי חשבון רשום` : '');
     host.append(accounts);
   }
+  if (s.agents) {
+    // Built from fixed text and numbers only — no answer text reaches this line,
+    // which is why it may be written as HTML.
+    const reach = reachLine(doc);
+    if (reach) { const line = el('div'); line.innerHTML = reach; host.append(line); }
+  }
   if (s.believed !== null && Number(s.believed) !== s.agents && !Number.isNaN(Number(s.believed))) {
     host.append(el('div', { class: 'gap',
       text: `הארגון העריך ${s.believed} סוכנים. בטבלה ${s.agents}.` }));
@@ -275,7 +282,9 @@ function drawAccounts() {
     return;
   }
   host.append(el('p', { text:
-    'סוכן אחד הוא שורה בטבלה. חשבון אחד יכול לשאת כמה סוכנים — וזה מה שיומן הגישה רואה.' }));
+    'סוכן אחד הוא שורה בטבלה. חשבון אחד יכול לשאת כמה סוכנים — וזה מה שיומן הגישה רואה. '
+    + 'מספר האנשים הוא טווח כשחשבון נושא יותר מסוכן אחד: הרישום לא מחבר שני קהלים לפני שמישהו '
+    + 'בחדר אומר אם אלה אותם אנשים.' }));
   const list = el('ul');
   for (const id of ids) {
     const item = el('li');
@@ -284,6 +293,8 @@ function drawAccounts() {
     tail.push(id.agents.length > 1 ? `${id.agents.length} סוכנים` : '1 סוכן');
     if (id.kinds.length) tail.push(id.kinds.join(' / '));
     if (id.writeTools.length) tail.push(`כתיבה: ${id.writeTools.join(', ')}`);
+    const phrase = reachPhrase(id.reach);
+    if (phrase) tail.push(`${phrase}${/\d$/.test(phrase) || phrase.includes('ומעלה') ? ' אנשים' : ''}`);
     item.append(document.createTextNode(` — ${tail.join(' · ')}`));
     list.append(item);
   }

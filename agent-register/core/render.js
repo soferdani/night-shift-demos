@@ -2,6 +2,7 @@ import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './questions.j
 import { LAW, LAW_STATUS_HE, ASI } from './refs.js';
 import { readRegister, stats, isEmpty, asList } from './register.js';
 import { readIdentities, identityStats, sheetLines, sheetCounts } from './identities.js';
+import { reachOf, reachPhrase, ceilingGaps, groupDigits } from './reach.js';
 
 const RLM = '‏'; // Chromium prints a list of Latin names inside a Hebrew
 // sentence in reverse order. Fencing every separator with a right-to-left mark
@@ -77,6 +78,8 @@ li .hint{color:var(--muted);font-size:.8rem}
 .ids td.who{color:var(--muted)}
 .ids .n{font-weight:600}
 .ids .carry{color:var(--open);font-weight:600}
+.ids .reach{display:block;margin-top:2px;font-size:.78rem;color:var(--muted)}
+.ids .reach b{color:var(--ink);font-weight:600}
 .counts{font-size:.84rem;color:var(--muted);margin:0 0 16px}
 .counts b{color:var(--ink)}
 @media print{
@@ -167,6 +170,50 @@ export function identityLine(doc) {
   return bits.join(`${RLM} · ${RLM}`);
 }
 
+/** The reach of one account, as the cell under its personal-data column. A
+ *  range is printed as a range and never collapsed to its middle. */
+function reachCell(reach) {
+  if (!reach || !reach.agents) return '';
+  const wrap = (body) => `<span class="reach">${body}</span>`;
+  if (reach.floor === null) {
+    if (reach.rates.length) {
+      return wrap(`${esc(reach.rates[0].text)} — מספר לתקופה, לא מספר אנשים`);
+    }
+    return '';
+  }
+  if (reach.ceiling === null) {
+    return wrap(`<b>${groupDigits(reach.floor)}</b> אנשים לפחות`);
+  }
+  if (reach.floor === reach.ceiling) {
+    return wrap(`<b>${groupDigits(reach.floor)}</b> אנשים`);
+  }
+  return wrap(`בין <b>${groupDigits(reach.floor)}</b> ל-<b>${groupDigits(reach.ceiling)}</b> אנשים`
+    + (reach.overlapUnknown ? ', תלוי אם אלה אותם אנשים' : ''));
+}
+
+/**
+ * How far the register reaches into people, all accounts together. The floor is
+ * read off the answers; the ceiling exists only when every figure could be read
+ * and added, and when it cannot the sentence names what is missing instead of
+ * estimating around it.
+ */
+export function reachLine(doc) {
+  const reach = reachOf((doc.agents || []).map((a) => ({ name: a.name, answers: a.answers || {} })));
+  if (reach.floor === null) {
+    if (!reach.rates.length && !reach.unreadable.length && !reach.missing.length) return '';
+    return `מספר האנשים שהסוכנים יכולים להגיע למידע עליהם לא נגזר מהרישום${RLM} · ${RLM}${
+      ceilingGaps(reach).join(`${RLM} · ${RLM}`)}`;
+  }
+  const head = reach.ceiling !== null
+    ? `הסוכנים יכולים להגיע למידע על <b>${groupDigits(reach.floor)}</b> עד <b>${groupDigits(reach.ceiling)}</b> אנשים`
+    : `הסוכנים יכולים להגיע למידע על <b>${groupDigits(reach.floor)}</b> אנשים לפחות`;
+  const tail = [];
+  if (reach.overlapUnknown) tail.push('הרישום לא מחבר את המספרים לפני שהחדר יענה אם אלה אותם אנשים');
+  const gaps = ceilingGaps(reach);
+  if (reach.ceiling === null && gaps.length) tail.push(`בלי גבול עליון: ${gaps.join(', ')}`);
+  return [head, ...tail].join(`${RLM} · ${RLM}`);
+}
+
 export function identityBlock(doc) {
   const ids = readIdentities(doc);
   if (!ids.length) return '';
@@ -183,12 +230,14 @@ export function identityBlock(doc) {
     const data = id.touchesPersonalData
       ? `כן${subjects ? `${RLM} · ${RLM}${subjects}` : ''}`
       : (id.personalData.length ? joinHe(id.personalData) : '<span class="open">—</span>');
+    const reach = reachCell(id.reach);
     const who = id.owners.length ? joinHe(id.owners) : '<span class="open">אין אדם אחראי רשום</span>';
     return `<tr><td>${name}</td><td>${carry}</td><td>${kinds}</td><td>${write}</td>`
-      + `<td>${data}</td><td class="who">${who}</td></tr>`;
+      + `<td>${data}${reach}</td><td class="who">${who}</td></tr>`;
   }).join('');
+  const reach = reachLine(doc);
   return `<h2>החשבונות שבשמם הסוכנים פועלים</h2>
-<p class="counts">${identityLine(doc)}</p>
+<p class="counts">${identityLine(doc)}</p>${reach ? `\n<p class="counts">${reach}</p>` : ''}
 <div class="ids"><table><tr>
 <th class="h">החשבון</th><th class="h">הסוכנים שפועלים בשמו</th><th class="h">הסוג כפי שנרשם</th>
 <th class="h">כתיבה למערכות</th><th class="h">מידע אישי</th><th class="h">מי עונה</th>
