@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 // How far one account reaches into people.
 //
 // Night 2 built the rollup: six agents in the sample act as five accounts, and
@@ -155,18 +157,14 @@ export function reachPhrase(reach) {
   return `${groupDigits(reach.floor)}–${groupDigits(reach.ceiling)}`;
 }
 
-/** Why there is no upper number, in the register's own words. Returns the
- *  reasons, never an estimate to paper over them. */
-export function ceilingGaps(reach) {
+/** Why there is no upper number, in the register's own words — which is why
+ *  these sentences may be printed in either language. Returns the reasons,
+ *  never an estimate to paper over them. */
+export function ceilingGaps(reach, lang = 'he') {
+  const T = t(lang);
   const out = [];
-  if (reach.rates.length) {
-    out.push(`${reach.rates.length === 1 ? 'מספר אחד נרשם' : `${reach.rates.length} מספרים נרשמו`} לפי תקופה`);
-  }
-  if (reach.unreadable.length) {
-    out.push(`${reach.unreadable.length === 1 ? 'בתשובה אחת' : `ב-${reach.unreadable.length} תשובות`} לא נמצא מספר`);
-  }
-  if (reach.missing.length) {
-    out.push(`${reach.missing.length === 1 ? 'סוכן אחד' : `${reach.missing.length} סוכנים`} בלי מספר רשום`);
-  }
+  if (reach.rates.length) out.push(T.gapRates(reach.rates.length));
+  if (reach.unreadable.length) out.push(T.gapUnreadable(reach.unreadable.length));
+  if (reach.missing.length) out.push(T.gapMissing(reach.missing.length));
   return out.filter(Boolean);
 }

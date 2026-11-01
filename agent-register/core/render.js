@@ -1,8 +1,9 @@
-import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './questions.js';
-import { LAW, LAW_STATUS_HE, ASI } from './refs.js';
+import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies, optionLabel } from './questions.js';
+import { LAW, LAW_STATUS_HE, LAW_STATUS_EN, ASI } from './refs.js';
 import { readRegister, stats, isEmpty, asList } from './register.js';
 import { readIdentities, identityStats, sheetLines, sheetCounts } from './identities.js';
-import { reachOf, reachPhrase, ceilingGaps, groupDigits } from './reach.js';
+import { reachOf, ceilingGaps, groupDigits } from './reach.js';
+import { DIR, t } from './i18n.js';
 
 const RLM = '‏'; // Chromium prints a list of Latin names inside a Hebrew
 // sentence in reverse order. Fencing every separator with a right-to-left mark
@@ -12,25 +13,66 @@ export const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** A list of names inside a Hebrew sentence. The right-to-left mark on both
+ *  sides of every separator is what keeps Latin names in the order they were
+ *  written; three nights of printing have verified it. */
 export function joinHe(items) {
   return items.map((x) => esc(x)).join(`${RLM} · ${RLM}`);
 }
 
-function valueHtml(question, raw) {
-  if (isEmpty(raw)) return '<span class="open">—</span>';
-  if (question.type === 'list') {
-    const items = Array.isArray(raw) ? asList(raw) : [String(raw)];
-    return joinHe(items);
-  }
-  return esc(raw);
+/**
+ * The same list inside an English sentence, where the problem is mirrored —
+ * Hebrew answers inside a left-to-right line. `<bdi>` is the general fix: it
+ * isolates each item and lets the browser read its direction, so the separators
+ * stay in the paragraph's own direction and no mark is needed.
+ *
+ * The Hebrew document keeps the mark instead of moving to `<bdi>` as well. Not
+ * because the mark is better — it isn't — but because a night that changes how
+ * the shipped Hebrew sheet prints has to re-verify the shipped Hebrew sheet,
+ * and tonight is not that night.
+ */
+export function joinEn(items) {
+  return items.map((x) => `<bdi>${esc(x)}</bdi>`).join(' · ');
 }
 
-function whyHtml(question) {
+const joinIn = (items, lang) => (lang === 'en' ? joinEn(items) : joinHe(items));
+
+/** The room's own words, printed as they were given. In an English document
+ *  they are isolated so a Hebrew answer does not drag the punctuation around
+ *  it; they are never translated, in either document. */
+const said = (text, lang) => (lang === 'en' ? `<bdi>${esc(text)}</bdi>` : esc(text));
+
+const labelOf = (question, lang) => (lang === 'en' && question.en ? question.en : question.he);
+const hintOf = (question, lang) =>
+  (lang === 'en' ? (question.enHint || '') : (question.hint || ''));
+const sectionLabel = (section, lang) => (lang === 'en' && section.en ? section.en : section.he);
+
+function valueHtml(question, raw, lang) {
+  const T = t(lang);
+  if (isEmpty(raw)) return `<span class="open">${T.dash}</span>`;
+  if (question.type === 'list') {
+    const items = Array.isArray(raw) ? asList(raw) : [String(raw)];
+    return joinIn(items, lang);
+  }
+  // A dropdown answer is a word the tool put in the list and the room pointed
+  // at, so it translates. A typed answer is a sentence the room said, so it
+  // does not. The schema decides, not a guess about the string.
+  if (question.type === 'choice') return esc(optionLabel(question, raw, lang));
+  return said(raw, lang);
+}
+
+function whyHtml(question, lang) {
+  const status = lang === 'en' ? LAW_STATUS_EN : LAW_STATUS_HE;
   const laws = (question.law || []).map((k) => LAW[k]).filter(Boolean);
   const risks = (question.asi || []).filter((k) => ASI[k]);
   const bits = [];
   for (const law of laws) {
-    bits.push(`<span class="ref law ${law.status}">${esc(law.short)} · ${esc(LAW_STATUS_HE[law.status])}</span>`);
+    // The Hebrew name is the citation in both documents; in the English one the
+    // gloss follows it, because which English title is correct is unsettled.
+    const name = lang === 'en' && law.en
+      ? `<bdi>${esc(law.short)}</bdi> · ${esc(law.en)}`
+      : esc(law.short);
+    bits.push(`<span class="ref law ${law.status}">${name} · ${esc(status[law.status])}</span>`);
   }
   for (const key of risks) {
     bits.push(`<span class="ref risk">${esc(key)} ${esc(ASI[key])}</span>`);
@@ -38,17 +80,18 @@ function whyHtml(question) {
   return bits.join(' ');
 }
 
-const CSS = `
+const css = (lang) => `
 :root{--ink:#14110d;--muted:#6a6358;--line:#d9d3c9;--open:#a8421f;--bg:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
+body{margin:0;background:var(--bg);color:var(--ink);direction:${DIR[lang]};
   font:13px/1.6 "Segoe UI","Noto Sans Hebrew",Arial,sans-serif}
 .page{max-width:760px;margin:0 auto;padding:28px 26px 50px}
 h1{font-size:1.45rem;margin:0 0 2px}
 h2{font-size:1rem;margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 .meta{color:var(--muted);font-size:.84rem;margin:0 0 14px}
-.note{border:1px solid var(--line);border-right:3px solid var(--ink);
+.note{border:1px solid var(--line);border-inline-start:3px solid var(--ink);
   padding:9px 11px;margin:0 0 18px;font-size:.84rem;color:var(--muted)}
+.note+.note{margin-top:-10px}
 .agent{border:1px solid var(--line);border-radius:7px;padding:12px 14px;margin:0 0 12px}
 .agent h3,.agent .who,.sect{break-after:avoid;page-break-after:avoid}
 .agent table{break-inside:avoid;page-break-inside:avoid}
@@ -57,24 +100,30 @@ h2{font-size:1rem;margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid v
 table{width:100%;border-collapse:collapse}
 tr{border-bottom:1px dotted var(--line)}
 tr:last-child{border-bottom:0}
-th,td{text-align:right;vertical-align:top;padding:5px 0;font-size:.86rem}
-th{width:42%;font-weight:600;color:var(--muted);padding-left:14px}
+th,td{text-align:start;vertical-align:top;padding:5px 0;font-size:.86rem}
+th{width:42%;font-weight:600;color:var(--muted);padding-inline-end:14px}
 .open{color:var(--open);font-weight:600}
 .sect{color:var(--muted);font-size:.74rem;letter-spacing:.02em;margin:10px 0 2px}
-ol{padding-right:20px;margin:0}
+ol{padding-inline-start:20px;margin:0}
 li{margin:0 0 10px;break-inside:avoid}
 li .names{color:var(--muted);font-size:.82rem}
 li .hint{color:var(--muted);font-size:.8rem}
 .ref{display:inline-block;font-size:.7rem;border:1px solid var(--line);border-radius:99px;
-  padding:1px 7px;margin:3px 0 0 4px;color:var(--muted)}
+  padding:1px 7px;margin:3px 0 0;margin-inline-end:4px;color:var(--muted)}
 .ref.law.binding{border-color:#8d8375;color:#4a4238}
 .ref.law.draft,.ref.law.opinion{border-style:dashed}
 .ids{margin:0 0 14px}
 .ids table{border-collapse:collapse}
 .ids tr{border-bottom:1px solid var(--line);break-inside:avoid;page-break-inside:avoid}
 .ids tr:first-child{break-after:avoid;page-break-after:avoid}
-.ids th.h{width:auto;font-size:.74rem;color:var(--muted);padding:0 0 4px;text-align:right}
-.ids td{padding:6px 0;font-size:.84rem}
+.ids th.h{width:auto;font-size:.74rem;color:var(--muted);padding:0 0 4px;text-align:start}
+/* The account table is six columns of text with no rule between them, so the
+   gap is the only thing separating one from the next. Hebrew answers are short
+   enough that nobody noticed; "A shared account" sitting against "Zendesk" in
+   the English one made it obvious. */
+.ids td,.ids th.h{padding-inline-end:12px}
+.ids td:last-child,.ids th.h:last-child{padding-inline-end:0}
+.ids td{padding-block:6px;font-size:.84rem}
 .ids td.who{color:var(--muted)}
 .ids .n{font-weight:600}
 .ids .carry{color:var(--open);font-weight:600}
@@ -89,32 +138,62 @@ li .hint{color:var(--muted);font-size:.8rem}
 }
 `;
 
-function shell(title, body) {
+function shell(title, body, lang) {
   return `<!doctype html>
-<html lang="he" dir="rtl">
+<html lang="${lang}" dir="${DIR[lang]}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title><style>${CSS}</style></head>
+<title>${esc(title)}</title><style>${css(lang)}</style></head>
 <body><div class="page">${body}</div></body></html>`;
 }
 
-export const DISCLAIMER =
-  'הדף הזה רושם עובדות ושאלות פתוחות. הוא לא קובע אם משהו כאן חוקי, תקין או מאובטח — ' +
-  'ההפניות לחוק הן מצביע לעורך הדין או לממונה, לא חוות דעת.';
+export const DISCLAIMER = t('he').disclaimer;
+
+/**
+ * Is there anything on this page the English document cannot translate? True as
+ * soon as one answer was given in Hebrew. A register filled in English has
+ * nothing to explain, so the notice is not printed.
+ */
+export function hasUntranslatedAnswers(doc) {
+  const hebrew = /[֐-׿]/;
+  const values = [];
+  for (const agent of doc.agents || []) {
+    values.push(agent.name || '');
+    for (const [id, raw] of Object.entries(agent.answers || {})) {
+      const question = [...AGENT_QUESTIONS, ...ORG_QUESTIONS].find((x) => x.id === id);
+      // A dropdown answer is translated, so it is not what the notice is about.
+      if (question && question.type === 'choice') continue;
+      values.push(...(Array.isArray(raw) ? raw : [raw]).map((x) => String(x ?? '')));
+    }
+  }
+  return values.some((x) => hebrew.test(x));
+}
+
+function notices(doc, lang) {
+  const T = t(lang);
+  const out = [`<div class="note">${esc(T.disclaimer)}</div>`];
+  if (lang === 'en') {
+    if (hasUntranslatedAnswers(doc)) out.push(`<div class="note">${esc(T.bilingual)}</div>`);
+    out.push(`<div class="note">${esc(T.lawNote)}</div>`);
+  }
+  return out.join('\n');
+}
 
 /** Document 1 — the register. What the organisation keeps. */
-export function renderRegister(doc) {
+export function renderRegister(doc, lang = 'he') {
+  const T = t(lang);
   const reg = readRegister(doc);
   const s = stats(doc);
-  const head = `<h1>רישום סוכני AI</h1>
-<p class="meta">${esc(reg.org.name || 'ארגון')} · ${esc(reg.org.date || '')}</p>
-<div class="note">${esc(DISCLAIMER)}</div>
-<p class="counts">בטבלה ${s.agents === 1 ? 'סוכן אחד' : `<b>${s.agents}</b> סוכנים`} · נענו <b>${s.answered}</b> מתוך <b>${s.asked}</b> שאלות${
-    s.believed ? ` · הארגון העריך <b>${esc(s.believed)}</b> סוכנים` : ''
-  }</p>`;
+  const head = `<h1>${esc(T.registerTitle)}</h1>
+<p class="meta">${said(reg.org.name || T.orgFallback, lang)} · ${said(reg.org.date || '', lang)}</p>
+${notices(doc, lang)}
+<p class="counts">${T.counts({
+    agents: s.agents, answered: s.answered, asked: s.asked,
+    believed: s.believed ? esc(s.believed) : null,
+  })}</p>`;
 
   const orgBlock = ORG_QUESTIONS.map((question) => {
     const raw = reg.org.answers[question.id];
-    return `<tr><th>${esc(question.he)}</th><td>${valueHtml(question, raw)}</td></tr>`;
+    return `<tr><th>${esc(labelOf(question, lang))}</th><td>${valueHtml(question, raw, lang)}</td></tr>`;
   }).join('');
 
   const agents = reg.agents.map((agent) => {
@@ -124,21 +203,21 @@ export function renderRegister(doc) {
       );
       if (!asked.length) return '';
       const body = asked.map((question) =>
-        `<tr><th>${esc(question.he)}</th><td>${valueHtml(question, agent.answers[question.id])}</td></tr>`,
+        `<tr><th>${esc(labelOf(question, lang))}</th><td>${valueHtml(question, agent.answers[question.id], lang)}</td></tr>`,
       ).join('');
-      return `<p class="sect">${esc(section.he)}</p><table>${body}</table>`;
+      return `<p class="sect">${esc(sectionLabel(section, lang))}</p><table>${body}</table>`;
     }).join('');
     const openCount = agent.open.length;
-    return `<div class="agent"><h3>${esc(agent.name)}</h3>
-<p class="who">${agent.owner ? `אחראי: ${esc(agent.owner)}` : '<span class="open">אין אדם אחראי רשום</span>'}${
-      openCount ? ` · ${openCount} שאלות פתוחות` : ' · כל השאלות נענו'
+    return `<div class="agent"><h3>${said(agent.name, lang)}</h3>
+<p class="who">${agent.owner ? T.ownerIs(said(agent.owner, lang)) : `<span class="open">${esc(T.noOwner)}</span>`}${
+      openCount ? ` · ${esc(T.openCount(openCount))}` : ` · ${esc(T.allAnswered)}`
     }</p>${rows}</div>`;
   }).join('');
 
-  return shell('רישום סוכני AI', `${head}
-<h2>הארגון</h2><table>${orgBlock}</table>
-${identityBlock(doc)}
-<h2>הסוכנים</h2>${agents || '<p class="open">לא נרשם אף סוכן.</p>'}`);
+  return shell(T.registerTitle, `${head}
+<h2>${esc(T.orgHeading)}</h2><table>${orgBlock}</table>
+${identityBlock(doc, lang)}
+<h2>${esc(T.agentsHeading)}</h2>${agents || `<p class="open">${esc(T.noAgents)}</p>`}`, lang);
 }
 
 /**
@@ -146,49 +225,37 @@ ${identityBlock(doc)}
  * counts agents; the access log counts accounts, and the two numbers are
  * rarely the same.
  */
-export function identityLine(doc) {
+export function identityLine(doc, lang = 'he') {
+  const T = t(lang);
   const s = identityStats(doc);
   const agents = (doc.agents || []).length;
   if (!agents) return '';
-  const bits = [
-    `${agents === 1 ? 'סוכן אחד פועל' : `<b>${agents}</b> סוכנים פועלים`} בשם ${
-      s.identities === 1 ? 'חשבון אחד' : `<b>${s.identities}</b> חשבונות`}`,
-  ];
+  const bits = [T.agentsActAs({ agents, identities: s.identities })];
   if (s.widest > 1) {
-    bits.push(`חשבון אחד נושא <b>${s.widest}</b> סוכנים${s.widestName ? ` (${esc(s.widestName)})` : ''}`);
+    bits.push(T.widest({ n: s.widest, name: s.widestName ? said(s.widestName, lang) : null }));
   }
-  if (s.onHumanCredentials) {
-    bits.push(s.onHumanCredentials === 1
-      ? 'חשבון אחד הוא הרשאות של עובד'
-      : `<b>${s.onHumanCredentials}</b> מהחשבונות הם הרשאות של עובד`);
-  }
-  if (s.unnamed) {
-    bits.push(s.unnamed === 1
-      ? 'סוכן אחד בלי חשבון רשום'
-      : `<b>${s.unnamed}</b> סוכנים בלי חשבון רשום`);
-  }
-  return bits.join(`${RLM} · ${RLM}`);
+  if (s.onHumanCredentials) bits.push(T.onHumanCredentials(s.onHumanCredentials));
+  if (s.unnamed) bits.push(T.unnamed(s.unnamed));
+  return bits.join(lang === 'en' ? ' · ' : `${RLM} · ${RLM}`);
 }
 
 /** The reach of one account, as the cell under its personal-data column. A
  *  range is printed as a range and never collapsed to its middle. */
-function reachCell(reach) {
+function reachCell(reach, lang) {
+  const T = t(lang);
   if (!reach || !reach.agents) return '';
   const wrap = (body) => `<span class="reach">${body}</span>`;
   if (reach.floor === null) {
-    if (reach.rates.length) {
-      return wrap(`${esc(reach.rates[0].text)} — מספר לתקופה, לא מספר אנשים`);
-    }
+    if (reach.rates.length) return wrap(T.reachRate(said(reach.rates[0].text, lang)));
     return '';
   }
-  if (reach.ceiling === null) {
-    return wrap(`<b>${groupDigits(reach.floor)}</b> אנשים לפחות`);
-  }
-  if (reach.floor === reach.ceiling) {
-    return wrap(`<b>${groupDigits(reach.floor)}</b> אנשים`);
-  }
-  return wrap(`בין <b>${groupDigits(reach.floor)}</b> ל-<b>${groupDigits(reach.ceiling)}</b> אנשים`
-    + (reach.overlapUnknown ? ', תלוי אם אלה אותם אנשים' : ''));
+  if (reach.ceiling === null) return wrap(T.reachFloorOnly(groupDigits(reach.floor)));
+  if (reach.floor === reach.ceiling) return wrap(T.reachExact(groupDigits(reach.floor)));
+  return wrap(T.reachRange({
+    floor: groupDigits(reach.floor),
+    ceiling: groupDigits(reach.ceiling),
+    overlap: reach.overlapUnknown,
+  }));
 }
 
 /**
@@ -197,94 +264,105 @@ function reachCell(reach) {
  * and added, and when it cannot the sentence names what is missing instead of
  * estimating around it.
  */
-export function reachLine(doc) {
+export function reachLine(doc, lang = 'he') {
+  const T = t(lang);
+  const sep = lang === 'en' ? ' · ' : `${RLM} · ${RLM}`;
   const reach = reachOf((doc.agents || []).map((a) => ({ name: a.name, answers: a.answers || {} })));
+  const gapWords = () => ceilingGaps(reach, lang);
   if (reach.floor === null) {
     if (!reach.rates.length && !reach.unreadable.length && !reach.missing.length) return '';
-    return `מספר האנשים שהסוכנים יכולים להגיע למידע עליהם לא נגזר מהרישום${RLM} · ${RLM}${
-      ceilingGaps(reach).join(`${RLM} · ${RLM}`)}`;
+    return `${T.reachNone}${sep}${gapWords().join(sep)}`;
   }
   const head = reach.ceiling !== null
-    ? `הסוכנים יכולים להגיע למידע על <b>${groupDigits(reach.floor)}</b> עד <b>${groupDigits(reach.ceiling)}</b> אנשים`
-    : `הסוכנים יכולים להגיע למידע על <b>${groupDigits(reach.floor)}</b> אנשים לפחות`;
+    ? T.reachHeadRange({ floor: groupDigits(reach.floor), ceiling: groupDigits(reach.ceiling) })
+    : T.reachHeadFloor(groupDigits(reach.floor));
   const tail = [];
-  if (reach.overlapUnknown) tail.push('הרישום לא מחבר את המספרים לפני שהחדר יענה אם אלה אותם אנשים');
-  const gaps = ceilingGaps(reach);
-  if (reach.ceiling === null && gaps.length) tail.push(`בלי גבול עליון: ${gaps.join(', ')}`);
-  return [head, ...tail].join(`${RLM} · ${RLM}`);
+  if (reach.overlapUnknown) tail.push(T.reachOverlapNote);
+  const gaps = gapWords();
+  if (reach.ceiling === null && gaps.length) tail.push(T.reachNoCeiling(gaps.join(', ')));
+  return [head, ...tail].join(sep);
 }
 
-export function identityBlock(doc) {
+export function identityBlock(doc, lang = 'he') {
+  const T = t(lang);
   const ids = readIdentities(doc);
   if (!ids.length) return '';
   const rows = ids.map((id) => {
     const name = id.named
-      ? `<span class="n">${esc(id.name)}</span>`
-      : '<span class="open">לא נרשם חשבון</span>';
+      ? `<span class="n">${said(id.name, lang)}</span>`
+      : `<span class="open">${esc(T.noAccount)}</span>`;
     const carry = id.agents.length > 1
-      ? `<span class="carry">${id.agents.length}</span> · ${joinHe(id.agents)}`
-      : joinHe(id.agents);
-    const kinds = id.kinds.length ? joinHe(id.kinds) : '<span class="open">—</span>';
-    const write = id.writeTools.length ? joinHe(id.writeTools) : '<span class="open">—</span>';
-    const subjects = id.subjects.length ? joinHe(id.subjects) : '';
+      ? `<span class="carry">${id.agents.length}</span> · ${joinIn(id.agents, lang)}`
+      : joinIn(id.agents, lang);
+    const kindWords = id.kinds.map((k) => optionLabel(byQuestion('identity_used'), k, lang));
+    const kinds = kindWords.length ? joinIn(kindWords, lang) : `<span class="open">${T.dash}</span>`;
+    const write = id.writeTools.length ? joinIn(id.writeTools, lang) : `<span class="open">${T.dash}</span>`;
+    const subjects = id.subjects.length ? joinIn(id.subjects, lang) : '';
     const data = id.touchesPersonalData
-      ? `כן${subjects ? `${RLM} · ${RLM}${subjects}` : ''}`
-      : (id.personalData.length ? joinHe(id.personalData) : '<span class="open">—</span>');
-    const reach = reachCell(id.reach);
-    const who = id.owners.length ? joinHe(id.owners) : '<span class="open">אין אדם אחראי רשום</span>';
+      ? `${esc(T.yes)}${subjects ? `${lang === 'en' ? ' · ' : `${RLM} · ${RLM}`}${subjects}` : ''}`
+      : (id.personalData.length
+        ? joinIn(id.personalData.map((v) => optionLabel(byQuestion('personal_data'), v, lang)), lang)
+        : `<span class="open">${T.dash}</span>`);
+    const reach = reachCell(id.reach, lang);
+    const who = id.owners.length ? joinIn(id.owners, lang) : `<span class="open">${esc(T.noOwner)}</span>`;
     return `<tr><td>${name}</td><td>${carry}</td><td>${kinds}</td><td>${write}</td>`
       + `<td>${data}${reach}</td><td class="who">${who}</td></tr>`;
   }).join('');
-  const reach = reachLine(doc);
-  return `<h2>החשבונות שבשמם הסוכנים פועלים</h2>
-<p class="counts">${identityLine(doc)}</p>${reach ? `\n<p class="counts">${reach}</p>` : ''}
+  const reach = reachLine(doc, lang);
+  const heads = T.cols.map((label) => `<th class="h">${esc(label)}</th>`).join('');
+  return `<h2>${esc(T.accountsHeading)}</h2>
+<p class="counts">${identityLine(doc, lang)}</p>${reach ? `\n<p class="counts">${reach}</p>` : ''}
 <div class="ids"><table><tr>
-<th class="h">החשבון</th><th class="h">הסוכנים שפועלים בשמו</th><th class="h">הסוג כפי שנרשם</th>
-<th class="h">כתיבה למערכות</th><th class="h">מידע אישי</th><th class="h">מי עונה</th>
+${heads}
 </tr>${rows}</table></div>`;
 }
 
 /** Document 2 — the open questions. What nobody in the room could answer. */
-export function renderQuestions(doc) {
+export function renderQuestions(doc, lang = 'he') {
+  const T = t(lang);
   const lines = sheetLines(doc);
   const reg = readRegister(doc);
   const counts = sheetCounts(doc);
-  const head = `<h1>שאלות פתוחות</h1>
-<p class="meta">${esc(reg.org.name || 'ארגון')} · ${esc(reg.org.date || '')}</p>
-<div class="note">${esc(DISCLAIMER)}</div>
-<p class="counts"><b>${counts.lines}</b> שאלות, על <b>${counts.cases}</b> מקרים — אותה שאלה על כמה סוכנים היא שורה אחת</p>`;
+  const head = `<h1>${esc(T.questionsTitle)}</h1>
+<p class="meta">${said(reg.org.name || T.orgFallback, lang)} · ${said(reg.org.date || '', lang)}</p>
+${notices(doc, lang)}
+<p class="counts">${T.sheetCounts(counts)}</p>`;
 
   const bySection = SECTIONS.map((section) => {
     const mine = lines.filter((line) => line.section === section.id);
     if (!mine.length) return '';
     const items = mine.map((line) => {
+      const text = lang === 'en' && line.en ? line.en : line.he;
+      const hintText = lang === 'en' && line.hintEn !== undefined ? line.hintEn : (line.hint || '');
       const names = line.scope === 'org'
-        ? '<span class="names">ברמת הארגון</span>'
-        : `<span class="names">${joinHe(line.agents)}</span>`;
+        ? `<span class="names">${esc(T.atOrgLevel)}</span>`
+        : `<span class="names">${joinIn(line.agents, lang)}</span>`;
+      const ask = line.ask.length
+        ? `<span class="names"> · ${esc(T.askLabel)}: ${joinIn(line.ask, lang)}</span>`
+        : '';
+      const hint = hintText ? `<div class="hint">${said(hintText, lang)}</div>` : '';
       // A line the grouping raised has no entry in the question catalogue, so
       // it carries its own text and no references — it is not a question
       // somebody wrote, it is one the register noticed.
       if (line.scope === 'identity') {
-        const hint = line.hint ? `<div class="hint">${esc(line.hint)}</div>` : '';
-        return `<li>${esc(line.he)}<div>${names}${
-          line.ask.length ? `<span class="names"> · לשאול: ${joinHe(line.ask)}</span>` : ''
-        }</div>${hint}</li>`;
+        return `<li>${esc(text)}<div>${names}${ask}</div>${hint}</li>`;
       }
-      const ask = line.ask.length ? `<span class="names"> · לשאול: ${joinHe(line.ask)}</span>` : '';
-      const hint = line.hint ? `<div class="hint">${esc(line.hint)}</div>` : '';
-      const why = whyHtml({ law: byRef(line.id, 'law'), asi: byRef(line.id, 'asi') });
-      return `<li>${esc(line.he)}<div>${names}${ask}</div>${hint}${why}</li>`;
+      const why = whyHtml({ law: byRef(line.id, 'law'), asi: byRef(line.id, 'asi') }, lang);
+      return `<li>${esc(text)}<div>${names}${ask}</div>${hint}${why}</li>`;
     }).join('');
-    return `<h2>${esc(section.he)}</h2><ol>${items}</ol>`;
+    return `<h2>${esc(sectionLabel(section, lang))}</h2><ol>${items}</ol>`;
   }).join('');
 
-  return shell('שאלות פתוחות — רישום סוכני AI', `${head}${
-    lines.length ? bySection : '<p>אין שאלות פתוחות.</p>'
-  }`);
+  return shell(T.questionsDocTitle, `${head}${
+    lines.length ? bySection : `<p>${esc(T.noQuestions)}</p>`
+  }`, lang);
+}
+
+function byQuestion(id) {
+  return [...AGENT_QUESTIONS, ...ORG_QUESTIONS].find((x) => x.id === id);
 }
 
 function byRef(id, field) {
-  const all = [...AGENT_QUESTIONS, ...ORG_QUESTIONS];
-  const found = all.find((x) => x.id === id);
+  const found = byQuestion(id);
   return found ? found[field] || [] : [];
 }

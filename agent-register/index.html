@@ -58,6 +58,9 @@
   .panel li{margin:0 0 4px}
   .foot{color:var(--muted);font-size:.8rem;margin:26px 0 0;border-top:1px solid var(--line);
     padding-top:12px}
+  .bar.en{align-items:center;margin:-8px 0 18px}
+  .bar.en button{direction:ltr}
+  .barlab{font-size:.82rem;color:var(--muted)}
   @media (max-width:420px){.bar button{flex:1 1 auto}}
 </style>
 </head>
@@ -74,6 +77,12 @@
     <button id="export">ייצוא JSON</button>
     <button id="load-sample">נתוני דוגמה</button>
     <button id="clear">התחלה מאפס</button>
+  </div>
+
+  <div class="bar en">
+    <span class="barlab">עותק באנגלית, לחברת אם או לגוף מבקר:</span>
+    <button id="print-register-en">Register</button>
+    <button id="print-questions-en">Open questions</button>
   </div>
 
   <div class="counts" id="counts"></div>
@@ -341,6 +350,13 @@ document.getElementById('print-register').addEventListener('click',
   () => openDoc(renderRegister(doc), 'agent-register.html'));
 document.getElementById('print-questions').addEventListener('click',
   () => openDoc(renderQuestions(doc), 'open-questions.html'));
+// The same two documents in English. The questions translate because the tool
+// wrote them; the answers are printed exactly as the room gave them, and the
+// English document says so in one line.
+document.getElementById('print-register-en').addEventListener('click',
+  () => openDoc(renderRegister(doc, 'en'), 'agent-register.en.html'));
+document.getElementById('print-questions-en').addEventListener('click',
+  () => openDoc(renderQuestions(doc, 'en'), 'open-questions.en.html'));
 document.getElementById('add').addEventListener('click', () => {
   doc.agents.push({ name: '', answers: {} });
   redraw(true);

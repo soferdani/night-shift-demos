@@ -8,7 +8,17 @@
 // two, and the register could not tell. `identity_name` is the field that makes
 // the rollup possible, and this module is what it is for.
 import { readRegister, openQuestions, isEmpty, asList } from './register.js';
-import { reachOf, parseReach } from './reach.js';
+import { reachOf } from './reach.js';
+import { byId, optionLabel } from './questions.js';
+import { T } from './i18n.js';
+
+// The lines below are questions the register noticed, not questions somebody
+// wrote into the catalogue — so they carry their own text, and they carry it in
+// both languages, because the words are the tool's own. What they must NOT
+// translate is the evidence inside the hint: an account name, an agent's name,
+// the figure the room gave. Those are quoted, and a quote is not translated.
+// The one exception is a `kind`, which is a dropdown label the tool wrote.
+const kinds = (list, lang) => list.map((k) => optionLabel(byId('identity_used'), k, lang)).join(' / ');
 
 export const EMPLOYEE_CREDENTIAL = 'ההרשאות של עובד מסוים';
 
@@ -115,8 +125,10 @@ export function identityQuestions(doc) {
     .filter((id) => id.conflict)
     .map((id) => ({
       id: `identity_conflict:${id.key}`,
-      he: 'אותו חשבון נרשם בשני תיאורים שונים — איזה מהם נכון',
-      hint: `${id.name}: ${id.kinds.join(' / ')}`,
+      he: T.he.qConflict,
+      en: T.en.qConflict,
+      hint: `${id.name}: ${kinds(id.kinds, 'he')}`,
+      hintEn: `${id.name}: ${kinds(id.kinds, 'en')}`,
       section: 'identity',
       agents: id.agents,
       ask: id.owners,
@@ -150,7 +162,9 @@ export function nearMissQuestions(ids) {
       if (!head || head !== nameHead(b.name)) continue;
       out.push({
         id: `identity_nearmiss:${a.key}|${b.key}`,
-        he: 'שני שמות חשבון שנרשמו קרובים זה לזה — האם זה אותו חשבון',
+        he: T.he.qNearMiss,
+        en: T.en.qNearMiss,
+        // Two account names, quoted. Nothing here to translate.
         hint: `${a.name} / ${b.name}`,
         section: 'identity',
         agents: [...a.agents, ...b.agents],
@@ -178,8 +192,10 @@ export function reachQuestions(doc) {
     const who = id.reach.figures.map((f) => `${f.agent} (${f.text})`).join(' / ');
     out.push({
       id: `reach_overlap:${id.key}`,
-      he: 'האם אותו חשבון מגיע לאותם אנשים בשני הסוכנים, או לשני קהלים שונים',
-      hint: `${id.named ? id.name : 'בלי חשבון רשום'} — ${who}. בלי התשובה הזו הרישום לא מחבר את המספרים`,
+      he: T.he.qOverlap,
+      en: T.en.qOverlap,
+      hint: T.he.qOverlapHint(`${id.named ? id.name : T.he.noAccountRecorded} — ${who}`),
+      hintEn: T.en.qOverlapHint(`${id.named ? id.name : T.en.noAccountRecorded} — ${who}`),
       section: 'data',
       agents: id.agents,
       ask: id.owners,
@@ -193,7 +209,10 @@ export function reachQuestions(doc) {
   if (rates.length) {
     out.push({
       id: 'reach_rate',
-      he: 'המספר נרשם לפי תקופה — על כמה אנשים שונים מדובר בסך הכול',
+      he: T.he.qRate,
+      en: T.en.qRate,
+      // The agent's name and the figure as the room wrote it. Quoted, not
+      // translated — the figure is the evidence for the question.
       hint: rates.map((r) => `${r.agent}: ${r.text}`).join(' · '),
       section: 'data',
       agents: rates.map((r) => r.agent),
@@ -208,7 +227,8 @@ export function reachQuestions(doc) {
   if (unreadable.length) {
     out.push({
       id: 'reach_unreadable',
-      he: 'בתשובה על מספר האנשים לא נמצא מספר — מה סדר הגודל',
+      he: T.he.qUnreadable,
+      en: T.en.qUnreadable,
       hint: unreadable.map((u) => `${u.agent}: ${u.text}`).join(' · '),
       section: 'data',
       agents: unreadable.map((u) => u.agent),

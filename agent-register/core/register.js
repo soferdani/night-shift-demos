@@ -64,7 +64,9 @@ export function openQuestions(doc) {
   const lines = [...byQuestion.values()].map((row) => ({
     id: row.question.id,
     he: row.question.he,
+    en: row.question.en,
     hint: row.question.hint || '',
+    hintEn: row.question.enHint || '',
     section: row.question.section,
     agents: row.agents,
     ask: row.owners.size ? [...row.owners] : [],
@@ -73,7 +75,9 @@ export function openQuestions(doc) {
   const orgLines = reg.org.open.map((question) => ({
     id: question.id,
     he: question.he,
+    en: question.en,
     hint: question.hint || '',
+    hintEn: question.enHint || '',
     section: question.section,
     agents: [],
     ask: [],
