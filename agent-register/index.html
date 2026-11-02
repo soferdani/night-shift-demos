@@ -75,7 +75,8 @@
     <button id="print-questions">הדפסת השאלות הפתוחות</button>
     <button id="add">הוספת סוכן</button>
     <button id="export">ייצוא JSON</button>
-    <button id="load-sample">נתוני דוגמה</button>
+    <button id="load-sample">דוגמה: 6 סוכנים</button>
+    <button id="load-one">דוגמה: עוזר אחד</button>
     <button id="clear">התחלה מאפס</button>
   </div>
 
@@ -90,6 +91,7 @@
   <div id="agents"></div>
 
   <div class="panel" id="accounts"></div>
+  <div class="panel" id="systems"></div>
   <div class="panel" id="coverage"></div>
 
   <p class="foot">הדף לא קובע אם משהו חוקי, תקין או מאובטח — הוא רושם עובדות ושאלות.
@@ -101,9 +103,11 @@ import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies } from './core/questi
 import { LAW, LAW_STATUS_HE, ASI } from './core/refs.js';
 import { readRegister, stats, hookCoverage, isEmpty } from './core/register.js';
 import { readIdentities, identityStats, sheetCounts } from './core/identities.js';
+import { readSystems, systemStats } from './core/systems.js';
 import { renderRegister, renderQuestions, reachLine } from './core/render.js';
 import { reachPhrase } from './core/reach.js';
 import { SAMPLE } from './core/sample.js';
+import { ONE_ASSISTANT } from './core/one-assistant.js';
 
 const KEY = 'agent-register/v1';
 const blank = () => ({ org: { name: '', date: today(), answers: {} }, agents: [] });
@@ -310,6 +314,42 @@ function drawAccounts() {
   host.append(list);
 }
 
+// The register read by system. The account rollup needs a second agent to say
+// anything; this one does not, which is the whole reason night 5 built it.
+function drawSystems() {
+  const host = document.getElementById('systems');
+  host.textContent = '';
+  const systems = readSystems(doc);
+  host.append(el('h2', { text: 'ומבחינת המערכות עצמן' }));
+  if (!systems.length) {
+    host.append(el('p', { text: 'לא נרשמה אף מערכת.' }));
+    return;
+  }
+  const s = systemStats(doc);
+  host.append(el('p', { text:
+    `${s.systems} מערכות ברישום, ב-${s.written} מהן סוכן יכול לשנות משהו.`
+    + (s.widest > 1
+      ? ` מערכת אחת נגישה ל-${s.widest} סוכנים (${s.widestName}).`
+      : (doc.agents.length > 1
+        ? ' אף שני סוכנים לא נפגשים באותה מערכת — אין ברישום מה להצליב.'
+        : ' סוכן אחד, ולכן אין פה הצלבה בין סוכנים — רק מה שהוא נוגע בו.'))
+    + (s.crossAccount ? ` ${s.crossAccount} נגישות מיותר מחשבון אחד.` : '') }));
+  const list = el('ul');
+  for (const system of systems) {
+    const item = el('li');
+    item.append(el('b', { text: system.name }));
+    const tail = [];
+    tail.push(system.agents.length > 1 ? `${system.agents.length} סוכנים` : '1 סוכן');
+    tail.push(system.written ? 'כתיבה' : 'קריאה בלבד');
+    if (system.accounts.length) tail.push(system.accounts.join(' / '));
+    else tail.push('בלי חשבון רשום');
+    if (system.populationsDiffer) tail.push('קהלים שונים בין הסוכנים');
+    item.append(document.createTextNode(` — ${tail.join(' · ')}`));
+    list.append(item);
+  }
+  host.append(list);
+}
+
 function drawCoverage() {
   const cover = hookCoverage();
   const host = document.getElementById('coverage');
@@ -333,6 +373,7 @@ function redraw(full = true) {
   if (full) { drawOrg(); drawAgents(); }
   drawCounts();
   drawAccounts();
+  drawSystems();
 }
 
 function openDoc(html, name) {
@@ -372,11 +413,16 @@ document.getElementById('export').addEventListener('click', () => {
 document.getElementById('load-sample').addEventListener('click', () => {
   doc = structuredClone(SAMPLE); redraw(true);
 });
+// The shape the product was pitched on: one assistant, twelve tools, one login.
+// Every question answered, and until tonight the questions sheet came out blank.
+document.getElementById('load-one').addEventListener('click', () => {
+  doc = structuredClone(ONE_ASSISTANT); redraw(true);
+});
 document.getElementById('clear').addEventListener('click', () => {
   doc = blank(); redraw(true);
 });
 
-drawOrg(); drawAgents(); drawCounts(); drawAccounts(); drawCoverage();
+drawOrg(); drawAgents(); drawCounts(); drawAccounts(); drawSystems(); drawCoverage();
 </script>
 </body>
 </html>

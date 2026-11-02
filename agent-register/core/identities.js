@@ -9,7 +9,8 @@
 // the rollup possible, and this module is what it is for.
 import { readRegister, openQuestions, isEmpty, asList } from './register.js';
 import { reachOf } from './reach.js';
-import { byId, optionLabel } from './questions.js';
+import { byId, optionLabel, EMPLOYEE_CREDENTIAL } from './questions.js';
+import { systemQuestions, spanQuestions } from './systems.js';
 import { T } from './i18n.js';
 
 // The lines below are questions the register noticed, not questions somebody
@@ -20,7 +21,8 @@ import { T } from './i18n.js';
 // The one exception is a `kind`, which is a dropdown label the tool wrote.
 const kinds = (list, lang) => list.map((k) => optionLabel(byId('identity_used'), k, lang)).join(' / ');
 
-export const EMPLOYEE_CREDENTIAL = 'ההרשאות של עובד מסוים';
+// Re-exported: three nights of code and tests import it from here.
+export { EMPLOYEE_CREDENTIAL };
 
 /** Two spellings of one login are one login. A capital letter and a trailing
  *  space are not a second credential. */
@@ -247,7 +249,17 @@ export function reachQuestions(doc) {
  * disagree.
  */
 export function sheetLines(doc) {
-  return [...openQuestions(doc), ...identityQuestions(doc), ...reachQuestions(doc)];
+  return [
+    ...openQuestions(doc),
+    ...identityQuestions(doc),
+    ...reachQuestions(doc),
+    // Night 5. Every line above comes from a blank field or from two agents
+    // sharing an account. These come from answers that are all present and, put
+    // together, raise something only the room can settle — which is the only
+    // kind of question a fully-answered register can still produce.
+    ...systemQuestions(doc),
+    ...spanQuestions(doc),
+  ];
 }
 
 /** Lines on the sheet, and the cases behind them — one question open about

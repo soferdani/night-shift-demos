@@ -295,6 +295,12 @@ export const ORG_QUESTIONS = [
 
 export const ALL_QUESTIONS = [...AGENT_QUESTIONS, ...ORG_QUESTIONS];
 
+/** The stored value of "whose name it acts under" when the answer is a person's
+ *  own login. It lives here, beside the option list it comes from, because both
+ *  the account rollup and the system rollup compare against it and importing it
+ *  from either one into the other would be a cycle. */
+export const EMPLOYEE_CREDENTIAL = 'ההרשאות של עובד מסוים';
+
 // A question is asked only when its `only` gate matches the answers given so far.
 // "לא ידוע" always keeps the follow-up open: not knowing is not a way out.
 export function applies(question, answers = {}) {

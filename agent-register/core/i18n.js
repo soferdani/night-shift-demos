@@ -86,6 +86,10 @@ export const T = {
     reachHeadRange: ({ floor, ceiling }) =>
       `הסוכנים יכולים להגיע למידע על <b>${floor}</b> עד <b>${ceiling}</b> אנשים`,
     reachHeadFloor: (floor) => `הסוכנים יכולים להגיע למידע על <b>${floor}</b> אנשים לפחות`,
+    // One figure, read exactly, with nothing behind it to add. Night 5: the
+    // single-assistant register printed "בין 5,000 ל-5,000", which reads like a
+    // bug and is one, even though the arithmetic was right.
+    reachHeadExact: (n) => `הסוכנים יכולים להגיע למידע על <b>${n}</b> אנשים`,
     reachOverlapNote: 'הרישום לא מחבר את המספרים לפני שהחדר יענה אם אלה אותם אנשים',
     reachNoCeiling: (gaps) => `בלי גבול עליון: ${gaps}`,
     gapRates: (n) => `${n === 1 ? 'מספר אחד נרשם' : `${n} מספרים נרשמו`} לפי תקופה`,
@@ -99,6 +103,34 @@ export const T = {
     qRate: 'המספר נרשם לפי תקופה — על כמה אנשים שונים מדובר בסך הכול',
     qUnreadable: 'בתשובה על מספר האנשים לא נמצא מספר — מה סדר הגודל',
     noAccountRecorded: 'בלי חשבון רשום',
+    noName: 'סוכן בלי שם',
+    // The third rollup: the same register read by system. Night 5 — an account
+    // groups agents, so one agent is a group of one, and everything the tool had
+    // built went quiet on a company with a single assistant.
+    systemsHeading: 'המערכות שהסוכנים מגיעים אליהן',
+    systemCols: ['המערכת', 'הסוכנים שמגיעים אליה', 'כתיבה', 'החשבונות', 'על מי המידע'],
+    readOnly: 'קריאה בלבד',
+    writes: 'כותב',
+    systemsLine: ({ systems, written }) =>
+      `${systems === 1 ? 'מערכת אחת' : `<b>${systems}</b> מערכות`} ברישום · `
+      + `${written === 1 ? 'באחת' : `ב-<b>${written}</b>`} מהן סוכן יכול לשנות משהו`,
+    systemWidest: ({ n, name }) =>
+      `מערכת אחת נגישה ל-<b>${n}</b> סוכנים${name ? ` (${name})` : ''}`,
+    systemCrossAccount: (n) => (n === 1
+      ? 'מערכת אחת נגישה מיותר מחשבון אחד'
+      : `<b>${n}</b> מערכות נגישות מיותר מחשבון אחד`),
+    systemsNoMeeting: 'אף שתי סוכנים לא נפגשים באותה מערכת — אין ברישום מה להצליב',
+    qSystemPopulations: 'שני סוכנים מגיעים לאותה מערכת ורשמו קהלים שונים — מה שמור בה',
+    qSystemPopulationsHint: (who) =>
+      `${who}. הרישום לא מאחד את הקהלים ולא בוחר ביניהם`,
+    qSystemWriteAccounts: 'שני חשבונות כותבים לאותה מערכת — האם היומן שלה מבדיל ביניהם',
+    qSystemOffList: 'מערכת נרשמה כמערכת שהסוכן משנה בה, ולא ברשימת המערכות שהוא מגיע אליהן — איזו רשימה חסרה',
+    qSystemNearMiss: 'שני שמות מערכת שנרשמו קרובים זה לזה — האם זו אותה מערכת',
+    qHumanCredential: 'הסוכן כותב למערכות בשם הלוגין האישי של עובד — אילו רשומות ביומן של כל מערכת הן שלו',
+    qSpan: 'מספר האנשים נרשם פעם אחת לסוכן שמגיע לכמה מערכות — זה הגדול שבהם או כולם יחד',
+    qSpanHint: (list) => list
+      .map((a) => `${a.name}: ${a.answers.volume} על ${a.span} מערכות`)
+      .join(' · '),
     bilingual: null,
     lawNote: null,
   },
@@ -153,6 +185,7 @@ export const T = {
     reachHeadRange: ({ floor, ceiling }) =>
       `The agents can reach information about <b>${floor}</b> to <b>${ceiling}</b> people`,
     reachHeadFloor: (floor) => `The agents can reach information about <b>${floor}</b> people at least`,
+    reachHeadExact: (n) => `The agents can reach information about <b>${n}</b> people`,
     reachOverlapNote: 'the register does not add the figures before the room answers whether they are the same people',
     reachNoCeiling: (gaps) => `no upper bound: ${gaps}`,
     gapRates: (n) => `${n === 1 ? 'one figure is recorded' : `${n} figures are recorded`} per period`,
@@ -165,6 +198,31 @@ export const T = {
     qRate: 'The figure was recorded per period — how many different people is it in total',
     qUnreadable: 'No number was found in the answer about how many people — what is the order of magnitude',
     noAccountRecorded: 'no account recorded',
+    noName: 'agent with no name',
+    systemsHeading: 'The systems the agents reach',
+    systemCols: ['System', 'Agents reaching it', 'Writes', 'Accounts', 'Whose information'],
+    readOnly: 'read only',
+    writes: 'writes',
+    systemsLine: ({ systems, written }) =>
+      `${systems === 1 ? 'One system' : `<b>${systems}</b> systems`} in the register · `
+      + `an agent can change something in ${written === 1 ? 'one' : `<b>${written}</b>`} of them`,
+    systemWidest: ({ n, name }) =>
+      `one system is reached by <b>${n}</b> agents${name ? ` (${name})` : ''}`,
+    systemCrossAccount: (n) => (n === 1
+      ? 'one system is reached from more than one account'
+      : `<b>${n}</b> systems are reached from more than one account`),
+    systemsNoMeeting: 'no two agents meet in the same system — there is nothing in this register to cross-check',
+    qSystemPopulations: 'Two agents reach the same system and recorded different populations — what is held in it',
+    qSystemPopulationsHint: (who) =>
+      `${who}. The register does not merge the populations and does not pick between them`,
+    qSystemWriteAccounts: "Two accounts write to the same system — does its own log tell them apart",
+    qSystemOffList: 'A system was recorded as one the agent changes, and not on the list of systems it can reach — which list is incomplete',
+    qSystemNearMiss: 'Two system names recorded close to each other — is this the same system',
+    qHumanCredential: "The agent writes into systems under an employee's own login — which entries in each system's log are the agent's",
+    qSpan: 'The number of people was recorded once for an agent that reaches several systems — is it the largest of them or all of them together',
+    qSpanHint: (list) => list
+      .map((a) => `${a.name}: ${a.answers.volume} across ${a.span} systems`)
+      .join(' · '),
     // Why an English register still has Hebrew in it. Printed only when there
     // actually is: a register filled in English says nothing.
     bilingual:

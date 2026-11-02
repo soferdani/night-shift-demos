@@ -2,6 +2,7 @@ import { AGENT_QUESTIONS, ORG_QUESTIONS, SECTIONS, applies, optionLabel } from '
 import { LAW, LAW_STATUS_HE, LAW_STATUS_EN, ASI } from './refs.js';
 import { readRegister, stats, isEmpty, asList } from './register.js';
 import { readIdentities, identityStats, sheetLines, sheetCounts } from './identities.js';
+import { readSystems, systemStats } from './systems.js';
 import { reachOf, ceilingGaps, groupDigits } from './reach.js';
 import { DIR, t } from './i18n.js';
 
@@ -13,11 +14,24 @@ export const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** A list of names inside a Hebrew sentence. The right-to-left mark on both
- *  sides of every separator is what keeps Latin names in the order they were
- *  written; three nights of printing have verified it. */
+/**
+ * A list of names inside a Hebrew sentence.
+ *
+ * Nights 1–4 fenced every separator with a right-to-left mark, and that did
+ * keep the names in the order they were written. Night 5 measured both
+ * mechanisms in the browser that prints the sheet, character by character, and
+ * found two things. The order is identical under either one — so the mark was
+ * never the thing holding the list together on its own. And the mark does
+ * nothing at all for a name whose own last character is neutral: `support@`
+ * laid out as `@support` in the Hebrew register, which is an account name
+ * printed backwards, shipped since night 2 and never caught, because the check
+ * had always been "is the list in the right order".
+ *
+ * `<bdi>` fixes that and keeps the order, which is why night 4's open item is
+ * closed here rather than deferred again. The measurement is in the README.
+ */
 export function joinHe(items) {
-  return items.map((x) => esc(x)).join(`${RLM} · ${RLM}`);
+  return items.map((x) => `<bdi>${esc(x)}</bdi>`).join(' · ');
 }
 
 /**
@@ -41,6 +55,16 @@ const joinIn = (items, lang) => (lang === 'en' ? joinEn(items) : joinHe(items));
  *  they are isolated so a Hebrew answer does not drag the punctuation around
  *  it; they are never translated, in either document. */
 const said = (text, lang) => (lang === 'en' ? `<bdi>${esc(text)}</bdi>` : esc(text));
+
+/**
+ * An identifier — an account name, a system name. Isolated in both documents,
+ * because it is a name rather than a sentence: `<bdi>` resolves its direction
+ * from its own first strong character, which is what you want for `svc-recon`
+ * and is exactly what you do NOT want for a Hebrew sentence that happens to
+ * open with a Latin word. That is why `said()` above is left alone in the
+ * Hebrew document and only names are isolated here.
+ */
+const named = (text) => `<bdi>${esc(text)}</bdi>`;
 
 const labelOf = (question, lang) => (lang === 'en' && question.en ? question.en : question.he);
 const hintOf = (question, lang) =>
@@ -112,7 +136,13 @@ li .hint{color:var(--muted);font-size:.8rem}
   padding:1px 7px;margin:3px 0 0;margin-inline-end:4px;color:var(--muted)}
 .ref.law.binding{border-color:#8d8375;color:#4a4238}
 .ref.law.draft,.ref.law.opinion{border-style:dashed}
-.ids{margin:0 0 14px}
+/* Night 5, found by printing the document at 390px rather than on the page:
+   night 4's column spacing pushed the account table to 415px, so the whole
+   printed register scrolled sideways on a phone — and the review path for this
+   product IS a phone. The table scrolls inside its own box instead of dragging
+   the page with it; on paper it is laid out by @page and must not be clipped,
+   so the overflow is lifted in print. A4 pagination is unchanged by this. */
+.ids{margin:0 0 14px;overflow-x:auto}
 .ids table{border-collapse:collapse}
 .ids tr{border-bottom:1px solid var(--line);break-inside:avoid;page-break-inside:avoid}
 .ids tr:first-child{break-after:avoid;page-break-after:avoid}
@@ -134,6 +164,7 @@ li .hint{color:var(--muted);font-size:.8rem}
 @media print{
   body{font-size:11.5px}
   .page{max-width:none;padding:0}
+  .ids{overflow:visible}
   @page{size:A4;margin:14mm 12mm}
 }
 `;
@@ -217,6 +248,7 @@ ${notices(doc, lang)}
   return shell(T.registerTitle, `${head}
 <h2>${esc(T.orgHeading)}</h2><table>${orgBlock}</table>
 ${identityBlock(doc, lang)}
+${systemBlock(doc, lang)}
 <h2>${esc(T.agentsHeading)}</h2>${agents || `<p class="open">${esc(T.noAgents)}</p>`}`, lang);
 }
 
@@ -232,7 +264,7 @@ export function identityLine(doc, lang = 'he') {
   if (!agents) return '';
   const bits = [T.agentsActAs({ agents, identities: s.identities })];
   if (s.widest > 1) {
-    bits.push(T.widest({ n: s.widest, name: s.widestName ? said(s.widestName, lang) : null }));
+    bits.push(T.widest({ n: s.widest, name: s.widestName ? named(s.widestName) : null }));
   }
   if (s.onHumanCredentials) bits.push(T.onHumanCredentials(s.onHumanCredentials));
   if (s.unnamed) bits.push(T.unnamed(s.unnamed));
@@ -273,9 +305,14 @@ export function reachLine(doc, lang = 'he') {
     if (!reach.rates.length && !reach.unreadable.length && !reach.missing.length) return '';
     return `${T.reachNone}${sep}${gapWords().join(sep)}`;
   }
-  const head = reach.ceiling !== null
-    ? T.reachHeadRange({ floor: groupDigits(reach.floor), ceiling: groupDigits(reach.ceiling) })
-    : T.reachHeadFloor(groupDigits(reach.floor));
+  const head = reach.ceiling === null
+    ? T.reachHeadFloor(groupDigits(reach.floor))
+    : (reach.floor === reach.ceiling
+      // A range whose ends are equal is not a range. The per-account cell has
+      // said this since night 3; the register-wide line had not, because until
+      // tonight no sample reached it with one agent.
+      ? T.reachHeadExact(groupDigits(reach.floor))
+      : T.reachHeadRange({ floor: groupDigits(reach.floor), ceiling: groupDigits(reach.ceiling) }));
   const tail = [];
   if (reach.overlapUnknown) tail.push(T.reachOverlapNote);
   const gaps = gapWords();
@@ -289,7 +326,7 @@ export function identityBlock(doc, lang = 'he') {
   if (!ids.length) return '';
   const rows = ids.map((id) => {
     const name = id.named
-      ? `<span class="n">${said(id.name, lang)}</span>`
+      ? `<span class="n">${named(id.name)}</span>`
       : `<span class="open">${esc(T.noAccount)}</span>`;
     const carry = id.agents.length > 1
       ? `<span class="carry">${id.agents.length}</span> · ${joinIn(id.agents, lang)}`
@@ -312,6 +349,63 @@ export function identityBlock(doc, lang = 'he') {
   const heads = T.cols.map((label) => `<th class="h">${esc(label)}</th>`).join('');
   return `<h2>${esc(T.accountsHeading)}</h2>
 <p class="counts">${identityLine(doc, lang)}</p>${reach ? `\n<p class="counts">${reach}</p>` : ''}
+<div class="ids"><table><tr>
+${heads}
+</tr>${rows}</table></div>`;
+}
+
+/**
+ * The register read a third way: by system.
+ *
+ * The account rollup needs two agents to say anything. This one does not — one
+ * assistant on twelve tools is twelve rows, which is the only reading of a
+ * single-agent register that is not a group of one. And where there ARE several
+ * agents, a system is the one place two of them meet without sharing a login:
+ * in the sample, the bookkeeping system is read by a reviewed service account
+ * and written to by the shared mailbox.
+ */
+export function systemLine(doc, lang = 'he') {
+  const T = t(lang);
+  const s = systemStats(doc);
+  if (!s.systems) return '';
+  const bits = [T.systemsLine({ systems: s.systems, written: s.written })];
+  if (s.widest > 1) {
+    bits.push(T.systemWidest({ n: s.widest, name: s.widestName ? named(s.widestName) : null }));
+  } else if ((doc.agents || []).length > 1) {
+    // Said out loud rather than left as an absence: a register in which no two
+    // agents meet anywhere has nothing in it to cross-check.
+    bits.push(esc(T.systemsNoMeeting));
+  }
+  if (s.crossAccount) bits.push(T.systemCrossAccount(s.crossAccount));
+  return bits.join(lang === 'en' ? ' · ' : `${RLM} · ${RLM}`);
+}
+
+export function systemBlock(doc, lang = 'he') {
+  const T = t(lang);
+  const systems = readSystems(doc);
+  if (!systems.length) return '';
+  const rows = systems.map((system) => {
+    const name = `<span class="n">${named(system.name)}</span>`;
+    const agents = system.agents.length > 1
+      ? `<span class="carry">${system.agents.length}</span> · ${joinIn([...new Set(system.agents)], lang)}`
+      : joinIn(system.agents, lang);
+    const write = system.written
+      ? `${esc(T.writes)}${system.writtenBy.length < system.agents.length
+        ? ` · ${joinIn([...new Set(system.writtenBy)], lang)}` : ''}`
+      : `<span class="who">${esc(T.readOnly)}</span>`;
+    const accounts = system.accounts.length
+      ? joinIn(system.accounts, lang)
+      : `<span class="open">${esc(T.noAccount)}</span>`;
+    const subjects = [...new Set(system.declared.flatMap((d) => d.subjects))];
+    const who = subjects.length
+      ? joinIn(subjects, lang)
+      : `<span class="open">${T.dash}</span>`;
+    return `<tr><td>${name}</td><td>${agents}</td><td>${write}</td>`
+      + `<td>${accounts}</td><td>${who}</td></tr>`;
+  }).join('');
+  const heads = T.systemCols.map((label) => `<th class="h">${esc(label)}</th>`).join('');
+  return `<h2>${esc(T.systemsHeading)}</h2>
+<p class="counts">${systemLine(doc, lang)}</p>
 <div class="ids"><table><tr>
 ${heads}
 </tr>${rows}</table></div>`;
