@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>send-rail — the board</title>
+<style>
+  :root{--bg:#fbfaf8;--card:#fff;--ink:#16130f;--muted:#6b6358;--line:#e5e0d8;--accent:#1c4f8f;
+    --quote:#f4f1ec;--code:#f1eee8;--ok:#1f6b3f;--warn:#8a5a12;--dead:#8a2f2f;--obs:#f6f4f0}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;--line:#302b25;--accent:#7fb0e8;
+    --quote:#262219;--code:#262219;--ok:#86d8a6;--warn:#e3b566;--dead:#ea9a9a;--obs:#1a1713}}
+  :root[data-theme="dark"]{--bg:#14120f;--card:#1d1a16;--ink:#f2efe9;--muted:#a39a8c;--line:#302b25;
+    --accent:#7fb0e8;--quote:#262219;--code:#262219;--ok:#86d8a6;--warn:#e3b566;--dead:#ea9a9a;--obs:#1a1713}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:36px 16px 72px}
+  h1{font-size:1.55rem;margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 6px;max-width:64ch}
+  .back{display:inline-block;margin:0 0 22px;font-size:.85rem;color:var(--accent);text-decoration:none}
+  .cols{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:22px;align-items:start}
+  @media (max-width:800px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    margin:0 0 12px;font-weight:600}
+  /* the phone, rendered the way Obsidian mobile renders a note */
+  .obs{background:var(--obs);border:1px solid var(--line);border-radius:14px;padding:14px 13px 16px;
+    font-size:.9rem;max-width:390px;margin:0 auto}
+  .obs h3{font-size:1.18rem;margin:2px 0 10px;letter-spacing:-.01em}
+  .obs h4{font-size:.98rem;margin:16px 0 4px}
+  .lede{margin:0 0 10px}
+  .lede b{font-weight:700}
+  .why{color:var(--muted);font-size:.85rem;margin:0 0 10px}
+  .taps{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+  .tap{font-size:.82rem;padding:6px 12px;border-radius:999px;border:1px solid var(--accent);
+    background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
+  .tap.ghost{background:transparent;color:var(--accent)}
+  .co{border-left:3px solid var(--warn);background:var(--quote);border-radius:6px;
+    padding:8px 10px;margin:9px 0;font-size:.82rem}
+  .co b{color:var(--warn)}
+  .co.fold{border-left-color:var(--muted);color:var(--muted)}
+  .blk{position:relative;background:var(--code);border-radius:8px;padding:10px 38px 10px 11px;
+    margin:9px 0;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;
+    word-wrap:break-word}
+  .copy{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;
+    border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;
+    font-size:12px;line-height:1;display:grid;place-items:center}
+  .copy:hover{color:var(--ink)}
+  .cite{color:var(--muted);font-size:.76rem;font-style:italic;margin:4px 0 0}
+  .foldrow{font-size:.82rem;color:var(--muted);margin:5px 0}
+  .foot{color:var(--muted);font-size:.74rem;font-style:italic;border-top:1px solid var(--line);
+    margin-top:14px;padding-top:9px}
+  /* the explanation side */
+  .step{display:grid;grid-template-columns:26px 1fr;gap:11px;margin:0 0 15px}
+  .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:.78rem;
+    font-weight:700;display:grid;place-items:center}
+  .step p{margin:3px 0 0;font-size:.9rem}
+  .step h3{margin:2px 0 0;font-size:.95rem}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;margin:4px 0 0}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em}
+  td.no{color:var(--dead)}td.yes{color:var(--ok)}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.84em}
+  .note{font-size:.84rem;color:var(--muted);margin:14px 0 0;border-top:1px solid var(--line);padding-top:12px}
+  .pill{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:999px;
+    border:1px solid var(--line);color:var(--muted);margin-left:7px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">&larr; night-shift demos</a>
+  <h1>send-rail &mdash; the board <span class="pill">night 4/5</span></h1>
+  <p class="sub">
+    Twenty-one finished messages sit in this vault, addressed to real people, never sent.
+    The oldest has waited fifteen weeks. send-rail has been able to find them since night 1.
+    What it could not do was reach a thumb.
+  </p>
+  <p class="sub">
+    Nights 1&ndash;3 built a Telegram card and an installer for it. Both work and neither has
+    ever run: the card needs one line executed on a machine this build cannot reach.
+    Night 4 drops that transport for one that is already installed, already synced to the
+    phone, and already opened every morning &mdash; the vault itself.
+    <strong>Sample data below.</strong>
+  </p>
+
+  <div class="cols">
+    <div class="panel">
+      <h2>What he opens, on his phone</h2>
+      <div class="obs">
+        <h3>The outbox</h3>
+        <p class="lede"><b>7 finished and unsent</b> &mdash; 5 messages, 2 documents.
+          The oldest has waited 107 days &middot; 15 weeks.</p>
+        <p class="lede">Open <b>Rita</b>. Rita asked for this today. The message exists.</p>
+
+        <h4>Rita &middot; today</h4>
+        <p class="why">Rita asked for this today. The message exists.</p>
+        <div class="taps"><a class="tap" href="#" onclick="return false">Open WhatsApp, typed</a></div>
+        <div class="blk" id="b1">Hi Rita, good talking today. Short version of what we agreed: two weeks, one process, one number at the end. I'll bring the one-pager to the procurement meeting so nobody has to read a deck.
+
+If the date moves, tell me and I'll shift the week.<button class="copy" aria-label="Copy" onclick="cp('b1',this)">⧉</button></div>
+        <p class="cite">30_Projects/Acme/Acme — pilot follow-up.md:11</p>
+
+        <h4>Then these 4</h4>
+        <p class="why">The links already have the text typed into them.</p>
+
+        <p style="margin:12px 0 2px;font-weight:600">Dalia &middot; today</p>
+        <p class="why">Nobody wrote down an ask for this one. It reads as written.</p>
+        <div class="taps"><a class="tap" href="#" onclick="return false">Open Gmail, typed</a></div>
+        <div class="co"><b>answered</b> &mdash; You wrote &ldquo;six of them this quarter is wrong, it's four&rdquo;
+          under this draft, and the answer under it says it was changed.</div>
+
+        <p style="margin:14px 0 2px;font-weight:600">Daniel Danilov &middot; 107 days &middot; 15 weeks</p>
+        <p class="why">It is a document, so there was never a block to paste.</p>
+        <div class="taps"><a class="tap ghost" href="#" onclick="return false">Open the note in Obsidian</a></div>
+        <div class="co"><b>a document, not a message</b> &mdash; nothing to paste: the note is the deliverable.</div>
+
+        <div class="co fold">▸ clear to send (2)</div>
+        <div class="co fold">▸ read it again first (1)</div>
+        <p class="foot">1 someone is waiting &middot; 4 clear to send &middot; 2 read it again first
+          &middot; 12 notes read &middot; rebuilt tonight by send-rail. This file is generated &mdash;
+          edit the note, not the board.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Why this is the night-4 milestone</h2>
+
+      <div class="step"><div class="n">1</div><div>
+        <h3>The board is markdown, not a web page</h3>
+        <p>Obsidian mobile renders it natively. Every code block gets a copy button the app
+           already provides, so the one thing he has to do is one tap on a screen he was
+           already looking at.</p>
+      </div></div>
+
+      <div class="step"><div class="n">2</div><div>
+        <h3>The taps carry the text, not a summary</h3>
+        <p><code>wa.me</code> and Gmail compose links open with the message already typed.
+           A link too long to survive the URL says so instead of opening an empty window.</p>
+      </div></div>
+
+      <div class="step"><div class="n">3</div><div>
+        <h3>One card, not twenty-one</h3>
+        <p>One message gets its full text. Four get the taps only &mdash; the text is inside
+           the link, so nothing is lost. The rest fold to one line each. The board answers
+           &ldquo;which one do I open&rdquo;, not &ldquo;what is in all of them&rdquo;.</p>
+      </div></div>
+
+      <div class="step"><div class="n">4</div><div>
+        <h3>It still never sends anything</h3>
+        <p>Same rule as every night: the rail opens an app with the text ready. The send
+           is his.</p>
+      </div></div>
+
+      <h2 style="margin-top:22px">The transport, four nights in</h2>
+      <table>
+        <tr><th>Route</th><th>Needs</th><th>Ran?</th></tr>
+        <tr><td>Telegram card (nights 1&ndash;3)</td><td>one line run on the ASUS; a reachable bot API</td><td class="no">never</td></tr>
+        <tr><td>Local HTML page</td><td>a terminal and a laptop</td><td class="no">never on a phone</td></tr>
+        <tr><td><strong>Markdown board in the vault</strong></td><td>nothing &mdash; Obsidian is already there</td><td class="yes">tonight</td></tr>
+      </table>
+
+      <p class="note">
+        The private repo holds the code and 273 tests. <code>npm run board -- --vault &lt;path&gt;</code>
+        writes the file. The real board is generated into the vault itself, where it is private;
+        this page is the sample vault that ships with the repo, so the names here are invented.
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+  function cp(id, btn) {
+    var el = document.getElementById(id).cloneNode(true);
+    var b = el.querySelector('button'); if (b) b.remove();
+    var txt = el.textContent;
+    var done = function () { btn.textContent = '✓'; setTimeout(function () { btn.textContent = '⧉'; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () { btn.textContent = '✕'; });
+    } else { done(); }
+  }
+</script>
+</body>
+</html>
