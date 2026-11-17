@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>send-rail — the board</title>
+<title>send-rail — what your hands have to do</title>
 <style>
   :root{--bg:#fbfaf8;--card:#fff;--ink:#16130f;--muted:#6b6358;--line:#e5e0d8;--accent:#1c4f8f;
     --quote:#f4f1ec;--code:#f1eee8;--ok:#1f6b3f;--warn:#8a5a12;--dead:#8a2f2f;--obs:#f6f4f0}
@@ -49,6 +49,7 @@
   .copy:hover{color:var(--ink)}
   .cite{color:var(--muted);font-size:.76rem;font-style:italic;margin:4px 0 0}
   .foldrow{font-size:.82rem;color:var(--muted);margin:5px 0}
+  .check{font-size:.84rem;margin:7px 0;line-height:1.75}
   .foot{color:var(--muted);font-size:.74rem;font-style:italic;border-top:1px solid var(--line);
     margin-top:14px;padding-top:9px}
   /* the explanation side */
@@ -70,17 +71,19 @@
 <body>
 <div class="wrap">
   <a class="back" href="../">&larr; night-shift demos</a>
-  <h1>send-rail &mdash; the board <span class="pill">night 4/5</span></h1>
+  <h1>send-rail &mdash; the board <span class="pill">night 5/5</span></h1>
   <p class="sub">
-    Twenty-one finished messages sit in this vault, addressed to real people, never sent.
-    The oldest has waited fifteen weeks. send-rail has been able to find them since night 1.
-    What it could not do was reach a thumb.
+    For four nights this board opened on a message that was 33 days old, that somebody
+    had asked for in writing, and that said <em>tap the Gmail link, send</em>.
+    That instruction could not be carried out. The message announces three attachments,
+    and no deep link on any platform carries a file.
   </p>
   <p class="sub">
-    Nights 1&ndash;3 built a Telegram card and an installer for it. Both work and neither has
-    ever run: the card needs one line executed on a machine this build cannot reach.
-    Night 4 drops that transport for one that is already installed, already synced to the
-    phone, and already opened every morning &mdash; the vault itself.
+    Nights 1&ndash;5 of phase one all asked whether the <strong>text</strong> was finished &mdash;
+    addressed, not stale, not argued with. All four detectors can pass on a message that is
+    still impossible to send from a phone, because what is missing was never in the text:
+    a file on a disk, a draft already sitting in a thread, or a condition the note set on
+    sending. Night 5 asks that question instead, and splits the board on the answer.
     <strong>Sample data below.</strong>
   </p>
 
@@ -90,10 +93,14 @@
       <div class="obs">
         <h3>The outbox</h3>
         <p class="lede"><b>7 finished and unsent</b> &mdash; 5 messages, 2 documents.
-          The oldest has waited 107 days &middot; 15 weeks.</p>
-        <p class="lede">Open <b>Rita</b>. Rita asked for this today. The message exists.</p>
+          The oldest has waited 108 days &middot; 15 weeks.</p>
+        <p class="lede"><b>2 of them cannot be sent from this phone.</b> Not because anything is
+          wrong with the text &mdash; because a file has to be attached, the message is already a
+          draft in a thread, or it waits on something else first.</p>
+        <p class="lede">Send <b>Rita</b> from here. Rita asked for this today. The message exists.</p>
 
-        <h4>Rita &middot; today</h4>
+        <h4>From your thumb, now</h4>
+        <p style="margin:10px 0 2px;font-weight:600">Rita &middot; today</p>
         <p class="why">Rita asked for this today. The message exists.</p>
         <div class="taps"><a class="tap" href="#" onclick="return false">Open WhatsApp, typed</a></div>
         <div class="blk" id="b1">Hi Rita, good talking today. Short version of what we agreed: two weeks, one process, one number at the end. I'll bring the one-pager to the procurement meeting so nobody has to read a deck.
@@ -101,69 +108,90 @@
 If the date moves, tell me and I'll shift the week.<button class="copy" aria-label="Copy" onclick="cp('b1',this)">⧉</button></div>
         <p class="cite">30_Projects/Acme/Acme — pilot follow-up.md:11</p>
 
+        <h4>Needs the laptop (2)</h4>
+        <p class="why">A link can carry text. It cannot carry a file, and it cannot open a draft
+          that already exists.</p>
+
+        <p style="margin:12px 0 2px;font-weight:600">Rita &middot; 63 days &middot; 9 weeks</p>
+        <p class="why"><strong>3 files to attach &middot; the draft &ldquo;Invoice 7&rdquo; is already
+          in the thread.</strong> Rita asked for this, 63 days ago, and a date in it has gone by.</p>
+        <p class="check">&#9744;&nbsp; Invoice 7 &mdash; 11 days across August and September.<br>
+          &#9744;&nbsp; The hours sheet, by day and by workstream.<br>
+          &#9744;&nbsp; The signed order, clause 4.2, for your file.</p>
+        <div class="taps">
+          <a class="tap" href="#" onclick="return false">Open the draft &ldquo;Invoice 7&rdquo; in Gmail</a>
+          <a class="tap ghost" href="#" onclick="return false">Open the note in Obsidian</a>
+        </div>
+        <p class="cite">&gt; line 4 &mdash; ready. Attached:<br>
+          &gt; line 33 &mdash; Open the Gmail draft &ldquo;Invoice 7&rdquo;, attach the 3 PDFs from this folder, send.</p>
+
+        <p class="foldrow">&bull; <b>Maya</b> &middot; 40 days &mdash; 1 file to attach</p>
+
         <h4>Then these 4</h4>
         <p class="why">The links already have the text typed into them.</p>
 
         <p style="margin:12px 0 2px;font-weight:600">Dalia &middot; today</p>
-        <p class="why">Nobody wrote down an ask for this one. It reads as written.</p>
         <div class="taps"><a class="tap" href="#" onclick="return false">Open Gmail, typed</a></div>
         <div class="co"><b>answered</b> &mdash; You wrote &ldquo;six of them this quarter is wrong, it's four&rdquo;
           under this draft, and the answer under it says it was changed.</div>
 
-        <p style="margin:14px 0 2px;font-weight:600">Daniel Danilov &middot; 107 days &middot; 15 weeks</p>
-        <p class="why">It is a document, so there was never a block to paste.</p>
-        <div class="taps"><a class="tap ghost" href="#" onclick="return false">Open the note in Obsidian</a></div>
-        <div class="co"><b>a document, not a message</b> &mdash; nothing to paste: the note is the deliverable.</div>
-
-        <div class="co fold">▸ clear to send (2)</div>
-        <div class="co fold">▸ read it again first (1)</div>
-        <p class="foot">1 someone is waiting &middot; 4 clear to send &middot; 2 read it again first
+        <div class="co fold">&#9656; clear to send (2)</div>
+        <div class="co fold">&#9656; read it again first (1)</div>
+        <p class="foot">1 someone is waiting &middot; 3 clear to send &middot; 3 read it again first
           &middot; 12 notes read &middot; rebuilt tonight by send-rail. This file is generated &mdash;
           edit the note, not the board.</p>
       </div>
     </div>
 
     <div class="panel">
-      <h2>Why this is the night-4 milestone</h2>
+      <h2>Why this is the night-5 milestone</h2>
 
       <div class="step"><div class="n">1</div><div>
-        <h3>The board is markdown, not a web page</h3>
-        <p>Obsidian mobile renders it natively. Every code block gets a copy button the app
-           already provides, so the one thing he has to do is one tap on a screen he was
-           already looking at.</p>
+        <h3>A new question: can his thumb finish it?</h3>
+        <p>Not &ldquo;is the text finished&rdquo;. Three things say no, and all three are
+           written down rather than guessed: the message announces attachments, a draft of
+           it already exists somewhere a compose link cannot reach, or the note set a
+           condition on sending.</p>
       </div></div>
 
       <div class="step"><div class="n">2</div><div>
-        <h3>The taps carry the text, not a summary</h3>
-        <p><code>wa.me</code> and Gmail compose links open with the message already typed.
-           A link too long to survive the URL says so instead of opening an empty window.</p>
+        <h3>The first card is now one he can actually send</h3>
+        <p>On the real vault that moved the board off a 33-day-old reply that needs three
+           PDFs and a desk, and onto a three-day-old one with nothing to attach &mdash; the
+           one in the pile with a number in it.</p>
       </div></div>
 
       <div class="step"><div class="n">3</div><div>
-        <h3>One card, not twenty-one</h3>
-        <p>One message gets its full text. Four get the taps only &mdash; the text is inside
-           the link, so nothing is lost. The rest fold to one line each. The board answers
-           &ldquo;which one do I open&rdquo;, not &ldquo;what is in all of them&rdquo;.</p>
+        <h3>Nothing is hidden or ranked down</h3>
+        <p>The ones a phone cannot send get their own sections. <em>Needs the laptop</em>
+           carries the checklist of what to attach, so the hunting is done before he sits
+           down. <em>Waits on something first</em> quotes the line that said not yet.</p>
       </div></div>
 
       <div class="step"><div class="n">4</div><div>
-        <h3>It still never sends anything</h3>
-        <p>Same rule as every night: the rail opens an app with the text ready. The send
-           is his.</p>
+        <h3>A harmful tap is removed, not kept</h3>
+        <p>Where a draft already exists, a compose link opens a new, empty, threadless
+           message beside the finished one, with none of the attachments &mdash; and the typed
+           text makes it look done. The tap now searches Gmail for the draft&rsquo;s own name.</p>
       </div></div>
 
-      <h2 style="margin-top:22px">The transport, four nights in</h2>
+      <h2 style="margin-top:22px">Three guards, three real mistakes</h2>
       <table>
-        <tr><th>Route</th><th>Needs</th><th>Ran?</th></tr>
-        <tr><td>Telegram card (nights 1&ndash;3)</td><td>one line run on the ASUS; a reachable bot API</td><td class="no">never</td></tr>
-        <tr><td>Local HTML page</td><td>a terminal and a laptop</td><td class="no">never on a phone</td></tr>
-        <tr><td><strong>Markdown board in the vault</strong></td><td>nothing &mdash; Obsidian is already there</td><td class="yes">tonight</td></tr>
+        <tr><th>The sentence</th><th>Where from</th><th>Verdict</th></tr>
+        <tr><td><code>מצורפים:</code> + three numbered documents</td><td>the message</td><td class="yes">3 files to attach</td></tr>
+        <tr><td>&ldquo;material <strong>the user</strong> pastes or attaches&rdquo;</td><td>a 26,145-character build kit</td><td class="no">refused &mdash; a document, and not his hands</td></tr>
+        <tr><td>&ldquo;the form <strong>you</strong> attached&rdquo;</td><td>a message body</td><td class="no">refused &mdash; he received it</td></tr>
+        <tr><td>&ldquo;the deck you asked for <strong>is attached</strong>&rdquo;</td><td>a message body</td><td class="yes">accepted &mdash; three words from the verb</td></tr>
+        <tr><td><code>Email draft (copy-paste ready)</code></td><td>a block heading</td><td class="no">refused &mdash; the vault&rsquo;s own convention</td></tr>
+        <tr><td><code>Gmail draft already created in the thread</code></td><td>a block heading</td><td class="yes">a draft exists</td></tr>
       </table>
 
       <p class="note">
-        The private repo holds the code and 273 tests. <code>npm run board -- --vault &lt;path&gt;</code>
-        writes the file. The real board is generated into the vault itself, where it is private;
-        this page is the sample vault that ships with the repo, so the names here are invented.
+        The private repo holds the code and 305 tests. <code>npm run board -- --vault &lt;path&gt;</code>
+        writes the file; <code>npm run hands -- --vault &lt;path&gt;</code> prints every candidate it
+        read, accepted and refused, with the line it came from. The real board is generated into
+        the vault itself, where it is private; this page is the sample vault that ships with the
+        repo, so the names here are invented. It still sends nothing.
       </p>
     </div>
   </div>
