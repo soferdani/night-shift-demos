@@ -71,7 +71,7 @@
 <body>
 <div class="wrap">
   <a class="back" href="../">&larr; night-shift demos</a>
-  <h1>send-rail &mdash; the board <span class="pill">night 5/5</span></h1>
+  <h1>send-rail &mdash; the board <span class="pill">night 5/5 &middot; hotfix 18.11</span></h1>
   <p class="sub">
     For four nights this board opened on a message that was 33 days old, that somebody
     had asked for in writing, and that said <em>tap the Gmail link, send</em>.
@@ -84,7 +84,16 @@
     still impossible to send from a phone, because what is missing was never in the text:
     a file on a disk, a draft already sitting in a thread, or a condition the note set on
     sending. Night 5 asks that question instead, and splits the board on the answer.
-    <strong>Sample data below.</strong>
+  </p>
+  <p class="sub">
+    <strong>Hotfix, 18 November.</strong> On the morning of the 18th the board opened on a
+    finished, 4-day-old contract email and said send it. Eleven lines under that draft, in
+    the same note, a dated update said the text above was a first draft and the one that
+    goes out is elsewhere &mdash; and by then the other side had sent a second version
+    without the clause the email argues about, and it had been signed three days earlier.
+    Nothing in that update is a correction, and nothing in it says &ldquo;not yet&rdquo;, so
+    neither night-5 detector saw it. There is a third question now, and it is the first one
+    asked: <em>is this still the draft?</em> <strong>Sample data below.</strong>
   </p>
 
   <div class="cols">
@@ -92,8 +101,8 @@
       <h2>What he opens, on his phone</h2>
       <div class="obs">
         <h3>The outbox</h3>
-        <p class="lede"><b>7 finished and unsent</b> &mdash; 5 messages, 2 documents.
-          The oldest has waited 108 days &middot; 15 weeks.</p>
+        <p class="lede"><b>8 finished and unsent</b> &mdash; 6 messages, 2 documents.
+          The oldest has waited 109 days &middot; 15 weeks.</p>
         <p class="lede"><b>2 of them cannot be sent from this phone.</b> Not because anything is
           wrong with the text &mdash; because a file has to be attached, the message is already a
           draft in a thread, or it waits on something else first.</p>
@@ -136,10 +145,19 @@ If the date moves, tell me and I'll shift the week.<button class="copy" aria-lab
           under this draft, and the answer under it says it was changed.</div>
 
         <div class="co fold">&#9656; clear to send (2)</div>
-        <div class="co fold">&#9656; read it again first (1)</div>
-        <p class="foot">1 someone is waiting &middot; 3 clear to send &middot; 3 read it again first
-          &middot; 12 notes read &middot; rebuilt tonight by send-rail. This file is generated &mdash;
-          edit the note, not the board.</p>
+
+        <h4>The other 1</h4>
+        <p class="why">A blank, a date that has gone by, or a line you wrote under the draft.
+          A tap would send the wrong thing.</p>
+        <div class="co"><b>superseded</b> &mdash; <b>Rita</b> &middot; 29 days &mdash; You came back
+          to this note on 2026-10-20 and wrote that this is not the version that goes out:
+          &ldquo;The asks and the email above are the first draft. He cut them down the same
+          day&rdquo;</div>
+        <p class="cite">30_Projects/Acme/Acme &mdash; annex renewal (rate ask).md</p>
+
+        <p class="foot">1 someone is waiting &middot; 3 clear to send &middot; 4 read it again first
+          &middot; 13 notes read &middot; 1 marked sent &middot; rebuilt tonight by send-rail. This
+          file is generated &mdash; edit the note, not the board.</p>
       </div>
     </div>
 
@@ -175,7 +193,25 @@ If the date moves, tell me and I'll shift the week.<button class="copy" aria-lab
            text makes it look done. The tap now searches Gmail for the draft&rsquo;s own name.</p>
       </div></div>
 
-      <h2 style="margin-top:22px">Three guards, three real mistakes</h2>
+      <div class="step"><div class="n">5</div><div>
+        <h3>Hotfix: is this still the draft?</h3>
+        <p>Two facts have to be in the note, and both are written down rather than
+           inferred. <strong>A date at least as late as the note itself</strong> &mdash; a
+           dated line under a draft is the writer coming back to it after writing it, and a
+           note with no writing date gets nothing here. <strong>And a word that says
+           replaced, or says the matter is settled</strong>, in that dated line or in the
+           lines a dated heading owns &mdash; never anywhere in the margin, or a dated
+           heading would pick up a sentence four lines down that is about something else.</p>
+        <p>Measured on the real vault, where this had to be true before it could ship:
+           <strong>one brake across 23 drafts</strong>, 3 dated headings refused for carrying
+           no such word, 0 false positives. The demoted card keeps its text and its citation
+           &mdash; it is ranked down and quoted, never hidden.</p>
+        <p>It is also the one brake that can never be &ldquo;answered&rdquo;. A correction can
+           be settled by the agent&rsquo;s reply under it. A record that a contract was signed
+           cannot be argued down by a line below it.</p>
+      </div></div>
+
+      <h2 style="margin-top:22px">Four guards, four real mistakes</h2>
       <table>
         <tr><th>The sentence</th><th>Where from</th><th>Verdict</th></tr>
         <tr><td><code>מצורפים:</code> + three numbered documents</td><td>the message</td><td class="yes">3 files to attach</td></tr>
@@ -184,10 +220,15 @@ If the date moves, tell me and I'll shift the week.<button class="copy" aria-lab
         <tr><td>&ldquo;the deck you asked for <strong>is attached</strong>&rdquo;</td><td>a message body</td><td class="yes">accepted &mdash; three words from the verb</td></tr>
         <tr><td><code>Email draft (copy-paste ready)</code></td><td>a block heading</td><td class="no">refused &mdash; the vault&rsquo;s own convention</td></tr>
         <tr><td><code>Gmail draft already created in the thread</code></td><td>a block heading</td><td class="yes">a draft exists</td></tr>
+        <tr><td><code>## Update 2026-11-14 &mdash; the version he chose</code> + &ldquo;the first draft&hellip; not the one in this note&rdquo;</td><td>11 lines under a contract email</td><td class="yes">superseded &mdash; the note moved on, with a date</td></tr>
+        <tr><td><code>## Update 2026-11-16</code> + &ldquo;she asked for the numbers by client&rdquo;</td><td>a dated heading</td><td class="no">refused &mdash; dated, but nothing about replacing or settling</td></tr>
+        <tr><td>&ldquo;this is the <strong>final version</strong> of the wording&rdquo;</td><td>a line under a draft</td><td class="no">refused &mdash; no date on it</td></tr>
+        <tr><td>&ldquo;the master agreement was <strong>signed on</strong> 2026-08-12&rdquo;</td><td>a line under a draft</td><td class="no">refused &mdash; older than the note; history, not an update</td></tr>
+        <tr><td><code>[!tip] 🤖 Claude &mdash; done (2026-11-16)</code> &ldquo;the annex was signed, so this is superseded&rdquo;</td><td>the agent&rsquo;s own callout</td><td class="no">refused &mdash; the rail does not get to cite itself</td></tr>
       </table>
 
       <p class="note">
-        The private repo holds the code and 305 tests. <code>npm run board -- --vault &lt;path&gt;</code>
+        The private repo holds the code and 315 tests. <code>npm run board -- --vault &lt;path&gt;</code>
         writes the file; <code>npm run hands -- --vault &lt;path&gt;</code> prints every candidate it
         read, accepted and refused, with the line it came from. The real board is generated into
         the vault itself, where it is private; this page is the sample vault that ships with the
