@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atidi Labs</title>
+<meta name="description" content="חוסכים לעסק שלכם זמן וכסף בעזרת AI. מתחילים בביקור של שעה, בחינם.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbfaf8; --card:#fff; --ink:#16130f; --muted:#6b6358;
+    --line:#e5e0d8; --accent:#1c4f8f; --accent-ink:#fff; --soft:#f3efe8;
+    --go:#1f7a4d;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14120f; --card:#1d1a16; --ink:#f2efe9; --muted:#a39a8c;
+    --line:#302b25; --accent:#7fb0e8; --accent-ink:#10233b; --soft:#221e19;
+    --go:#6fcf9b;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14120f; --card:#1d1a16; --ink:#f2efe9; --muted:#a39a8c;
+    --line:#302b25; --accent:#7fb0e8; --accent-ink:#10233b; --soft:#221e19;
+    --go:#6fcf9b;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.7 "Assistant",ui-sans-serif,system-ui,"Segoe UI",Arial,sans-serif}
+  .wrap{max-width:660px;margin:0 auto;padding:28px 16px 72px}
+
+  /* ---- brand bar ---- */
+  .brand{display:flex;align-items:center;gap:10px;margin:0 0 34px}
+  .mark{width:34px;height:34px;flex:0 0 34px}
+  .brand b{font-size:1.06rem;font-weight:700;letter-spacing:.01em}
+  .brand span{color:var(--muted);font-size:.9rem}
+
+  /* ---- hero ---- */
+  h1{font-size:1.72rem;line-height:1.32;margin:0 0 14px;font-weight:700;letter-spacing:-.01em}
+  .lede{font-size:1.06rem;color:var(--muted);margin:0 0 24px}
+  .cta{display:inline-flex;align-items:center;gap:9px;background:var(--accent);
+    color:var(--accent-ink);text-decoration:none;font-weight:700;font-size:1.02rem;
+    padding:14px 22px;border-radius:999px}
+  .cta:hover{filter:brightness(1.07)}
+  .cta-note{margin:11px 0 0;font-size:.88rem;color:var(--muted)}
+
+  h2{font-size:1.18rem;margin:44px 0 14px;font-weight:700}
+  p{margin:0 0 14px}
+
+  /* ---- leaks ---- */
+  .leaks{list-style:none;margin:0;padding:0}
+  .leaks li{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;margin:0 0 9px;font-size:1rem}
+
+  /* ---- the number ---- */
+  .number{background:var(--soft);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;margin:18px 0 0}
+  .number p{margin:0}
+  .number p+p{margin-top:9px}
+  .number b{color:var(--ink)}
+
+  /* ---- steps ---- */
+  ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+  ol.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px 16px 18px;margin:0 0 11px;position:relative}
+  ol.steps li::before{content:counter(s);position:absolute;top:16px;inset-inline-start:18px;
+    width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    font-size:.85rem;font-weight:700;display:grid;place-items:center}
+  ol.steps .h{display:block;font-weight:700;font-size:1.05rem;margin:0 0 2px;
+    padding-inline-start:36px;min-height:26px}
+  ol.steps .when{display:block;font-size:.86rem;color:var(--muted);margin:0 0 8px;
+    padding-inline-start:36px}
+  ol.steps p{margin:0;font-size:.98rem}
+  ol.steps .get{margin:8px 0 0;font-size:.94rem;color:var(--go);font-weight:600}
+
+  /* ---- why / yours ---- */
+  .grid{display:grid;gap:10px}
+  @media (min-width:520px){.grid{grid-template-columns:1fr 1fr}}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .box b{display:block;margin:0 0 3px}
+  .box span{font-size:.94rem;color:var(--muted)}
+
+  ul.plain{margin:0;padding-inline-start:1.15em}
+  ul.plain li{margin:0 0 7px}
+
+  /* ---- faq ---- */
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;margin:0 0 9px}
+  details summary{cursor:pointer;font-weight:600;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"+";float:left;color:var(--muted);font-weight:700}
+  details[open] summary::after{content:"\2013"}
+  details p{margin:10px 0 0;font-size:.97rem;color:var(--muted)}
+
+  /* ---- who ---- */
+  .who{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .who p:last-child{margin:0}
+
+  /* ---- foot ---- */
+  .foot{margin:46px 0 0;padding:24px 0 0;border-top:1px solid var(--line);
+    font-size:.93rem;color:var(--muted)}
+  .foot a{color:var(--accent)}
+  .foot .tel{font-weight:700;color:var(--ink);font-size:1.05rem;
+    direction:ltr;display:inline-block;unicode-bidi:embed}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 40 40" role="img" aria-label="Atidi Labs">
+      <rect x="1.5" y="1.5" width="37" height="37" rx="10"
+            fill="none" stroke="currentColor" stroke-width="2.4" opacity=".28"/>
+      <path d="M11 27.5 L20 12 L29 27.5" fill="none" stroke="currentColor"
+            stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.4 22 L24.6 22" fill="none" stroke="currentColor"
+            stroke-width="2.8" stroke-linecap="round"/>
+    </svg>
+    <b>Atidi&nbsp;Labs</b>
+    <span>· עתידי</span>
+  </div>
+
+  <h1>חוסכים לעסק שלכם זמן וכסף בעזרת&nbsp;AI.</h1>
+
+  <p class="lede">אנחנו מוצאים את העבודה שמישהו אצלכם עושה ביד כל יום,
+  וגורמים לה לקרות לבד.</p>
+
+  <a class="cta" href="https://wa.me/972543074547?text=%D7%A9%D7%9C%D7%95%D7%9D%20%D7%93%D7%A0%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%90%D7%AA%D7%A8.%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A2%D7%9C%20%D7%91%D7%99%D7%A7%D7%95%D7%A8%20%D7%A9%D7%9C%20%D7%A9%D7%A2%D7%94.">
+    ביקור של שעה, בחינם
+  </a>
+  <p class="cta-note">אנחנו באים אליכם. בלי עלות, בלי התחייבות.</p>
+
+  <h2>איפה הכסף בורח</h2>
+
+  <p>זה כמעט תמיד באותם מקומות:</p>
+
+  <ul class="leaks">
+    <li>ליד שהתקשר, ואף אחד לא חזר אליו.</li>
+    <li>הצעת מחיר שיוצאת אחרי יומיים במקום אחרי שעה.</li>
+    <li>דוחות, פרוטוקולים ומעקב אחרי אישורים שחוזרים כל שבוע, ונכתבים ביד.</li>
+    <li>חשבוניות שמישהו רודף אחריהן ביד, כל חודש.</li>
+  </ul>
+
+  <p>אף אחד מהדברים האלה לא נראה כמו בעיה גדולה. ביחד הם אוכלים
+  שעות של אנשים שאתם משלמים להם.</p>
+
+  <div class="number">
+    <p><b>בסוף השעה יהיה לכם מספר.</b> בערך כמה שקלים בחודש הולכים
+    אצלכם לאיבוד על עבודה ידנית.</p>
+    <p>אם המספר קטן, נגיד לכם את זה בעצמנו. אם הוא גדול, אתם מחליטים
+    מה לעשות איתו. המספר נשאר שלכם בכל מקרה.</p>
+  </div>
+
+  <h2>איך זה עובד</h2>
+
+  <p>מתקנים דליפה אחת בכל פעם. אתם מתחילים בצעד קטן, רואים תוצאה,
+  ואז מחליטים אם אתם רוצים את הצעד הבא. בלי פרויקט גדול, בלי חוזה ארוך.</p>
+
+  <ol class="steps">
+    <li>
+      <span class="h">הביקור</span>
+      <span class="when">שעה · בחינם</span>
+      <p>עוברים על העסק ביחד איתכם ומחפשים איפה נדלף זמן וכסף כל חודש.</p>
+      <p class="get">יוצאים עם: מספר ראשון. אתם מחליטים אם מפה שווה לכם.</p>
+    </li>
+    <li>
+      <span class="h">המפה</span>
+      <span class="when">שבועיים · מחיר קבוע</span>
+      <p>רשימה מדורגת של ארבע עד שש דליפות. לכל אחת יש שווי בשקלים לחודש,
+      וכל אחת קטנה מספיק כדי להיסגר בחודש.</p>
+      <p class="get">יוצאים עם: המפה. היא שלכם. אפשר לעצור כאן.</p>
+    </li>
+    <li>
+      <span class="h">התיקון הראשון</span>
+      <span class="when">שלושה עד ארבעה שבועות · מחיר קבוע</span>
+      <p>סוגרים את הדליפה הראשונה. לפני שמתחילים, מסכימים על מספר אחד
+      שיראה אם זה עבד.</p>
+      <p class="get">יוצאים עם: תהליך אחד שעובד.</p>
+    </li>
+    <li>
+      <span class="h">חודש אחרי חודש</span>
+      <span class="when">מחיר חודשי קבוע</span>
+      <p>כל חודש נסגרת עוד דליפה מהמפה. כל מה שנבנה קודם ממשיך לעבוד
+      ומתוחזק. מקבלים עמוד אחד שמראה מה נעשה ומה זה חסך.</p>
+      <p class="get">יוצאים עם: התקדמות קבועה, ואפשרות לעצור בהתראה של 30 יום.</p>
+    </li>
+  </ol>
+
+  <h2>למה צעד אחרי צעד</h2>
+
+  <div class="grid">
+    <div class="box"><b>החלטות קטנות</b><span>כל צעד הוא התחייבות קטנה.
+      אתם לא חותמים על הרשימה המלאה.</span></div>
+    <div class="box"><b>קודם הוכחה</b><span>אתם רואים תוצאה אחת
+      לפני שאתם משלמים על הבאה.</span></div>
+    <div class="box"><b>מחירים קבועים</b><span>יודעים את העלות של כל צעד
+      לפני שהוא מתחיל. לא גובים לפי שעות.</span></div>
+    <div class="box"><b>גדל איתכם</b><span>מתחילים בתהליך אחד ועוברים
+      לבא רק כשאתם מוכנים.</span></div>
+  </div>
+
+  <h2>מה נשאר שלכם</h2>
+
+  <ul class="plain">
+    <li>המפה.</li>
+    <li>כל אוטומציה שבנינו לכם, עם התיעוד שלה.</li>
+    <li>החשבונות והמידע. הם על השם שלכם.</li>
+    <li>ההחלטה. אפשר לעצור אחרי המפה, אחרי התיקון הראשון, או אחרי החודש השלישי.</li>
+  </ul>
+
+  <h2>שאלות שבעלי עסקים שואלים</h2>
+
+  <details>
+    <summary>אפשר לנסות לפני שמתחייבים?</summary>
+    <p>כן. שלושת הצעדים הראשונים הם הניסיון. התשלום החודשי מתחיל רק אחרי
+    שהתיקון הראשון הגיע למספר שהסכמנו עליו.</p>
+  </details>
+
+  <details>
+    <summary>אפשר להתחיל מתהליך אחד בלבד?</summary>
+    <p>כן. צעד שלוש הוא בדיוק תהליך אחד. על הבא אתם מחליטים אחרי שאתם
+    רואים אותו עובד.</p>
+  </details>
+
+  <details>
+    <summary>איך אני יודע שזה חסך כסף?</summary>
+    <p>לכל תיקון יש מספר אחד, שמוסכם בכתב לפני שהעבודה מתחילה.
+    רואה החשבון שלכם יכול לבדוק אותו.</p>
+  </details>
+
+  <details>
+    <summary>כמה עולה להפעיל את ה-AI עצמו?</summary>
+    <p>אתם משלמים לספק ה-AI ישירות, על חשבון שלכם. אתם רואים את החשבון
+    האמיתי. אנחנו לא מוסיפים עליו כלום.</p>
+  </details>
+
+  <details>
+    <summary>ומה כשכל הדליפות נסגרו?</summary>
+    <p>עוברים לתוכנית קטנה יותר: עדכוני אבטחה, תיקון כשמשהו נשבר,
+    הזכות לבקש שינויים, ואדם אחד שאחראי. אם העסק משתנה, בונים מפה חדשה.</p>
+  </details>
+
+  <details>
+    <summary>ואם אני רוצה להפסיק?</summary>
+    <p>אחרי החודש השלישי נותנים התראה של 30 יום. כל מה שבנינו ממשיך
+    לעבוד ונשאר שלכם.</p>
+  </details>
+
+  <h2>מי אנחנו</h2>
+
+  <div class="who">
+    <p><b>דני סופר</b>, מהנדס תעשייה וניהול.</p>
+    <p>ביומיום אני מטמיע AI בצוותי פיתוח של חברות גדולות: לוגיסטיקה,
+    פיננסים, ביטוח. לעסק בגודל שלכם אין צוות כזה. בשביל זה אנחנו כאן.</p>
+    <p>אנחנו בונים. לא מרצים, לא כותבים מסמכים. בסוף כל צעד יש משהו
+    שעובד בעסק שלכם.</p>
+  </div>
+
+  <h2>נדבר שעה?</h2>
+
+  <p>אנחנו באים אליכם למשרד. שעה אחת, בלי עלות ובלי התחייבות.
+  אתם יוצאים עם מספר.</p>
+
+  <a class="cta" href="https://wa.me/972543074547?text=%D7%A9%D7%9C%D7%95%D7%9D%20%D7%93%D7%A0%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%90%D7%AA%D7%A8.%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A2%D7%9C%20%D7%91%D7%99%D7%A7%D7%95%D7%A8%20%D7%A9%D7%9C%20%D7%A9%D7%A2%D7%94.">
+    שלחו הודעה בוואטסאפ
+  </a>
+
+  <div class="foot">
+    <p>או בטלפון: <a class="tel" href="tel:+972543074547">054-3074547</a></p>
+    <p><b>Atidi Labs</b> · עתידי · דני סופר · הרצליה</p>
+  </div>
+
+</div>
+</body>
+</html>
