@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>המספר הראשון</title>
+<meta name="description" content="הכלי של הביקור: שעה אחת במשרד, ובסוף מספר אחד שבנוי מהתשובות של בעל העסק.">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --ink:#15181d; --soft:#5b6472; --line:#dfe3e9;
+  --accent:#0b5c4d; --accent-soft:#e6f2ef; --warn:#8a5a00; --warn-soft:#fdf3e0;
+  --hero:#0b5c4d; --on-accent:#ffffff;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#101317; --card:#171b21; --ink:#eef1f5; --soft:#9aa5b4; --line:#262c35;
+    --accent:#4ec9ad; --accent-soft:#12271f; --warn:#e3b15f; --warn-soft:#2a2112;
+    --hero:#4ec9ad; --on-accent:#06120e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101317; --card:#171b21; --ink:#eef1f5; --soft:#9aa5b4; --line:#262c35;
+  --accent:#4ec9ad; --accent-soft:#12271f; --warn:#e3b15f; --warn-soft:#2a2112;
+  --hero:#4ec9ad; --on-accent:#06120e;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Assistant","Heebo",-apple-system,"Segoe UI",system-ui,sans-serif;
+  font-size:17px; line-height:1.55; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 140px}
+header.top{padding:22px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:-.2px}
+.brand span{color:var(--soft);font-weight:600}
+.top .sep{color:var(--line)}
+.top h1{font-size:1.15rem;margin:0;font-weight:700}
+.lede{color:var(--soft);margin:2px 0 18px;font-size:.98rem}
+
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:5px;margin:0 0 20px;box-shadow:var(--shadow);width:fit-content}
+.tabs button{appearance:none;border:0;background:transparent;color:var(--soft);
+  font:inherit;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;margin:0 0 16px;box-shadow:var(--shadow)}
+.card > h2{margin:0 0 4px;font-size:1.02rem;letter-spacing:-.2px}
+.card > h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;
+  background:var(--accent-soft);color:var(--accent);font-size:.8rem;margin-inline-end:8px;
+  vertical-align:middle;font-weight:800}
+.card > p.hint{color:var(--soft);font-size:.9rem;margin:0 0 14px}
+.ask{color:var(--soft);font-size:.86rem;margin:0 0 12px;font-style:italic}
+
+.row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row label{font-weight:600;font-size:.97rem}
+.row .sub{display:block;color:var(--soft);font-weight:400;font-size:.84rem;margin-top:1px}
+input[type=number],input[type=text],input[type=date]{
+  font:inherit;font-weight:700;width:108px;padding:9px 10px;text-align:center;
+  background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px}
+input[type=text]{width:190px;text-align:start;font-weight:600}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.unit{color:var(--soft);font-size:.85rem;margin-inline-start:6px}
+.leakfoot{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.leakfoot b{font-size:1.05rem;color:var(--hero)}
+.leakfoot span{color:var(--soft);font-size:.88rem}
+
+.sticky{position:fixed;inset-inline:0;bottom:0;background:var(--card);
+  border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(16,24,40,.08);z-index:20}
+.sticky .in{max-width:860px;margin:0 auto;padding:11px 16px;display:flex;gap:16px;
+  align-items:center;flex-wrap:wrap}
+.sticky .big{font-size:1.5rem;font-weight:800;color:var(--hero);line-height:1.1}
+.sticky .meta{color:var(--soft);font-size:.86rem}
+.sticky .spacer{flex:1}
+.btn{appearance:none;font:inherit;font-weight:700;cursor:pointer;border-radius:10px;
+  padding:9px 15px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.quiet{background:transparent;color:var(--soft);border-color:var(--line)}
+.btn:active{transform:translateY(1px)}
+
+.sample{background:var(--warn-soft);border:1px solid var(--warn);color:var(--warn);
+  border-radius:12px;padding:11px 14px;margin:0 0 16px;display:flex;gap:12px;
+  align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:.92rem;font-weight:600}
+.sample button{border-color:currentColor;color:inherit;background:transparent}
+
+/* ---- the sheet ---- */
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:26px;box-shadow:var(--shadow)}
+.sheet .sh-top{display:flex;justify-content:space-between;align-items:baseline;
+  gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.sheet .sh-top .who{font-size:1.3rem;font-weight:800;letter-spacing:-.3px}
+.sheet .sh-top .when{color:var(--soft);font-size:.9rem}
+.hero{margin:22px 0 6px;text-align:center}
+.hero .k{color:var(--soft);font-size:.95rem;font-weight:600}
+.hero .v{font-size:3rem;font-weight:800;color:var(--hero);line-height:1.05;letter-spacing:-1px}
+.hero .v small{font-size:1.1rem;font-weight:700}
+.hero .sub{color:var(--soft);font-size:.95rem;margin-top:4px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 6px}
+.trio div{background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  padding:12px;text-align:center}
+.trio b{display:block;font-size:1.25rem;color:var(--ink)}
+.trio span{color:var(--soft);font-size:.82rem}
+table{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:.95rem}
+th,td{text-align:start;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--soft);font-size:.8rem;font-weight:700;text-transform:none}
+td.num,th.num{text-align:end;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num b{color:var(--hero)}
+tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
+.said{color:var(--soft);font-size:.82rem;display:block}
+.box{border:1px solid var(--line);border-radius:12px;padding:14px;margin:18px 0 0;background:var(--bg)}
+.box h3{margin:0 0 4px;font-size:.95rem}
+.box p{margin:0;color:var(--soft);font-size:.9rem}
+.box .big2{font-size:1.5rem;font-weight:800;color:var(--ink)}
+.verdict{border-inline-start:4px solid var(--accent);background:var(--accent-soft);
+  border-radius:0 12px 12px 0;padding:14px 16px;margin:20px 0 0}
+.verdict.small{border-color:var(--warn);background:var(--warn-soft)}
+.verdict b{display:block;margin-bottom:2px}
+.verdict p{margin:0;font-size:.93rem}
+.fine{margin:20px 0 0;padding:0;list-style:none;color:var(--soft);font-size:.88rem}
+.fine li{padding:4px 0 4px 0;display:flex;gap:8px}
+.fine li::before{content:"·";font-weight:800;color:var(--accent)}
+.sh-foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  color:var(--soft);font-size:.88rem}
+.sh-foot b{color:var(--ink)}
+.empty{text-align:center;color:var(--soft);padding:40px 10px}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.ta{position:absolute;inset-inline-start:-9999px;top:-9999px}
+.said-note{font-size:.85rem;color:var(--soft);margin-top:6px}
+.chk{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--soft);
+  padding:10px 0 0;border-top:1px solid var(--line);margin-top:10px}
+.chk input{width:auto}
+.toast{position:fixed;inset-inline:0;bottom:84px;display:flex;justify-content:center;
+  pointer-events:none;z-index:40}
+.toast span{background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;
+  font-size:.9rem;font-weight:700;opacity:0;transition:opacity .2s}
+.toast.on span{opacity:1}
+
+@media screen and (max-width:620px){
+  /* the phone IS the review path, so the table becomes one card per leak */
+  table{margin-top:14px}
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tbody tr{border:1px solid var(--line);border-radius:12px;background:var(--bg);
+    padding:11px 13px;margin:0 0 10px}
+  td{border:0;padding:3px 0;display:flex;justify-content:space-between;
+    align-items:baseline;gap:14px;text-align:start}
+  td:first-child{display:block;font-weight:700;padding-bottom:7px;margin-bottom:5px;
+    border-bottom:1px solid var(--line)}
+  td.num{text-align:end}
+  td[data-label]::before{content:attr(data-label);color:var(--soft);
+    font-size:.85rem;font-weight:600}
+  td.rate-cell:empty{display:none}
+  tbody tr.tot{border:2px solid var(--ink);background:transparent}
+  tbody tr.tot td{font-weight:800}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .wrap{padding-bottom:150px}
+  .row{grid-template-columns:1fr;align-items:start;gap:4px}
+  .row .val{justify-self:start}
+  .trio{grid-template-columns:1fr}
+  .hero .v{font-size:2.3rem}
+  .sheet{padding:18px}
+  .sticky .big{font-size:1.25rem}
+}
+
+@media print{
+  @page{size:A4;margin:14mm}
+  :root{--bg:#fff;--card:#fff;--ink:#000;--soft:#444;--line:#bbb;--accent:#0b5c4d;
+    --accent-soft:#eef5f3;--hero:#0b5c4d;--warn:#7a4f00;--warn-soft:#f7f1e3;
+    --on-accent:#fff;--shadow:none}
+  body{background:#fff;font-size:11.5pt}
+  .wrap{max-width:none;padding:0}
+  header.top,.tabs,.sticky,.toolbar,.sample,.toast,.noprint{display:none !important}
+  .sheet{border:0;padding:0;box-shadow:none}
+  .trio div,.box{background:#fff}
+  .hero .v{font-size:2.4rem}
+  table{font-size:10.5pt}
+  .verdict{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">Atidi&nbsp;Labs <span>· עתידי</span></div>
+    <div class="sep">|</div>
+    <h1>המספר הראשון</h1>
+  </header>
+  <p class="lede">הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד — בנוי מהתשובות שלו, לא משלנו.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-ask"   aria-selected="true"  aria-controls="pane-ask">הביקור</button>
+    <button role="tab" id="tab-sheet" aria-selected="false" aria-controls="pane-sheet">הדף שלו</button>
+  </div>
+
+  <div id="pane-ask" role="tabpanel">
+    <div class="sample" id="sampleBar">
+      <span>אלה נתוני דוגמה, לא ביקור אמיתי.</span>
+      <button class="btn" id="clearBtn">נקה והתחל ביקור</button>
+    </div>
+
+    <section class="card">
+      <h2><span class="n">0</span>העסק, ועלות השעה</h2>
+      <p class="hint">בלי עלות שעה אין מספר. שאל אותו, אל תנחש בשבילו.</p>
+      <div class="row"><label>שם העסק</label>
+        <div class="val"><input type="text" id="biz" placeholder="שם המשרד"></div></div>
+      <div class="row"><label>תאריך הביקור</label>
+        <div class="val"><input type="date" id="visitDate"></div></div>
+      <div class="row"><label>כמה מהנדסים ומפקחים בצוות?<span class="sub">רק כדי לראות את הגודל</span></label>
+        <div class="val"><input type="number" id="team" min="0" step="1"></div></div>
+      <div class="row"><label>עלות שעת מהנדס לעסק<span class="sub">עלות מעביד, לא שכר ברוטו</span></label>
+        <div class="val"><input type="number" id="rate" min="0" step="1"><span class="unit">₪</span></div></div>
+      <div class="row"><label>הוא לא יודע? עלות מעביד חודשית<span class="sub">מחושב לפי החלוקה למטה</span></label>
+        <div class="val"><input type="number" id="monthly" min="0" step="100"><span class="unit">₪</span></div></div>
+      <div class="row"><label>שעות עבודה בחודש<span class="sub">182 זה חודש מלא בישראל</span></label>
+        <div class="val"><input type="number" id="hpm" min="1" step="1"></div></div>
+      <p class="said-note" id="rateNote"></p>
+    </section>
+
+    <section class="card" data-leak="paper">
+      <h2><span class="n">1</span>הניירת</h2>
+      <p class="ask">"כמה דוחות פיקוח, פרוטוקולים ומעקבי אישורים נכתבים אצלכם בשבוע?"</p>
+      <div class="row"><label>מסמכים חוזרים בשבוע</label>
+        <div class="val"><input type="number" id="paperCount" min="0" step="1"></div></div>
+      <div class="row"><label>זמן למסמך אחד<span class="sub">מההתחלה עד שהוא נשלח</span></label>
+        <div class="val"><input type="number" id="paperMin" min="0" step="5"><span class="unit">דקות</span></div></div>
+      <div class="row"><label>עלות השעה של מי שכותב</label>
+        <div class="val"><input type="number" id="paperRate" min="0" step="1"><span class="unit">₪</span></div></div>
+      <div class="leakfoot"><span id="paperSaid"></span><b id="paperOut"></b></div>
+    </section>
+
+    <section class="card" data-leak="quote">
+      <h2><span class="n">2</span>הצעות מחיר</h2>
+      <p class="ask">"כמה הצעות אתם מוציאים בחודש, וכמה זמן לוקח להרכיב אחת?"</p>
+      <div class="row"><label>הצעות בחודש</label>
+        <div class="val"><input type="number" id="quoteCount" min="0" step="1"></div></div>
+      <div class="row"><label>זמן להצעה אחת</label>
+        <div class="val"><input type="number" id="quoteMin" min="0" step="10"><span class="unit">דקות</span></div></div>
+      <div class="row"><label>עלות השעה של מי שמרכיב</label>
+        <div class="val"><input type="number" id="quoteRate" min="0" step="1"><span class="unit">₪</span></div></div>
+      <div class="leakfoot"><span id="quoteSaid"></span><b id="quoteOut"></b></div>
+    </section>
+
+    <section class="card" data-leak="chase">
+      <h2><span class="n">3</span>רדיפה אחרי אישורים וחשבוניות</h2>
+      <p class="ask">"כמה שעות בחודש מישהו אצלכם רודף אחרי אישור חשבון או חשבונית?"</p>
+      <div class="row"><label>שעות בחודש<span class="sub">טלפונים, מיילים, תזכורות</span></label>
+        <div class="val"><input type="number" id="chaseHours" min="0" step="1"></div></div>
+      <div class="row"><label>עלות השעה של מי שרודף</label>
+        <div class="val"><input type="number" id="chaseRate" min="0" step="1"><span class="unit">₪</span></div></div>
+      <div class="leakfoot"><span id="chaseSaid"></span><b id="chaseOut"></b></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">4</span>פניות שלא נענו</h2>
+      <p class="hint">זה לא שעות, זה הכנסה. בדף זה יושב בנפרד, ועל שמו — זאת ההערכה שלו.</p>
+      <p class="ask">"כמה פניות חדשות מגיעות בחודש, וכמה מהן לא מקבלות מענה באותו יום?"</p>
+      <div class="row"><label>פניות חדשות בחודש</label>
+        <div class="val"><input type="number" id="leads" min="0" step="1"></div></div>
+      <div class="row"><label>מהן, כמה לא נענות באותו יום</label>
+        <div class="val"><input type="number" id="leadsMissed" min="0" step="1"></div></div>
+      <div class="row"><label>שווי פרויקט ממוצע</label>
+        <div class="val"><input type="number" id="dealValue" min="0" step="500"><span class="unit">₪</span></div></div>
+      <div class="row"><label>מהן, כמה היו נסגרות לדעתו<span class="sub">המספר שלו, לא שלך</span></label>
+        <div class="val"><input type="number" id="leadsWin" min="0" step="1"></div></div>
+      <div class="leakfoot"><span id="leadSaid"></span><b id="leadOut"></b></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">5</span>הדיאלים שלך</h2>
+      <p class="hint">לא מספרים מהשוק. אלה הקווים שאתה מעמיד, והם כתובים על הדף.</p>
+      <div class="row"><label>"קטן" זה עד<span class="sub">חלק ממהנדס אחד במשרה מלאה</span></label>
+        <div class="val"><input type="number" id="cutSmall" min="0" step="0.05"></div></div>
+      <div class="row"><label>"שווה מפה" זה מעל</label>
+        <div class="val"><input type="number" id="cutBig" min="0" step="0.05"></div></div>
+      <div class="row"><label>כמה מהעבודה הידנית אפשר להעיף<span class="sub">ניחוש שלך, לא נתון</span></label>
+        <div class="val"><input type="number" id="share" min="0" max="100" step="5"><span class="unit">%</span></div></div>
+      <label class="chk"><input type="checkbox" id="showSave"> להציג את שורת החיסכון המשוער בדף שלו</label>
+    </section>
+  </div>
+
+  <div id="pane-sheet" role="tabpanel" hidden>
+    <div class="toolbar noprint">
+      <button class="btn" id="printBtn">הדפס או שמור PDF</button>
+      <button class="btn ghost" id="waBtn">העתק הודעת וואטסאפ</button>
+      <button class="btn quiet" id="backBtn">חזרה לביקור</button>
+    </div>
+    <div id="sheet"></div>
+  </div>
+
+</div>
+
+<div class="sticky noprint" id="stickyBar">
+  <div class="in">
+    <div>
+      <div class="big" id="sBig">—</div>
+      <div class="meta" id="sMeta">מלא עלות שעה ושאלה אחת</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="toSheet">הדף שלו</button>
+  </div>
+</div>
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+<textarea class="ta" id="clip" aria-hidden="true" tabindex="-1"></textarea>
+
+<script>
+"use strict";
+var WEEKS = 52/12;            /* 4.333 weeks in a month */
+var DAY   = 8;                /* one engineer-day, for the "days" reading */
+
+var SAMPLE = {
+  biz:"משרד פיקוח (דוגמה)", team:6, rate:170, monthly:0, hpm:182,
+  paperCount:14, paperMin:45, paperRate:170,
+  quoteCount:8,  quoteMin:120, quoteRate:170,
+  chaseHours:12, chaseRate:110,
+  leads:18, leadsMissed:5, dealValue:30000, leadsWin:1,
+  cutSmall:0.2, cutBig:0.5, share:50, showSave:false
+};
+var FIELDS = Object.keys(SAMPLE).concat(["visitDate"]);
+var KEY = "atidi-first-number-v1";
+
+function $(id){ return document.getElementById(id); }
+function num(id){ var e=$(id); if(!e) return 0; var v=parseFloat(e.value); return isFinite(v)&&v>0?v:0; }
+function txt(id){ var e=$(id); return e&&e.value?e.value.trim():""; }
+
+function nis(n){
+  if(!isFinite(n)) n=0;
+  return "₪" + Math.round(n).toLocaleString("en-US");
+}
+function r1(n){ return isFinite(n) ? Math.round(n*10)/10 : 0; }
+function h(n){ return r1(n).toLocaleString("en-US"); }
+function d1(n){ return (Math.round(n*10)/10).toLocaleString("en-US"); }
+
+/* ---------- state ---------- */
+function isSample(){
+  return txt("biz") === SAMPLE.biz;
+}
+function load(){
+  var saved=null;
+  try{ var raw=localStorage.getItem(KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
+  var src = saved || SAMPLE;
+  FIELDS.forEach(function(k){
+    var el=$(k); if(!el) return;
+    if(el.type==="checkbox"){ el.checked = !!src[k]; }
+    else if(src[k]!==undefined && src[k]!==null && src[k]!=="" ){ el.value = src[k]; }
+  });
+  if(!$("visitDate").value) $("visitDate").value = today();
+  if(!saved){ /* sample: keep monthly empty so the rate note stays quiet */ $("monthly").value=""; }
+}
+function save(){
+  var o={};
+  FIELDS.forEach(function(k){
+    var el=$(k); if(!el) return;
+    o[k] = el.type==="checkbox" ? el.checked : el.value;
+  });
+  try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
+}
+function today(){
+  var d=new Date(), p=function(x){return (x<10?"0":"")+x;};
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function heDate(iso){
+  if(!iso) return "";
+  var p=iso.split("-"); if(p.length!==3) return iso;
+  return p[2]+"."+p[1]+"."+p[0];
+}
+
+/* ---------- the model ---------- */
+function model(){
+  var hpm = num("hpm") || 182;
+  var base = num("rate");
+  if(!base && num("monthly")) base = num("monthly")/hpm;
+
+  var leaks = [];
+
+  var pc=num("paperCount"), pm=num("paperMin");
+  if(pc&&pm){
+    leaks.push({ id:"paper", name:"הניירת",
+      said: pc+" מסמכים בשבוע × "+h(pm)+" דקות",
+      hours: pc*(pm/60)*WEEKS,
+      rate: num("paperRate")||base });
+  }
+  var qc=num("quoteCount"), qm=num("quoteMin");
+  if(qc&&qm){
+    leaks.push({ id:"quote", name:"הצעות מחיר",
+      said: qc+" הצעות בחודש × "+h(qm)+" דקות",
+      hours: qc*(qm/60),
+      rate: num("quoteRate")||base });
+  }
+  var ch=num("chaseHours");
+  if(ch){
+    leaks.push({ id:"chase", name:"רדיפה אחרי אישורים וחשבוניות",
+      said: h(ch)+" שעות בחודש, לדבריו",
+      hours: ch,
+      rate: num("chaseRate")||base });
+  }
+
+  /* Round first, then total. The owner checks this sheet by hand:
+     hours shown x rate shown must equal the cost shown, and the column
+     must equal the total. So the rounded figures are the real ones. */
+  leaks.forEach(function(l){
+    l.hours = r1(l.hours);
+    l.rate  = Math.round(l.rate||0);
+    l.cost  = Math.round(l.hours * l.rate);
+  });
+  leaks.sort(function(a,b){ return b.cost - a.cost; });
+
+  var hours = r1(leaks.reduce(function(s,l){ return s+l.hours; },0));
+  var cost  = leaks.reduce(function(s,l){ return s+l.cost;  },0);
+
+  var win = Math.min(num("leadsWin"), num("leadsMissed"));
+  var atRisk = win * num("dealValue");
+
+  return {
+    biz: txt("biz"), date: txt("visitDate"), team: num("team"),
+    hpm: hpm, base: base, leaks: leaks,
+    hours: hours, cost: cost, year: cost*12,
+    days: hours/DAY, engineers: hpm? hours/hpm : 0,
+    leads: num("leads"), missed: num("leadsMissed"),
+    win: win, dealValue: num("dealValue"), atRisk: atRisk,
+    cutSmall: num("cutSmall")||0.2, cutBig: num("cutBig")||0.5,
+    share: num("share")/100, showSave: $("showSave").checked,
+    ready: !!(cost>0)
+  };
+}
+
+function verdict(m){
+  if(m.engineers < m.cutSmall){
+    return { small:true, head:"המספר קטן.",
+      body:"לפי התשובות שלו, העבודה הידנית החוזרת היא פחות מ-"+d1(m.cutSmall)+
+           " מהנדס במשרה מלאה. זה הרגע להגיד את זה בעצמך וללחוץ יד. "+
+           "הדברים הגדולים אצלו כבר סגורים." };
+  }
+  if(m.engineers < m.cutBig){
+    return { small:false, head:"יש כאן תיקון אחד, לא מפה.",
+      body:"זה "+d1(m.engineers)+" מהנדס במשרה מלאה שיושב על עבודה ידנית חוזרת. "+
+           "הדליפה הגדולה היא „"+(m.leaks[0]?m.leaks[0].name:"")+"”. "+
+           "הציע לסגור אותה לבד, ולהחליט על השאר אחר כך." };
+  }
+  return { small:false, head:"שווה למדוד את זה כמו שצריך.",
+    body:"זה "+d1(m.engineers)+" מהנדס במשרה מלאה, רק על עבודה ידנית חוזרת, "+
+         "והמספר הזה הוא אומדן גס מתוך שעה אחת. כאן המפה מחזירה את עצמה." };
+}
+
+/* ---------- render: the live bar + per-leak lines ---------- */
+function renderAsk(m){
+  var rn = $("rateNote");
+  if(!num("rate") && num("monthly")){
+    rn.textContent = "לפי "+nis(num("monthly"))+" בחודש ו-"+h(m.hpm)+" שעות: "+nis(m.base)+" לשעה.";
+  } else if(!m.base){
+    rn.textContent = "אין עלות שעה, אין מספר.";
+  } else { rn.textContent = ""; }
+
+  var by={}; m.leaks.forEach(function(l){ by[l.id]=l; });
+  [["paper","הניירת"],["quote","הצעות מחיר"],["chase","רדיפה"]].forEach(function(p){
+    var l=by[p[0]];
+    $(p[0]+"Said").textContent = l ? l.said : "";
+    $(p[0]+"Out").textContent  = l ? (h(l.hours)+" שעות · "+nis(l.cost)+" בחודש") : "";
+  });
+
+  if(m.win && m.dealValue){
+    $("leadSaid").textContent = m.win+" מתוך "+m.missed+" שלא נענו × "+nis(m.dealValue);
+    $("leadOut").textContent  = nis(m.atRisk)+" בחודש, בהערכה שלו";
+  } else { $("leadSaid").textContent=""; $("leadOut").textContent=""; }
+
+  if(m.ready){
+    $("sBig").textContent  = nis(m.cost)+" בחודש";
+    $("sMeta").textContent = h(m.hours)+" שעות · "+d1(m.days)+" ימי מהנדס · "+
+                             d1(m.engineers)+" מהנדס במשרה מלאה";
+  } else {
+    $("sBig").textContent = "—";
+    $("sMeta").textContent = "מלא עלות שעה ושאלה אחת";
+  }
+}
+
+/* ---------- render: the sheet he keeps ---------- */
+function renderSheet(m){
+  var el = $("sheet");
+  if(!m.ready){
+    el.innerHTML = '<div class="sheet"><div class="empty">אין עוד מספר.<br>'+
+      'מלא עלות שעה ולפחות דליפה אחת, והדף ייבנה לבד.</div></div>';
+    return;
+  }
+  var v = verdict(m);
+  var rows = m.leaks.map(function(l){
+    return '<tr><td>'+esc(l.name)+'<span class="said">'+esc(l.said)+'</span></td>'+
+           '<td class="num" data-label="שעות בחודש">'+h(l.hours)+'</td>'+
+           '<td class="num" data-label="עלות שעה">'+nis(l.rate)+'</td>'+
+           '<td class="num" data-label="בחודש"><b>'+nis(l.cost)+'</b></td></tr>';
+  }).join("");
+
+  var saveRow = m.showSave && m.share ?
+    '<div class="box"><h3>אם מעיפים '+Math.round(m.share*100)+'% מהעבודה הזאת</h3>'+
+    '<div class="big2">'+nis(m.cost*m.share)+' בחודש</div>'+
+    '<p>האחוז הזה הוא הערכה, לא נתון. הוא נבחר לפני הפגישה וניתן לשינוי.</p></div>' : '';
+
+  var riskRow = m.atRisk ?
+    '<div class="box"><h3>פניות שלא נענו — ההערכה שלו</h3>'+
+    '<div class="big2">'+nis(m.atRisk)+' בחודש</div>'+
+    '<p>'+m.missed+' מתוך '+m.leads+' פניות בחודש לא מקבלות מענה באותו יום. '+
+    'הוא מעריך ש-'+m.win+' מהן היו נסגרות, בשווי '+nis(m.dealValue)+' לפרויקט. '+
+    'המספר הזה לא נכנס לסכום שלמעלה, כי הוא הערכה ולא שעות.</p></div>' : '';
+
+  el.innerHTML =
+  '<div class="sheet">'+
+    '<div class="sh-top">'+
+      '<div class="who">'+esc(m.biz||"הביקור")+'</div>'+
+      '<div class="when">ביקור של שעה · '+esc(heDate(m.date))+
+        (m.team? ' · '+m.team+' מהנדסים ומפקחים':'')+'</div>'+
+    '</div>'+
+
+    '<div class="hero">'+
+      '<div class="k">עבודה ידנית חוזרת, לפי התשובות שלך</div>'+
+      '<div class="v">'+nis(m.cost)+' <small>בחודש</small></div>'+
+      '<div class="sub">'+nis(m.year)+' בשנה</div>'+
+    '</div>'+
+
+    '<div class="trio">'+
+      '<div><b>'+h(m.hours)+'</b><span>שעות בחודש</span></div>'+
+      '<div><b>'+d1(m.days)+'</b><span>ימי מהנדס בחודש</span></div>'+
+      '<div><b>'+d1(m.engineers)+'</b><span>מהנדס במשרה מלאה</span></div>'+
+    '</div>'+
+
+    '<table><thead><tr>'+
+      '<th>איפה</th><th class="num">שעות בחודש</th>'+
+      '<th class="num">עלות שעה</th><th class="num">בחודש</th>'+
+    '</tr></thead><tbody>'+rows+
+    '<tr class="tot"><td>סך הכל</td>'+
+    '<td class="num" data-label="שעות בחודש">'+h(m.hours)+'</td>'+
+    '<td class="num rate-cell"></td>'+
+    '<td class="num" data-label="בחודש">'+nis(m.cost)+'</td></tr>'+
+    '</tbody></table>'+
+
+    riskRow + saveRow +
+
+    '<div class="verdict'+(v.small?' small':'')+'">'+
+      '<b>'+esc(v.head)+'</b><p>'+esc(v.body)+'</p></div>'+
+
+    '<ul class="fine">'+
+      '<li>כל מספר כאן בנוי מהתשובות שלך בשעה הזאת. אין כאן נתון מהשוק ואין כאן ממוצע של אף אחד.</li>'+
+      '<li>זה אומדן גס, לא מדידה. מספר שנאמר בעל פה הוא מספר שנאמר בעל פה.</li>'+
+      '<li>המפה היא העבודה שמודדת את זה באמת, דליפה אחר דליפה, עם שווי לכל אחת.</li>'+
+      '<li>הדף הזה שלך, גם אם לא נמשיך מכאן.</li>'+
+    '</ul>'+
+
+    '<div class="sh-foot">'+
+      '<div><b>דני סופר</b> · Atidi Labs · מהנדס תעשייה וניהול</div>'+
+      '<div>054-3074547 · atidilabs.com</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+  });
+}
+
+/* ---------- whatsapp ---------- */
+function waText(m){
+  var L=[];
+  L.push((m.biz? m.biz+", ":"")+"סיכום הביקור של היום.");
+  L.push("");
+  L.push("לפי המספרים שנתת, העבודה הידנית החוזרת לוקחת "+h(m.hours)+
+         " שעות בחודש — בערך "+nis(m.cost)+" בחודש, "+nis(m.year)+" בשנה.");
+  if(m.leaks[0]) L.push("הגדולה מכולן: "+m.leaks[0].name+", "+h(m.leaks[0].hours)+" שעות בחודש.");
+  if(m.atRisk) L.push("בנפרד, ההערכה שלך על פניות שלא נענו: "+nis(m.atRisk)+" בחודש.");
+  L.push("");
+  L.push("המספר בנוי מהתשובות שלך והוא אומדן גס, לא מדידה. הדף המלא מצורף.");
+  L.push("");
+  L.push("דני סופר · Atidi Labs · 054-3074547");
+  return L.join("\n");
+}
+
+function toast(msg){
+  $("toastMsg").textContent=msg;
+  var t=$("toast"); t.classList.add("on");
+  setTimeout(function(){ t.classList.remove("on"); },1600);
+}
+
+/* ---------- wiring ---------- */
+var current = null;
+function refresh(){
+  current = model();
+  renderAsk(current);
+  renderSheet(current);
+  $("sampleBar").hidden = !isSample();
+  save();
+}
+
+function showTab(which){
+  var ask = which==="ask";
+  $("pane-ask").hidden   = !ask;
+  $("pane-sheet").hidden =  ask;
+  $("tab-ask").setAttribute("aria-selected", ask?"true":"false");
+  $("tab-sheet").setAttribute("aria-selected", ask?"false":"true");
+  $("stickyBar").hidden = !ask;
+  window.scrollTo(0,0);
+}
+
+document.addEventListener("input", function(e){
+  if(e.target && e.target.id) refresh();
+});
+$("tab-ask").addEventListener("click", function(){ showTab("ask"); });
+$("tab-sheet").addEventListener("click", function(){ showTab("sheet"); });
+$("toSheet").addEventListener("click", function(){ showTab("sheet"); });
+$("backBtn").addEventListener("click", function(){ showTab("ask"); });
+$("printBtn").addEventListener("click", function(){ window.print(); });
+
+$("waBtn").addEventListener("click", function(){
+  if(!current || !current.ready){ toast("אין עוד מספר להעתיק"); return; }
+  var t = waText(current);
+  var done=function(){ toast("הועתק"); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
+  } else { fallback(t,done); }
+});
+function fallback(t,done){
+  var ta=$("clip"); ta.value=t; ta.removeAttribute("aria-hidden");
+  ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ toast("העתק ידנית מהדף"); }
+  ta.setAttribute("aria-hidden","true");
+}
+
+$("clearBtn").addEventListener("click", function(){
+  FIELDS.forEach(function(k){
+    var el=$(k); if(!el) return;
+    if(el.type==="checkbox") el.checked=false; else el.value="";
+  });
+  $("hpm").value=182; $("cutSmall").value=0.2; $("cutBig").value=0.5; $("share").value=50;
+  $("visitDate").value=today();
+  refresh();
+  $("biz").focus();
+  toast("נקי. התחל לשאול.");
+});
+
+load();
+refresh();
+showTab("ask");
+</script>
+</body>
+</html>
