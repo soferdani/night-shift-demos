@@ -28,6 +28,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{margin:0;padding:0}
 body{
   background:var(--bg); color:var(--ink);
@@ -145,6 +146,27 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
   font-size:.9rem;font-weight:700;opacity:0;transition:opacity .2s}
 .toast.on span{opacity:1}
 
+/* ---- the visit book (night 2) ---- */
+.visitbar{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;margin:0 0 16px;box-shadow:var(--shadow)}
+.visitbar select{font:inherit;font-weight:700;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;
+  display:block;margin:0 0 10px;text-overflow:ellipsis}
+.visitbar .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.visitbar .cnt{color:var(--soft);font-size:.86rem;font-weight:600;flex:0 0 auto;
+  margin-inline-end:auto}
+
+/* ---- the comparison (night 2) ---- */
+table.cmp{font-size:.92rem}
+table.cmp td:first-child{font-weight:600}
+.gate{border-inline-start:4px solid var(--accent);background:var(--accent-soft);
+  border-radius:0 12px 12px 0;padding:14px 16px;margin:4px 0 0}
+.gate.bad{border-color:var(--warn);background:var(--warn-soft)}
+.gate.wait{border-color:var(--line);background:var(--bg)}
+.gate b{display:block;margin-bottom:2px;font-size:1.05rem}
+.gate p{margin:0;font-size:.93rem;color:var(--soft)}
+.box p b{color:var(--ink)}
+
 @media screen and (max-width:620px){
   /* the phone IS the review path, so the table becomes one card per leak */
   table{margin-top:14px}
@@ -167,7 +189,8 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
   body{font-size:16px}
   .wrap{padding-bottom:150px}
   .row{grid-template-columns:1fr;align-items:start;gap:4px}
-  .row .val{justify-self:start}
+  .row .val{justify-self:stretch;width:100%}
+  .row .val input[type=text],.row .val input[type=date],.row .val select{width:100%}
   .trio{grid-template-columns:1fr}
   .hero .v{font-size:2.3rem}
   .sheet{padding:18px}
@@ -182,6 +205,8 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
   body{background:#fff;font-size:11.5pt}
   .wrap{max-width:none;padding:0}
   header.top,.tabs,.sticky,.toolbar,.sample,.toast,.noprint{display:none !important}
+  .visitbar,#pane-ask,#pane-compare{display:none !important}
+  #pane-sheet{display:block !important}
   .sheet{border:0;padding:0;box-shadow:none}
   .trio div,.box{background:#fff}
   .hero .v{font-size:2.4rem}
@@ -200,15 +225,25 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
   </header>
   <p class="lede">הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד — בנוי מהתשובות שלו, לא משלנו.</p>
 
+  <div class="visitbar noprint" id="visitBar">
+    <select id="visitPick" aria-label="הביקור הפתוח"></select>
+    <div class="foot">
+      <span class="cnt" id="visitCount"></span>
+      <button class="btn" id="newBtn">ביקור חדש</button>
+      <button class="btn quiet" id="delBtn" hidden>מחק ביקור</button>
+    </div>
+  </div>
+
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-ask"   aria-selected="true"  aria-controls="pane-ask">הביקור</button>
     <button role="tab" id="tab-sheet" aria-selected="false" aria-controls="pane-sheet">הדף שלו</button>
+    <button role="tab" id="tab-compare" aria-selected="false" aria-controls="pane-compare">ההשוואה</button>
   </div>
 
   <div id="pane-ask" role="tabpanel">
     <div class="sample" id="sampleBar">
       <span>אלה נתוני דוגמה, לא ביקור אמיתי.</span>
-      <button class="btn" id="clearBtn">נקה והתחל ביקור</button>
+      <button class="btn" id="clearBtn">התחל ביקור אמיתי</button>
     </div>
 
     <section class="card">
@@ -289,6 +324,19 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
         <div class="val"><input type="number" id="share" min="0" max="100" step="5"><span class="unit">%</span></div></div>
       <label class="chk"><input type="checkbox" id="showSave"> להציג את שורת החיסכון המשוער בדף שלו</label>
     </section>
+
+    <section class="card">
+      <h2><span class="n">6</span>איך נגמרה השעה</h2>
+      <p class="hint">סמן את זה אחרי שיצאת, לא בחדר. זה המספר של הניסוי, לא שלו.</p>
+      <div class="row"><label>הוא שאל כמה עולה המפה?<span class="sub">שאלה שלו, לא הצעה שלך</span></label>
+        <div class="val"><select id="outcome">
+          <option value="">עוד לא סומן</option>
+          <option value="asked">כן, שאל</option>
+          <option value="no">לא שאל</option>
+        </select></div></div>
+      <div class="row"><label>שורה אחת לזיכרון<span class="sub">מה נאמר שם שכדאי לזכור</span></label>
+        <div class="val"><input type="text" id="note" placeholder="מה נשאר ממנו"></div></div>
+    </section>
   </div>
 
   <div id="pane-sheet" role="tabpanel" hidden>
@@ -298,6 +346,10 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
       <button class="btn quiet" id="backBtn">חזרה לביקור</button>
     </div>
     <div id="sheet"></div>
+  </div>
+
+  <div id="pane-compare" role="tabpanel" hidden>
+    <div id="compare"></div>
   </div>
 
 </div>
@@ -328,12 +380,18 @@ var SAMPLE = {
   leads:18, leadsMissed:5, dealValue:30000, leadsWin:1,
   cutSmall:0.2, cutBig:0.5, share:50, showSave:false
 };
-var FIELDS = Object.keys(SAMPLE).concat(["visitDate"]);
-var KEY = "atidi-first-number-v1";
+var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note"]);
+
+var KEY   = "atidi-first-number-v2";   /* { visits:[ ... ], activeId } */
+var KEY_1 = "atidi-first-number-v1";   /* night 1 kept one visit here. migrated, never erased. */
+
+/* The threshold of the experiment, set 2026-11-23 before the first visit.
+   It is printed on the comparison tab so it cannot be quietly moved later. */
+var GATE = { asked:2, of:4 };
+
+var LEAK_NAMES = { paper:"הניירת", quote:"הצעות מחיר", chase:"רדיפה אחרי אישורים וחשבוניות" };
 
 function $(id){ return document.getElementById(id); }
-function num(id){ var e=$(id); if(!e) return 0; var v=parseFloat(e.value); return isFinite(v)&&v>0?v:0; }
-function txt(id){ var e=$(id); return e&&e.value?e.value.trim():""; }
 
 function nis(n){
   if(!isFinite(n)) n=0;
@@ -342,69 +400,136 @@ function nis(n){
 function r1(n){ return isFinite(n) ? Math.round(n*10)/10 : 0; }
 function h(n){ return r1(n).toLocaleString("en-US"); }
 function d1(n){ return (Math.round(n*10)/10).toLocaleString("en-US"); }
-
-/* ---------- state ---------- */
-function isSample(){
-  return txt("biz") === SAMPLE.biz;
-}
-function load(){
-  var saved=null;
-  try{ var raw=localStorage.getItem(KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
-  var src = saved || SAMPLE;
-  FIELDS.forEach(function(k){
-    var el=$(k); if(!el) return;
-    if(el.type==="checkbox"){ el.checked = !!src[k]; }
-    else if(src[k]!==undefined && src[k]!==null && src[k]!=="" ){ el.value = src[k]; }
-  });
-  if(!$("visitDate").value) $("visitDate").value = today();
-  if(!saved){ /* sample: keep monthly empty so the rate note stays quiet */ $("monthly").value=""; }
-}
-function save(){
-  var o={};
-  FIELDS.forEach(function(k){
-    var el=$(k); if(!el) return;
-    o[k] = el.type==="checkbox" ? el.checked : el.value;
-  });
-  try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
-}
 function today(){
   var d=new Date(), p=function(x){return (x<10?"0":"")+x;};
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
 }
 function heDate(iso){
   if(!iso) return "";
-  var p=iso.split("-"); if(p.length!==3) return iso;
+  var p=String(iso).split("-"); if(p.length!==3) return iso;
   return p[2]+"."+p[1]+"."+p[0];
 }
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+  });
+}
 
-/* ---------- the model ---------- */
-function model(){
-  var hpm = num("hpm") || 182;
-  var base = num("rate");
-  if(!base && num("monthly")) base = num("monthly")/hpm;
+/* ---------- the visit book ----------
+   Night 1 held ONE visit, so visiting the second office erased the first.
+   Four offices are the experiment, so the book holds them all. */
+
+function newId(){
+  return "v"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+}
+function blank(){
+  var v={ id:newId() };
+  FIELDS.forEach(function(k){ v[k]=""; });
+  v.visitDate=today(); v.hpm=182; v.cutSmall=0.2; v.cutBig=0.5; v.share=50;
+  v.showSave=false; v.outcome=""; v.note="";
+  return v;
+}
+function sampleVisit(){
+  var v=blank();
+  Object.keys(SAMPLE).forEach(function(k){ v[k]=SAMPLE[k]; });
+  v.monthly=""; v.sample=true;
+  return v;
+}
+function isSampleVisit(v){
+  return !!v && (v.sample===true || String(v.biz||"").trim()===SAMPLE.biz);
+}
+
+var book = { visits:[], activeId:"" };
+var migrated = false;
+
+function readBook(){
+  var b=null;
+  try{ var raw=localStorage.getItem(KEY); if(raw) b=JSON.parse(raw); }catch(e){}
+  if(b && b.visits && b.visits.length){
+    b.visits.forEach(function(v){ if(!v.id) v.id=newId(); });
+    return b;
+  }
+  var old=null;
+  try{ var r=localStorage.getItem(KEY_1); if(r) old=JSON.parse(r); }catch(e){}
+  if(old && typeof old==="object"){
+    var v=blank();
+    FIELDS.forEach(function(k){ if(old[k]!==undefined) v[k]=old[k]; });
+    if(!v.visitDate) v.visitDate=today();
+    if(isSampleVisit(v)) v.sample=true;
+    migrated = true;
+    return { visits:[v], activeId:v.id };
+  }
+  var s=sampleVisit();
+  return { visits:[s], activeId:s.id };
+}
+function saveBook(){
+  try{ localStorage.setItem(KEY, JSON.stringify(book)); }catch(e){}
+}
+function activeIndex(){
+  for(var i=0;i<book.visits.length;i++){ if(book.visits[i].id===book.activeId) return i; }
+  return -1;
+}
+function active(){
+  var i=activeIndex();
+  if(i<0){
+    if(!book.visits.length) book.visits.push(blank());
+    book.activeId = book.visits[0].id;
+    i = 0;
+  }
+  return book.visits[i];
+}
+function visitToForm(v){
+  FIELDS.forEach(function(k){
+    var el=$(k); if(!el) return;
+    if(el.type==="checkbox") el.checked = !!v[k];
+    else el.value = (v[k]===undefined||v[k]===null) ? "" : v[k];
+  });
+  if(!$("visitDate").value) $("visitDate").value = today();
+}
+function formToVisit(){
+  var v=active(); if(!v) return;
+  FIELDS.forEach(function(k){
+    var el=$(k); if(!el) return;
+    v[k] = el.type==="checkbox" ? el.checked : el.value;
+  });
+  if(v.sample && String(v.biz||"").trim()!==SAMPLE.biz) delete v.sample;
+}
+
+/* ---------- the model ----------
+   Reads a visit object, not the form, so a saved visit can be measured
+   without being opened. The arithmetic is night 1's, unchanged. */
+
+function nv(v,k){ var x=parseFloat(v[k]); return isFinite(x)&&x>0?x:0; }
+function sv(v,k){ return v[k]==null ? "" : String(v[k]).trim(); }
+
+function modelOf(v){
+  v = v || {};
+  var hpm = nv(v,"hpm") || 182;
+  var base = nv(v,"rate");
+  if(!base && nv(v,"monthly")) base = nv(v,"monthly")/hpm;
 
   var leaks = [];
 
-  var pc=num("paperCount"), pm=num("paperMin");
+  var pc=nv(v,"paperCount"), pm=nv(v,"paperMin");
   if(pc&&pm){
-    leaks.push({ id:"paper", name:"הניירת",
+    leaks.push({ id:"paper", name:LEAK_NAMES.paper,
       said: pc+" מסמכים בשבוע × "+h(pm)+" דקות",
       hours: pc*(pm/60)*WEEKS,
-      rate: num("paperRate")||base });
+      rate: nv(v,"paperRate")||base });
   }
-  var qc=num("quoteCount"), qm=num("quoteMin");
+  var qc=nv(v,"quoteCount"), qm=nv(v,"quoteMin");
   if(qc&&qm){
-    leaks.push({ id:"quote", name:"הצעות מחיר",
+    leaks.push({ id:"quote", name:LEAK_NAMES.quote,
       said: qc+" הצעות בחודש × "+h(qm)+" דקות",
       hours: qc*(qm/60),
-      rate: num("quoteRate")||base });
+      rate: nv(v,"quoteRate")||base });
   }
-  var ch=num("chaseHours");
+  var ch=nv(v,"chaseHours");
   if(ch){
-    leaks.push({ id:"chase", name:"רדיפה אחרי אישורים וחשבוניות",
+    leaks.push({ id:"chase", name:LEAK_NAMES.chase,
       said: h(ch)+" שעות בחודש, לדבריו",
       hours: ch,
-      rate: num("chaseRate")||base });
+      rate: nv(v,"chaseRate")||base });
   }
 
   /* Round first, then total. The owner checks this sheet by hand:
@@ -420,18 +545,20 @@ function model(){
   var hours = r1(leaks.reduce(function(s,l){ return s+l.hours; },0));
   var cost  = leaks.reduce(function(s,l){ return s+l.cost;  },0);
 
-  var win = Math.min(num("leadsWin"), num("leadsMissed"));
-  var atRisk = win * num("dealValue");
+  var win = Math.min(nv(v,"leadsWin"), nv(v,"leadsMissed"));
+  var atRisk = win * nv(v,"dealValue");
 
   return {
-    biz: txt("biz"), date: txt("visitDate"), team: num("team"),
+    id: v.id, sample: isSampleVisit(v),
+    biz: sv(v,"biz"), date: sv(v,"visitDate"), team: nv(v,"team"),
     hpm: hpm, base: base, leaks: leaks,
     hours: hours, cost: cost, year: cost*12,
     days: hours/DAY, engineers: hpm? hours/hpm : 0,
-    leads: num("leads"), missed: num("leadsMissed"),
-    win: win, dealValue: num("dealValue"), atRisk: atRisk,
-    cutSmall: num("cutSmall")||0.2, cutBig: num("cutBig")||0.5,
-    share: num("share")/100, showSave: $("showSave").checked,
+    leads: nv(v,"leads"), missed: nv(v,"leadsMissed"),
+    win: win, dealValue: nv(v,"dealValue"), atRisk: atRisk,
+    cutSmall: nv(v,"cutSmall")||0.2, cutBig: nv(v,"cutBig")||0.5,
+    share: nv(v,"share")/100, showSave: !!v.showSave,
+    outcome: sv(v,"outcome"), note: sv(v,"note"),
     ready: !!(cost>0)
   };
 }
@@ -455,16 +582,16 @@ function verdict(m){
 }
 
 /* ---------- render: the live bar + per-leak lines ---------- */
-function renderAsk(m){
+function renderAsk(m,v){
   var rn = $("rateNote");
-  if(!num("rate") && num("monthly")){
-    rn.textContent = "לפי "+nis(num("monthly"))+" בחודש ו-"+h(m.hpm)+" שעות: "+nis(m.base)+" לשעה.";
+  if(!nv(v,"rate") && nv(v,"monthly")){
+    rn.textContent = "לפי "+nis(nv(v,"monthly"))+" בחודש ו-"+h(m.hpm)+" שעות: "+nis(m.base)+" לשעה.";
   } else if(!m.base){
     rn.textContent = "אין עלות שעה, אין מספר.";
   } else { rn.textContent = ""; }
 
   var by={}; m.leaks.forEach(function(l){ by[l.id]=l; });
-  [["paper","הניירת"],["quote","הצעות מחיר"],["chase","רדיפה"]].forEach(function(p){
+  [["paper"],["quote"],["chase"]].forEach(function(p){
     var l=by[p[0]];
     $(p[0]+"Said").textContent = l ? l.said : "";
     $(p[0]+"Out").textContent  = l ? (h(l.hours)+" שעות · "+nis(l.cost)+" בחודש") : "";
@@ -562,10 +689,116 @@ function renderSheet(m){
   '</div>';
 }
 
-function esc(s){
-  return String(s==null?"":s).replace(/[&<>"]/g,function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+/* ---------- the visit bar ---------- */
+function visitLabel(m,i){
+  var name = m.biz || ("ביקור "+(i+1));
+  if(m.sample) name += " (דוגמה)";
+  return m.date ? name+" · "+heDate(m.date) : name;
+}
+function renderBar(){
+  var sel=$("visitPick"), out=[];
+  book.visits.forEach(function(v,i){
+    var m=modelOf(v);
+    out.push('<option value="'+esc(v.id)+'">'+esc(visitLabel(m,i))+'</option>');
   });
+  sel.innerHTML = out.join("");
+  sel.value = book.activeId;
+  $("visitCount").textContent = book.visits.length===1 ?
+    "ביקור אחד בכלי" : book.visits.length+" ביקורים בכלי";
+  $("delBtn").hidden = book.visits.length<2;
+  $("delBtn").textContent = "מחק ביקור";
+  $("delBtn").dataset.armed = "";
+}
+
+/* ---------- render: the comparison ---------- */
+function outcomeWord(o){
+  if(o==="asked") return "שאל כמה עולה המפה";
+  if(o==="no")    return "לא שאל";
+  return "עוד לא סומן";
+}
+function renderCompare(){
+  var el=$("compare");
+  var all = book.visits.map(modelOf);
+  var real = all.filter(function(m){ return !m.sample && m.ready; });
+
+  if(!real.length){
+    el.innerHTML = '<div class="card"><div class="empty">עוד אין ביקור אמיתי להשוות.<br>'+
+      'הטבלה כאן נבנית לבד אחרי הביקור הראשון.</div></div>';
+    return;
+  }
+
+  real.sort(function(a,b){ return String(a.date).localeCompare(String(b.date)); });
+
+  var rows = real.map(function(m){
+    var top = m.leaks[0] ? m.leaks[0].name : "—";
+    return '<tr><td>'+esc(m.biz||"ללא שם")+
+             '<span class="said">'+esc(heDate(m.date))+(m.note? ' · '+esc(m.note):'')+'</span></td>'+
+           '<td class="num" data-label="בחודש"><b>'+nis(m.cost)+'</b></td>'+
+           '<td class="num" data-label="מהנדס במשרה מלאה">'+d1(m.engineers)+'</td>'+
+           '<td class="num" data-label="הדליפה הגדולה">'+esc(top)+'</td>'+
+           '<td class="num" data-label="סוף הפגישה">'+esc(outcomeWord(m.outcome))+'</td></tr>';
+  }).join("");
+
+  var costs = real.map(function(m){ return m.cost; });
+  var avg  = Math.round(costs.reduce(function(s,c){ return s+c; },0)/costs.length);
+  var low  = Math.min.apply(null,costs), high = Math.max.apply(null,costs);
+
+  /* which leak comes out biggest, and in how many of the visits */
+  var tally={};
+  real.forEach(function(m){
+    if(!m.leaks[0]) return;
+    tally[m.leaks[0].id] = (tally[m.leaks[0].id]||0)+1;
+  });
+  var topId="", topN=0;
+  Object.keys(tally).forEach(function(k){ if(tally[k]>topN){ topN=tally[k]; topId=k; } });
+
+  var pattern;
+  if(real.length<2){
+    pattern = '<p>ביקור אחד הוא לא תבנית. השורה הזאת מתמלאת מהביקור השני.</p>';
+  } else {
+    pattern = '<p><b>הדליפה הגדולה ב-'+topN+' מתוך '+real.length+' הביקורים: '+
+      esc(LEAK_NAMES[topId]||"—")+'.</b> '+
+      'הטווח בין המשרדים הוא '+nis(low)+' עד '+nis(high)+' בחודש, בממוצע '+nis(avg)+'. '+
+      'זאת התבנית שאפשר לכתוב בהודעה הבאה, ורק אחרי שנאמרה בחדר.</p>';
+  }
+
+  /* the gate, as it was set before the first visit */
+  var done  = real.filter(function(m){ return m.outcome==="asked"||m.outcome==="no"; });
+  done.sort(function(a,b){ return String(a.date).localeCompare(String(b.date)); });
+  var first = done.slice(0,GATE.of);
+  var asked = first.filter(function(m){ return m.outcome==="asked"; }).length;
+
+  var gateCls, gateHead, gateBody;
+  if(asked>=GATE.asked){
+    gateCls="ok"; gateHead="עובר.";
+    gateBody=asked+" מתוך "+first.length+" הבעלים שישבו את השעה שאלו כמה עולה המפה. "+
+             "הרף היה "+GATE.asked+" מתוך "+GATE.of+". המכשיר עושה את העבודה שלו.";
+  } else if(done.length>=GATE.of){
+    gateCls="bad"; gateHead="נכשל.";
+    gateBody="רק "+asked+" מתוך "+GATE.of+" שאלו כמה עולה המפה. הרף היה "+GATE.asked+". "+
+             "לפי מה שנקבע מראש, הבעיה היא ההצעה, לא הכלי.";
+  } else {
+    gateCls="wait"; gateHead="עוד אין הכרעה.";
+    gateBody=done.length+" מתוך "+GATE.of+" הביקורים סומנו עד כה, "+asked+" מהם שאלו. "+
+             "סמן את סוף הפגישה בכל ביקור, והשורה הזאת תכריע לבד.";
+  }
+
+  el.innerHTML =
+    '<div class="card">'+
+      '<h2>מה הביקורים אומרים ביחד</h2>'+
+      '<p class="hint">רק ביקורים אמיתיים עם מספר. נתוני הדוגמה לא נכנסים לכאן.</p>'+
+      '<table class="cmp"><thead><tr>'+
+        '<th>המשרד</th><th class="num">בחודש</th><th class="num">מהנדס מלא</th>'+
+        '<th class="num">הדליפה הגדולה</th><th class="num">סוף הפגישה</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="box">'+pattern+'</div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<h2>הרף שנקבע לפני הביקור הראשון</h2>'+
+      '<p class="hint">הרף נקבע ב-23.11.2026: '+GATE.asked+' מתוך '+GATE.of+
+        ' השעות הראשונות מסתיימות בשאלה „כמה עולה המפה”. הוא לא זז אחרי שהנתונים נכנסו.</p>'+
+      '<div class="gate '+gateCls+'"><b>'+esc(gateHead)+'</b><p>'+esc(gateBody)+'</p></div>'+
+    '</div>';
 }
 
 /* ---------- whatsapp ---------- */
@@ -593,31 +826,78 @@ function toast(msg){
 /* ---------- wiring ---------- */
 var current = null;
 function refresh(){
-  current = model();
-  renderAsk(current);
+  formToVisit();
+  var v = active();
+  current = modelOf(v);
+  renderAsk(current,v);
   renderSheet(current);
-  $("sampleBar").hidden = !isSample();
-  save();
+  renderBar();
+  renderCompare();
+  $("sampleBar").hidden = !current.sample;
+  saveBook();
+}
+
+function openVisit(id){
+  book.activeId = id;
+  visitToForm(active());
+  refresh();
 }
 
 function showTab(which){
-  var ask = which==="ask";
-  $("pane-ask").hidden   = !ask;
-  $("pane-sheet").hidden =  ask;
-  $("tab-ask").setAttribute("aria-selected", ask?"true":"false");
-  $("tab-sheet").setAttribute("aria-selected", ask?"false":"true");
-  $("stickyBar").hidden = !ask;
+  var panes={ask:"pane-ask",sheet:"pane-sheet",compare:"pane-compare"};
+  Object.keys(panes).forEach(function(k){
+    $(panes[k]).hidden = (k!==which);
+    $("tab-"+k).setAttribute("aria-selected", k===which ? "true":"false");
+  });
+  $("stickyBar").hidden = (which!=="ask");
+  $("visitBar").hidden  = (which==="sheet");
   window.scrollTo(0,0);
 }
 
 document.addEventListener("input", function(e){
-  if(e.target && e.target.id) refresh();
+  if(e.target && e.target.id && e.target.id!=="visitPick") refresh();
 });
+document.addEventListener("change", function(e){
+  if(e.target && e.target.id==="outcome") refresh();
+});
+
 $("tab-ask").addEventListener("click", function(){ showTab("ask"); });
 $("tab-sheet").addEventListener("click", function(){ showTab("sheet"); });
+$("tab-compare").addEventListener("click", function(){ showTab("compare"); });
 $("toSheet").addEventListener("click", function(){ showTab("sheet"); });
 $("backBtn").addEventListener("click", function(){ showTab("ask"); });
 $("printBtn").addEventListener("click", function(){ window.print(); });
+
+$("visitPick").addEventListener("change", function(){
+  openVisit($("visitPick").value);
+  toast("פתוח: "+(active().biz||"ביקור ללא שם"));
+});
+
+$("newBtn").addEventListener("click", function(){
+  var v=blank();
+  book.visits.push(v);
+  openVisit(v.id);
+  showTab("ask");
+  $("biz").focus();
+  toast("ביקור חדש. שום דבר לא נמחק.");
+});
+
+/* Deleting takes two taps. Nothing here ever removes a visit on its own. */
+$("delBtn").addEventListener("click", function(){
+  var b=$("delBtn");
+  if(b.dataset.armed!=="yes"){
+    b.dataset.armed="yes";
+    b.textContent="לחץ שוב למחוק";
+    return;
+  }
+  if(book.visits.length<2){ toast("זה הביקור היחיד"); return; }
+  var i=activeIndex();
+  var gone=book.visits.splice(i,1)[0];
+  book.activeId = book.visits[Math.max(0,i-1)].id;
+  visitToForm(active());
+  refresh();
+  toast("נמחק: "+(gone.biz||"ביקור ללא שם"));
+});
 
 $("waBtn").addEventListener("click", function(){
   if(!current || !current.ready){ toast("אין עוד מספר להעתיק"); return; }
@@ -634,21 +914,21 @@ function fallback(t,done){
   ta.setAttribute("aria-hidden","true");
 }
 
+/* The sample stays in the book, labelled. This button opens a real visit
+   beside it instead of overwriting anything. */
 $("clearBtn").addEventListener("click", function(){
-  FIELDS.forEach(function(k){
-    var el=$(k); if(!el) return;
-    if(el.type==="checkbox") el.checked=false; else el.value="";
-  });
-  $("hpm").value=182; $("cutSmall").value=0.2; $("cutBig").value=0.5; $("share").value=50;
-  $("visitDate").value=today();
-  refresh();
+  var v=blank();
+  book.visits.push(v);
+  openVisit(v.id);
   $("biz").focus();
-  toast("נקי. התחל לשאול.");
+  toast("ביקור אמיתי. הדוגמה נשארה בצד.");
 });
 
-load();
+book = readBook();
+visitToForm(active());
 refresh();
 showTab("ask");
+if(migrated) toast("הביקור מליל אתמול נשמר כאן.");
 </script>
 </body>
 </html>
