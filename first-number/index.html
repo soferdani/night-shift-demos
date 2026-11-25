@@ -43,10 +43,10 @@ header.top{padding:22px 0 10px;display:flex;align-items:baseline;gap:10px;flex-w
 .top h1{font-size:1.15rem;margin:0;font-weight:700}
 .lede{color:var(--soft);margin:2px 0 18px;font-size:.98rem}
 
-.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);
-  border-radius:999px;padding:5px;margin:0 0 20px;box-shadow:var(--shadow);width:fit-content}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--card);border:1px solid var(--line);
+  border-radius:22px;padding:5px;margin:0 0 20px;box-shadow:var(--shadow);width:fit-content;max-width:100%}
 .tabs button{appearance:none;border:0;background:transparent;color:var(--soft);
-  font:inherit;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer}
+  font:inherit;font-weight:700;padding:8px 15px;border-radius:999px;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
@@ -137,6 +137,43 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
 .ta{position:absolute;inset-inline-start:-9999px;top:-9999px}
 .said-note{font-size:.85rem;color:var(--soft);margin-top:6px}
+
+/* night 3 — the listening card: his words, not ours */
+.clock{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.clock span{font-size:.82rem;font-weight:700;color:var(--accent);background:var(--accent-soft);
+  border-radius:999px;padding:5px 12px}
+.wq{padding:12px 0;border-top:1px solid var(--line)}
+.wq:first-of-type{border-top:0}
+.wq p{margin:0 0 7px;font-weight:600;font-size:.97rem}
+.wq p .n{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:6px;
+  background:var(--accent-soft);color:var(--accent);font-size:.75rem;margin-inline-end:7px;
+  vertical-align:middle;font-weight:800}
+textarea.w{font:inherit;width:100%;min-height:62px;padding:9px 11px;line-height:1.5;
+  background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;resize:vertical}
+.pain{margin-top:14px;border:1px dashed var(--accent);border-radius:12px;padding:12px 14px;
+  background:var(--accent-soft)}
+.pain label{font-weight:700;font-size:.95rem;display:block;margin-bottom:6px}
+.pain input{width:100%;text-align:start}
+.pain .sub{display:block;color:var(--soft);font-weight:400;font-size:.84rem;margin-top:5px}
+
+/* night 3 — the close (Dani's side; never printed, never turned around) */
+.mine{border-inline-start:4px solid var(--warn);background:var(--warn-soft);
+  border-radius:0 12px 12px 0;padding:11px 14px;margin:0 0 16px;font-size:.9rem;color:var(--soft)}
+.mine b{color:var(--ink)}
+.say{margin:0;padding:0;list-style:none}
+.say li{border-top:1px solid var(--line);padding:11px 0;font-size:.95rem}
+.say li:first-child{border-top:0}
+.say q{display:block;font-weight:700;color:var(--ink);font-style:normal;quotes:none}
+.say em{display:block;font-style:normal;color:var(--soft);font-size:.86rem;margin-top:3px}
+.src{display:block;color:var(--soft);font-size:.8rem;margin-top:5px}
+.msg{font:inherit;width:100%;min-height:150px;padding:11px;line-height:1.55;
+  background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;resize:vertical}
+.quote{border-inline-start:4px solid var(--accent);padding:2px 0 2px 0;padding-inline-start:12px;
+  margin:16px 0 0;font-size:.97rem;color:var(--ink)}
+.quote span{display:block;color:var(--soft);font-size:.83rem;margin-top:3px}
+.tlist{margin:0;padding:0;list-style:none}
+.tlist li{border-top:1px solid var(--line);padding:13px 0}
+.tlist li:first-child{border-top:0}
 .chk{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--soft);
   padding:10px 0 0;border-top:1px solid var(--line);margin-top:10px}
 .chk input{width:auto}
@@ -205,7 +242,7 @@ table.cmp td:first-child{font-weight:600}
   body{background:#fff;font-size:11.5pt}
   .wrap{max-width:none;padding:0}
   header.top,.tabs,.sticky,.toolbar,.sample,.toast,.noprint{display:none !important}
-  .visitbar,#pane-ask,#pane-compare{display:none !important}
+  .visitbar,#pane-ask,#pane-compare,#pane-words,#pane-close{display:none !important}
   #pane-sheet{display:block !important}
   .sheet{border:0;padding:0;box-shadow:none}
   .trio div,.box{background:#fff}
@@ -235,12 +272,48 @@ table.cmp td:first-child{font-weight:600}
   </div>
 
   <div class="tabs" role="tablist">
-    <button role="tab" id="tab-ask"   aria-selected="true"  aria-controls="pane-ask">הביקור</button>
+    <button role="tab" id="tab-words" aria-selected="true"  aria-controls="pane-words">השעה</button>
+    <button role="tab" id="tab-ask"   aria-selected="false" aria-controls="pane-ask">המספר</button>
     <button role="tab" id="tab-sheet" aria-selected="false" aria-controls="pane-sheet">הדף שלו</button>
+    <button role="tab" id="tab-close" aria-selected="false" aria-controls="pane-close">הסגירה</button>
     <button role="tab" id="tab-compare" aria-selected="false" aria-controls="pane-compare">ההשוואה</button>
   </div>
 
-  <div id="pane-ask" role="tabpanel">
+  <!-- the first 40 minutes: the listening card, his words.
+       Source: Engineering offices — first 5 messages (2026-11-21), the card
+       added after the talk with Benji. The questions are his, not the tool's. -->
+  <div id="pane-words" role="tabpanel">
+    <section class="card">
+      <h2>ארבעים הדקות הראשונות</h2>
+      <p class="hint">הוא מדבר, אתה כותב. במילים שלו, לא שלך. המספר בא ברביע האחרון של השעה.</p>
+      <div class="clock">
+        <span>0–40 דק׳ · הוא מדבר</span>
+        <span>45–60 דק׳ · המספר</span>
+        <span>בסוף · תאריך או שם</span>
+      </div>
+
+      <div class="wq"><p><span class="n">1</span>ספר לי על שבוע רגיל של מפקח אצלכם. מה הוא כותב, ולמי?</p>
+        <textarea class="w" id="w1" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">2</span>מה הדבר שהכי מעצבן אותך בניירת הזאת?</p>
+        <textarea class="w" id="w2" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">3</span>מה קורה כשדוח מאחר או חסר? מי משלם על זה?</p>
+        <textarea class="w" id="w3" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">4</span>איזה כלי או אוטומציה כבר הציעו לכם, וכמה זה עלה?</p>
+        <textarea class="w" id="w4" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">5</span>מי אצלכם מחליט על דבר כזה, ומי משלם את החשבון?</p>
+        <textarea class="w" id="w5" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">6</span>איפה אתם פוגשים בעלי משרדים אחרים? כנס, ארגון, קבוצת וואטסאפ?</p>
+        <textarea class="w" id="w6" rows="2"></textarea></div>
+
+      <div class="pain">
+        <label for="painWord">המילה שלו לכאב</label>
+        <input type="text" id="painWord" placeholder="בדיוק כמו שהוא אמר את זה">
+        <span class="sub">זאת השורה שחוזרת בהודעה הבאה ובדף שלו. אל תשפר אותה.</span>
+      </div>
+    </section>
+  </div>
+
+  <div id="pane-ask" role="tabpanel" hidden>
     <div class="sample" id="sampleBar">
       <span>אלה נתוני דוגמה, לא ביקור אמיתי.</span>
       <button class="btn" id="clearBtn">התחל ביקור אמיתי</button>
@@ -327,15 +400,7 @@ table.cmp td:first-child{font-weight:600}
 
     <section class="card">
       <h2><span class="n">6</span>איך נגמרה השעה</h2>
-      <p class="hint">סמן את זה אחרי שיצאת, לא בחדר. זה המספר של הניסוי, לא שלו.</p>
-      <div class="row"><label>הוא שאל כמה עולה המפה?<span class="sub">שאלה שלו, לא הצעה שלך</span></label>
-        <div class="val"><select id="outcome">
-          <option value="">עוד לא סומן</option>
-          <option value="asked">כן, שאל</option>
-          <option value="no">לא שאל</option>
-        </select></div></div>
-      <div class="row"><label>שורה אחת לזיכרון<span class="sub">מה נאמר שם שכדאי לזכור</span></label>
-        <div class="val"><input type="text" id="note" placeholder="מה נשאר ממנו"></div></div>
+      <p class="hint">עבר לטאב „הסגירה”, כי זה נמלא אחרי שיצאת ולא בחדר.</p>
     </section>
   </div>
 
@@ -348,7 +413,69 @@ table.cmp td:first-child{font-weight:600}
     <div id="sheet"></div>
   </div>
 
+  <!-- Dani's side. Never printed, never turned toward the owner. -->
+  <div id="pane-close" role="tabpanel" hidden>
+    <div class="mine"><b>המסך הזה שלך.</b> הוא לא נכנס להדפסה ולא מסתובב אליו.</div>
+
+    <section class="card">
+      <h2>איך לסיים את השעה</h2>
+      <p class="hint">הבקשה בסוף השעה היא תאריך או שם. לא עסקה.</p>
+      <div id="sayBox"></div>
+    </section>
+
+    <section class="card">
+      <h2>אם הוא שאל כמה עולה המפה</h2>
+      <p class="hint">המחיר נאמר בקול. החשבון שלמטה בנוי מהמספר שלו, לא מהשוק.</p>
+      <div id="priceBox"></div>
+    </section>
+
+    <section class="card">
+      <h2>אחרי שיצאת</h2>
+      <p class="hint">זה המספר של הניסוי, לא שלו. אף שדה כאן לא מופיע בדף שלו.</p>
+      <div class="row"><label>נקבע תאריך להמשך?<span class="sub">תאריך ריק = לא נקבע</span></label>
+        <div class="val"><input type="date" id="nextDate"></div></div>
+      <div class="row"><label>שם של בעל משרד אחר<span class="sub">הבקשה השנייה של סוף השעה</span></label>
+        <div class="val"><input type="text" id="nextName" placeholder="שם, או ריק"></div></div>
+      <div class="row"><label>אמרת את המחיר בקול?<span class="sub">3,500 ₪ למפה</span></label>
+        <div class="val"><select id="priceSaid">
+          <option value="">עוד לא סומן</option>
+          <option value="yes">כן, אמרתי</option>
+          <option value="no">לא אמרתי</option>
+        </select></div></div>
+      <div class="row"><label>הוא שאל כמה עולה המפה?<span class="sub">תצפית, לא רף</span></label>
+        <div class="val"><select id="outcome">
+          <option value="">עוד לא סומן</option>
+          <option value="asked">כן, שאל</option>
+          <option value="no">לא שאל</option>
+        </select></div></div>
+      <div class="row"><label>שילם על המפה?<span class="sub">3,500 ₪ · הרף האמיתי של מבחן המחיר</span></label>
+        <div class="val"><select id="mapPaid">
+          <option value="">עוד לא סומן</option>
+          <option value="yes">כן, שילם</option>
+          <option value="no">לא</option>
+        </select></div></div>
+      <div class="row"><label>שורה אחת לזיכרון<span class="sub">מה נאמר שם שכדאי לזכור</span></label>
+        <div class="val"><input type="text" id="note" placeholder="מה נשאר ממנו"></div></div>
+    </section>
+
+    <section class="card">
+      <h2>ההודעה של מחר</h2>
+      <p class="hint">המילה שלו לכאב, המספר שלו, ובקשה אחת. בלי מחיר — המחיר נאמר בחדר.</p>
+      <textarea class="msg" id="followMsg" readonly></textarea>
+      <div class="toolbar noprint" style="margin-top:12px">
+        <button class="btn" id="followBtn">העתק את ההודעה</button>
+      </div>
+    </section>
+  </div>
+
   <div id="pane-compare" role="tabpanel" hidden>
+    <section class="card">
+      <h2>הרף של הניסוי עצמו</h2>
+      <p class="hint">זה נמדד לפני שנכנסת לחדר, ולא מתוך הביקורים. מלא כאן.</p>
+      <div class="row"><label>בעלי משרדים שקבעו תאריך<span class="sub">תשובה מנומסת בלי תאריך נחשבת אפס</span></label>
+        <div class="val"><input type="number" id="bookedN" min="0" max="5" step="1"></div></div>
+      <div id="bookBox"></div>
+    </section>
     <div id="compare"></div>
   </div>
 
@@ -380,14 +507,33 @@ var SAMPLE = {
   leads:18, leadsMissed:5, dealValue:30000, leadsWin:1,
   cutSmall:0.2, cutBig:0.5, share:50, showSave:false
 };
-var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note"]);
+var WORDS = ["w1","w2","w3","w4","w5","w6"];
+var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note"])
+  .concat(WORDS).concat(["painWord","nextDate","nextName","priceSaid","mapPaid"]);
 
 var KEY   = "atidi-first-number-v2";   /* { visits:[ ... ], activeId } */
 var KEY_1 = "atidi-first-number-v1";   /* night 1 kept one visit here. migrated, never erased. */
 
-/* The threshold of the experiment, set 2026-11-23 before the first visit.
-   It is printed on the comparison tab so it cannot be quietly moved later. */
-var GATE = { asked:2, of:4 };
+/* The thresholds. Night 1 and 2 printed ONE gate here — "2 of the first 4 hours
+   end with him asking what the map costs" — and stamped it "set 23.11, does not
+   move". That threshold is in no document of Dani's; the tool invented it. The
+   three below are the real ones, each with the note it comes from. The invented
+   one is kept as an observation, named as such, with no pass/fail on it. */
+
+/* Engineering offices — 2 of 5 owners take the visit (2026-11-21) */
+var BOOKED = { need:2, of:5, deadline:"2026-12-05",
+  src:"Engineering offices — 2 of 5 owners take the visit · 21.11.2026" };
+
+/* Pricing Method — decisions & resume (2026-11-14): price said aloud in the
+   visit; pass = 1 owner pays the 3,500 map by 15.12.2026 */
+var PRICE_TEST = { need:1, by:"2026-12-15",
+  src:"Pricing Method — decisions & resume · 14.11.2026" };
+
+/* The map, as Dani decided it on 14.11.2026. Nothing here is the tool's idea. */
+var MAP = { price:3500, weeks:2, low:4, high:6, creditDays:30, workDays:22 };
+
+/* the tool's own observation, demoted from a gate on 25.11 */
+var OBS = { asked:2, of:4 };
 
 var LEAK_NAMES = { paper:"הניירת", quote:"הצעות מחיר", chase:"רדיפה אחרי אישורים וחשבוניות" };
 
@@ -439,7 +585,7 @@ function isSampleVisit(v){
   return !!v && (v.sample===true || String(v.biz||"").trim()===SAMPLE.biz);
 }
 
-var book = { visits:[], activeId:"" };
+var book = { visits:[], activeId:"", booked:"" };
 var migrated = false;
 
 function readBook(){
@@ -447,6 +593,7 @@ function readBook(){
   try{ var raw=localStorage.getItem(KEY); if(raw) b=JSON.parse(raw); }catch(e){}
   if(b && b.visits && b.visits.length){
     b.visits.forEach(function(v){ if(!v.id) v.id=newId(); });
+    if(b.booked===undefined) b.booked="";
     return b;
   }
   var old=null;
@@ -457,10 +604,10 @@ function readBook(){
     if(!v.visitDate) v.visitDate=today();
     if(isSampleVisit(v)) v.sample=true;
     migrated = true;
-    return { visits:[v], activeId:v.id };
+    return { visits:[v], activeId:v.id, booked:"" };
   }
   var s=sampleVisit();
-  return { visits:[s], activeId:s.id };
+  return { visits:[s], activeId:s.id, booked:"" };
 }
 function saveBook(){
   try{ localStorage.setItem(KEY, JSON.stringify(book)); }catch(e){}
@@ -559,6 +706,10 @@ function modelOf(v){
     cutSmall: nv(v,"cutSmall")||0.2, cutBig: nv(v,"cutBig")||0.5,
     share: nv(v,"share")/100, showSave: !!v.showSave,
     outcome: sv(v,"outcome"), note: sv(v,"note"),
+    words: WORDS.map(function(k){ return sv(v,k); }),
+    pain: sv(v,"painWord"),
+    nextDate: sv(v,"nextDate"), nextName: sv(v,"nextName"),
+    priceSaid: sv(v,"priceSaid"), mapPaid: sv(v,"mapPaid"),
     ready: !!(cost>0)
   };
 }
@@ -576,9 +727,12 @@ function verdict(m){
            "הדליפה הגדולה היא „"+(m.leaks[0]?m.leaks[0].name:"")+"”. "+
            "הציע לסגור אותה לבד, ולהחליט על השאר אחר כך." };
   }
+  /* night 1 and 2 ended this with "כאן המפה מחזירה את עצמה" — a payback claim
+     on a page that carries no price, so nothing on the sheet could back it.
+     The arithmetic moved to the close tab, where the 3,500 actually is. */
   return { small:false, head:"שווה למדוד את זה כמו שצריך.",
     body:"זה "+d1(m.engineers)+" מהנדס במשרה מלאה, רק על עבודה ידנית חוזרת, "+
-         "והמספר הזה הוא אומדן גס מתוך שעה אחת. כאן המפה מחזירה את עצמה." };
+         "והמספר הזה הוא אומדן גס מתוך שעה אחת. גדול מדי בשביל להישאר אומדן." };
 }
 
 /* ---------- render: the live bar + per-leak lines ---------- */
@@ -633,6 +787,26 @@ function renderSheet(m){
     '<div class="big2">'+nis(m.cost*m.share)+' בחודש</div>'+
     '<p>האחוז הזה הוא הערכה, לא נתון. הוא נבחר לפני הפגישה וניתן לשינוי.</p></div>' : '';
 
+  /* His word for the pain, on his sheet, exactly as he said it.
+     Listening card rule 2: his words, not ours. One line only — the long
+     answers stay on Dani's side so the sheet keeps printing on one page. */
+  var painRow = m.pain ?
+    '<blockquote class="quote">„'+esc(m.pain)+'”<span>במילים שלך, בשעה הזאת</span></blockquote>' : '';
+
+  /* What the map is, with no price on it. The price is said out loud in the
+     room if he asks (Pricing Method, 14.11.2026) — it is not printed here. */
+  var nextRow = '';
+  if(!v.small && m.leaks.length){
+    var two = m.leaks.slice(0,2).map(function(l){ return l.name; }).join(" ו");
+    nextRow =
+      '<div class="box"><h3>מה קורה הלאה, אם תרצה</h3>'+
+      '<p>'+MAP.weeks+' שבועות של מדידה אמיתית: '+MAP.low+'–'+MAP.high+
+      ' דליפות מדורגות, לכל אחת שעות ושווי בשקלים משלה. מה וכמה, לא איך. '+
+      'בסוף יש לך רשימה לפי סדר, ואתה מחליט מה נוגעים בו ראשון.</p>'+
+      '<p style="margin-top:8px"><b>השתיים שהיינו מודדים ראשונות אצלך: '+esc(two)+'.</b> '+
+      'לפי מה שאמרת היום, שם יושב רוב הסכום שלמעלה.</p></div>';
+  }
+
   var riskRow = m.atRisk ?
     '<div class="box"><h3>פניות שלא נענו — ההערכה שלו</h3>'+
     '<div class="big2">'+nis(m.atRisk)+' בחודש</div>'+
@@ -675,6 +849,8 @@ function renderSheet(m){
     '<div class="verdict'+(v.small?' small':'')+'">'+
       '<b>'+esc(v.head)+'</b><p>'+esc(v.body)+'</p></div>'+
 
+    painRow + nextRow +
+
     '<ul class="fine">'+
       '<li>כל מספר כאן בנוי מהתשובות שלך בשעה הזאת. אין כאן נתון מהשוק ואין כאן ממוצע של אף אחד.</li>'+
       '<li>זה אומדן גס, לא מדידה. מספר שנאמר בעל פה הוא מספר שנאמר בעל פה.</li>'+
@@ -711,15 +887,30 @@ function renderBar(){
 }
 
 /* ---------- render: the comparison ---------- */
-function outcomeWord(o){
-  if(o==="asked") return "שאל כמה עולה המפה";
-  if(o==="no")    return "לא שאל";
-  return "עוד לא סומן";
-}
 function renderCompare(){
   var el=$("compare");
   var all = book.visits.map(modelOf);
   var real = all.filter(function(m){ return !m.sample && m.ready; });
+
+  /* the experiment's own threshold: owners who set a date, before any hour */
+  var bN = parseInt(book.booked,10); if(!isFinite(bN)||bN<0) bN=0;
+  var bCls, bHead, bBody;
+  if(bN>=BOOKED.need){
+    bCls="ok"; bHead="עובר.";
+    bBody=bN+" מתוך "+BOOKED.of+" קבעו תאריך. הרף היה "+BOOKED.need+". "+
+          "ההנחה על הסקטור מחזיקה, והשעות הן עכשיו העבודה.";
+  } else if(book.booked===""||book.booked===null){
+    bCls="wait"; bHead="לא סומן.";
+    bBody="מלא כמה בעלי משרדים קבעו תאריך, מתוך "+BOOKED.of+". "+
+          "הרף הוא "+BOOKED.need+" עד "+heDate(BOOKED.deadline)+".";
+  } else {
+    bCls="wait"; bHead=bN+" מתוך "+BOOKED.of+".";
+    bBody="הרף הוא "+BOOKED.need+" עד "+heDate(BOOKED.deadline)+". "+
+          "0 או 1 פירושו שהסקטור או ההודעה לא נכונים, והתשובות אומרות מה מהשניים.";
+  }
+  $("bookBox").innerHTML =
+    '<div class="gate '+bCls+'"><b>'+esc(bHead)+'</b><p>'+esc(bBody)+'</p>'+
+    '<span class="src">מקור: '+esc(BOOKED.src)+'</span></div>';
 
   if(!real.length){
     el.innerHTML = '<div class="card"><div class="empty">עוד אין ביקור אמיתי להשוות.<br>'+
@@ -731,12 +922,15 @@ function renderCompare(){
 
   var rows = real.map(function(m){
     var top = m.leaks[0] ? m.leaks[0].name : "—";
+    var end = m.nextDate ? "תאריך "+heDate(m.nextDate) : (m.nextName ? "שם: "+m.nextName : "—");
     return '<tr><td>'+esc(m.biz||"ללא שם")+
              '<span class="said">'+esc(heDate(m.date))+(m.note? ' · '+esc(m.note):'')+'</span></td>'+
            '<td class="num" data-label="בחודש"><b>'+nis(m.cost)+'</b></td>'+
-           '<td class="num" data-label="מהנדס במשרה מלאה">'+d1(m.engineers)+'</td>'+
+           '<td class="num" data-label="מהנדס מלא">'+d1(m.engineers)+'</td>'+
            '<td class="num" data-label="הדליפה הגדולה">'+esc(top)+'</td>'+
-           '<td class="num" data-label="סוף הפגישה">'+esc(outcomeWord(m.outcome))+'</td></tr>';
+           '<td class="num" data-label="המחיר נאמר">'+esc(saidWord(m.priceSaid))+'</td>'+
+           '<td class="num" data-label="שילם על המפה">'+esc(paidWord(m.mapPaid))+'</td>'+
+           '<td class="num" data-label="המשך">'+esc(end)+'</td></tr>';
   }).join("");
 
   var costs = real.map(function(m){ return m.cost; });
@@ -762,26 +956,35 @@ function renderCompare(){
       'זאת התבנית שאפשר לכתוב בהודעה הבאה, ורק אחרי שנאמרה בחדר.</p>';
   }
 
-  /* the gate, as it was set before the first visit */
-  var done  = real.filter(function(m){ return m.outcome==="asked"||m.outcome==="no"; });
-  done.sort(function(a,b){ return String(a.date).localeCompare(String(b.date)); });
-  var first = done.slice(0,GATE.of);
-  var asked = first.filter(function(m){ return m.outcome==="asked"; }).length;
+  /* his words, across the rooms. The card says his word for the pain goes into
+     the next message, so the words are collected where that message is written. */
+  var pains = real.filter(function(m){ return m.pain; });
+  var painBox = pains.length ?
+    '<div class="box"><h3>המילים שלהם לכאב</h3>'+
+    pains.map(function(m){
+      return '<p style="margin-top:6px">„'+esc(m.pain)+'” <b>· '+esc(m.biz||"ללא שם")+'</b></p>';
+    }).join("")+
+    '<p style="margin-top:8px">אלה המילים שנכנסות להודעה הבאה, לא שלנו.</p></div>' :
+    '<div class="box"><h3>המילים שלהם לכאב</h3>'+
+    '<p>עוד לא נרשמה אף מילה. היא נרשמת בטאב „השעה”, בשדה שמתחת לשש השאלות.</p></div>';
 
-  var gateCls, gateHead, gateBody;
-  if(asked>=GATE.asked){
-    gateCls="ok"; gateHead="עובר.";
-    gateBody=asked+" מתוך "+first.length+" הבעלים שישבו את השעה שאלו כמה עולה המפה. "+
-             "הרף היה "+GATE.asked+" מתוך "+GATE.of+". המכשיר עושה את העבודה שלו.";
-  } else if(done.length>=GATE.of){
-    gateCls="bad"; gateHead="נכשל.";
-    gateBody="רק "+asked+" מתוך "+GATE.of+" שאלו כמה עולה המפה. הרף היה "+GATE.asked+". "+
-             "לפי מה שנקבע מראש, הבעיה היא ההצעה, לא הכלי.";
+  /* the price test, as Dani's pricing note defines it */
+  var saidN = real.filter(function(m){ return m.priceSaid==="yes"; }).length;
+  var paidN = real.filter(function(m){ return m.mapPaid==="yes"; }).length;
+  var pCls, pHead, pBody;
+  if(paidN>=PRICE_TEST.need){
+    pCls="ok"; pHead="עובר.";
+    pBody=paidN+" שילמו על המפה. הרף היה "+PRICE_TEST.need+" עד "+heDate(PRICE_TEST.by)+
+          ". זאת הפעם הראשונה שלקוח מגיע לחשבונית בלי ארגון מאחוריך.";
   } else {
-    gateCls="wait"; gateHead="עוד אין הכרעה.";
-    gateBody=done.length+" מתוך "+GATE.of+" הביקורים סומנו עד כה, "+asked+" מהם שאלו. "+
-             "סמן את סוף הפגישה בכל ביקור, והשורה הזאת תכריע לבד.";
+    pCls="wait"; pHead="עוד אין הכרעה.";
+    pBody="המחיר נאמר בקול ב-"+saidN+" מתוך "+real.length+" הביקורים, "+paidN+
+          " שילמו. הרף הוא "+PRICE_TEST.need+" מפה בתשלום עד "+heDate(PRICE_TEST.by)+".";
   }
+
+  /* the count night 1 and 2 printed as the gate. It is an observation. */
+  var marked = real.filter(function(m){ return m.outcome==="asked"||m.outcome==="no"; });
+  var askedN = marked.filter(function(m){ return m.outcome==="asked"; }).length;
 
   el.innerHTML =
     '<div class="card">'+
@@ -789,16 +992,135 @@ function renderCompare(){
       '<p class="hint">רק ביקורים אמיתיים עם מספר. נתוני הדוגמה לא נכנסים לכאן.</p>'+
       '<table class="cmp"><thead><tr>'+
         '<th>המשרד</th><th class="num">בחודש</th><th class="num">מהנדס מלא</th>'+
-        '<th class="num">הדליפה הגדולה</th><th class="num">סוף הפגישה</th>'+
+        '<th class="num">הדליפה הגדולה</th><th class="num">המחיר נאמר</th>'+
+        '<th class="num">שילם</th><th class="num">המשך</th>'+
       '</tr></thead><tbody>'+rows+'</tbody></table>'+
       '<div class="box">'+pattern+'</div>'+
+      painBox+
     '</div>'+
+
     '<div class="card">'+
-      '<h2>הרף שנקבע לפני הביקור הראשון</h2>'+
-      '<p class="hint">הרף נקבע ב-23.11.2026: '+GATE.asked+' מתוך '+GATE.of+
-        ' השעות הראשונות מסתיימות בשאלה „כמה עולה המפה”. הוא לא זז אחרי שהנתונים נכנסו.</p>'+
-      '<div class="gate '+gateCls+'"><b>'+esc(gateHead)+'</b><p>'+esc(gateBody)+'</p></div>'+
+      '<h2>מבחן המחיר</h2>'+
+      '<p class="hint">הצעד שבא אחרי שהניסוי עובר. המחיר נאמר בקול בחדר.</p>'+
+      '<div class="gate '+pCls+'"><b>'+esc(pHead)+'</b><p>'+esc(pBody)+'</p>'+
+      '<span class="src">מקור: '+esc(PRICE_TEST.src)+'</span></div>'+
+    '</div>'+
+
+    '<div class="card">'+
+      '<h2>תצפית, לא רף</h2>'+
+      '<p class="hint">זאת ספירה שהכלי המציא לעצמו. אין לה פס הצלחה.</p>'+
+      '<div class="gate wait"><b>'+
+        (marked.length ? askedN+' מתוך '+marked.length+' שאלו כמה עולה המפה.'
+                       : 'עוד לא סומן אף ביקור.')+'</b>'+
+      '<p>בלילות 1 ו-2 הכלי הדפיס כאן „'+OBS.asked+' מתוך '+OBS.of+'” כרף, עם תאריך, '+
+      'וכתב שהוא לא זז. הרף הזה לא קיים באף מסמך שלך: הכלי המציא אותו. '+
+      'הוא גם סותר את מבחן המחיר. אם אתה אומר את המחיר בקול, לבעל המשרד אין סיבה לשאול. '+
+      'לכן זאת תצפית: מעניין לראות אותה, אסור לנהל לפיה.</p>'+
+      '<span class="src">נקבע ע״י הכלי 23.11.2026, הורד לדרגת תצפית 25.11.2026</span></div>'+
     '</div>';
+}
+function saidWord(x){ return x==="yes"?"כן":(x==="no"?"לא":"—"); }
+function paidWord(x){ return x==="yes"?"כן":(x==="no"?"לא":"—"); }
+
+/* ---------- the close: Dani's side ----------
+   Two asks at the end of the hour, from the listening card (21.11.2026):
+   the next date, or one name of another owner. Not a deal. */
+function renderClose(m){
+  var say=[], v = m.ready ? verdict(m) : null;
+
+  if(!m.ready){
+    say.push({q:"אין עוד מספר על המסך.",
+      e:"מלא עלות שעה ולפחות דליפה אחת בטאב „המספר”, ואז יש מה להגיד."});
+  } else if(v.small){
+    say.push({q:"„המספר יצא קטן, ואני אומר לך את זה בעצמי.”",
+      e:"לפי התשובות שלו זה "+d1(m.engineers)+" מהנדס במשרה מלאה. "+
+        "הדברים הגדולים אצלו סגורים. אל תמכור כאן מפה."});
+    say.push({q:"„מה שכן יעזור לי: שם של בעל משרד אחד שכדאי שאשב איתו.”",
+      e:"זאת הבקשה היחידה בביקור כזה. היא לא עולה לו כלום."});
+  } else if(v.small===false && m.engineers < m.cutBig){
+    say.push({q:"„יש כאן תיקון אחד, לא מפה.”",
+      e:"הדליפה הגדולה היא „"+(m.leaks[0]?m.leaks[0].name:"")+"”, "+
+        h(m.leaks[0]?m.leaks[0].hours:0)+" שעות בחודש. הצע לסגור אותה לבד."});
+    say.push({q:"„נשב חצי שעה על הדבר האחד הזה. מתי נוח לך?”",
+      e:"תאריך. לא הצעת מחיר ולא מצגת."});
+  } else {
+    say.push({q:"„"+nis(m.cost)+" בחודש זה אומדן מתוך שעה אחת, לא מדידה.”",
+      e:"זה "+d1(m.engineers)+" מהנדס במשרה מלאה. הוא גדול מדי בשביל להישאר אומדן, "+
+        "וזה כל מה שצריך להגיד עליו."});
+    say.push({q:"„נקבע חצי שעה להמשך. מתי נוח לך?”",
+      e:"הבקשה בסוף השעה היא תאריך. המחיר נאמר רק אם הוא שואל."});
+  }
+  say.push({q:"„ואיפה אתם נפגשים, בעלי משרדים כמוך?”",
+    e:"שאלה 6 של כרטיס ההקשבה. היא מביאה את החדר הבא."});
+
+  $("sayBox").innerHTML = '<ul class="say">'+say.map(function(x){
+    return '<li><q>'+esc(x.q)+'</q><em>'+esc(x.e)+'</em></li>';
+  }).join("")+'</ul>'+
+  '<span class="src">מקור: כרטיס ההקשבה · Engineering offices — first 5 messages · 21.11.2026</span>';
+
+  /* the price, and the arithmetic against his own number */
+  var box="";
+  var bound =
+    '<div class="box"><h3>הגבולות של המפה, כפי שנקבעו</h3>'+
+    '<p>'+MAP.weeks+' שבועות · '+MAP.low+'–'+MAP.high+' דליפות מדורגות, לכל אחת שווי משלה · '+
+    'מה וכמה, לא איך · אין בה אפיון ואין בה בנייה · '+
+    'ה-'+MAP.price.toLocaleString("en-US")+' ₪ נכנסים לתיקון הראשון אם מזמינים אותו תוך '+
+    MAP.creditDays+' יום · אין סעיף הגנה בחוזה.</p>'+
+    '<span class="src">מקור: Pricing Method — decisions & resume · 14.11.2026</span></div>';
+
+  if(!m.ready){
+    box = '<p class="hint" style="margin:0">אין עוד מספר, ולכן אין ביחס למה להעמיד את המחיר.</p>'+bound;
+  } else if(v.small){
+    box = '<div class="gate bad"><b>אל תמכור כאן את המפה.</b>'+
+      '<p>המספר שלו הוא '+nis(m.cost)+' בחודש, '+d1(m.engineers)+' מהנדס במשרה מלאה. '+
+      'מפה ב-'+MAP.price.toLocaleString("en-US")+' ₪ על מספר כזה היא הדבר ששורף את הליד. '+
+      'אם הוא שואל, תגיד את המחיר, ותגיד באותה נשימה שאצלו זה לא משתלם.</p></div>'+bound;
+  } else if(m.cost < MAP.price){
+    box = '<div class="gate bad"><b>המפה יוצאת יותר מחודש של הבעיה.</b>'+
+      '<p>חודש של העבודה הידנית אצלו הוא '+nis(m.cost)+'. המפה היא '+
+      MAP.price.toLocaleString("en-US")+' ₪. '+
+      'אמור את המחיר אם הוא שואל, ואמור גם את השורה הזאת. אל תעגל אותה.</p></div>'+bound;
+  } else {
+    var sharePct = Math.round(MAP.price / m.cost * 100);
+    var perDay   = m.cost / MAP.workDays;
+    var days     = perDay>0 ? MAP.price/perDay : 0;
+    box =
+      '<div class="gate ok"><b>'+MAP.price.toLocaleString("en-US")+' ₪, '+MAP.weeks+' שבועות.</b>'+
+      '<p>זה '+sharePct+'% מחודש אחד של מה שמדדתם עכשיו ביחד. '+
+      'לפי המספר שלו, '+nis(m.cost)+' בחודש, הדליפה שווה בערך '+nis(perDay)+
+      ' ליום עבודה. המפה עולה כמו '+d1(days)+' ימי עבודה מאותה דליפה.</p>'+
+      '<p style="margin-top:7px"><b>זה לא חיסכון.</b> זה היחס בין מה שהמדידה עולה '+
+      'לבין המספר שהוא עצמו אמר. מה ייחסך נמצא בתיקון, לא במפה, ואף אחד לא יודע אותו היום.</p>'+
+      '</div>'+bound;
+  }
+  $("priceBox").innerHTML = box;
+
+  $("followMsg").value = followText(m);
+}
+
+/* the day-after message: his word, his number, one ask, no price */
+function followText(m){
+  var L=[];
+  L.push((m.biz? m.biz+", ":"")+"דני סופר. תודה על השעה.");
+  L.push("");
+  if(m.pain) L.push("אמרת: „"+m.pain+"”. זה נשאר איתי.");
+  if(m.ready){
+    L.push("לפי המספרים שנתת, העבודה הידנית החוזרת לוקחת "+h(m.hours)+
+           " שעות בחודש. בערך "+nis(m.cost)+" בחודש.");
+    if(m.leaks[0]) L.push("הגדולה מכולן: "+m.leaks[0].name+".");
+    L.push("");
+    L.push("הדף שיצא מהשעה מצורף. הוא שלך, גם אם לא נמשיך מכאן.");
+  } else {
+    L.push("");
+    L.push("הדף עם המספר יגיע אליך בנפרד.");
+  }
+  L.push("");
+  L.push("שתי אפשרויות, ושתיהן בסדר מצידי:");
+  L.push("1. נקבע חצי שעה להמשך.");
+  L.push("2. תיתן לי שם של בעל משרד אחד שכדאי שאשב איתו.");
+  L.push("");
+  L.push("דני סופר · Atidi Labs · 054-3074547");
+  return L.join("\n");
 }
 
 /* ---------- whatsapp ---------- */
@@ -807,7 +1129,7 @@ function waText(m){
   L.push((m.biz? m.biz+", ":"")+"סיכום הביקור של היום.");
   L.push("");
   L.push("לפי המספרים שנתת, העבודה הידנית החוזרת לוקחת "+h(m.hours)+
-         " שעות בחודש — בערך "+nis(m.cost)+" בחודש, "+nis(m.year)+" בשנה.");
+         " שעות בחודש. בערך "+nis(m.cost)+" בחודש, "+nis(m.year)+" בשנה.");
   if(m.leaks[0]) L.push("הגדולה מכולן: "+m.leaks[0].name+", "+h(m.leaks[0].hours)+" שעות בחודש.");
   if(m.atRisk) L.push("בנפרד, ההערכה שלך על פניות שלא נענו: "+nis(m.atRisk)+" בחודש.");
   L.push("");
@@ -827,10 +1149,12 @@ function toast(msg){
 var current = null;
 function refresh(){
   formToVisit();
+  book.booked = $("bookedN").value;
   var v = active();
   current = modelOf(v);
   renderAsk(current,v);
   renderSheet(current);
+  renderClose(current);
   renderBar();
   renderCompare();
   $("sampleBar").hidden = !current.sample;
@@ -844,12 +1168,15 @@ function openVisit(id){
 }
 
 function showTab(which){
-  var panes={ask:"pane-ask",sheet:"pane-sheet",compare:"pane-compare"};
+  var panes={ words:"pane-words", ask:"pane-ask", sheet:"pane-sheet",
+              close:"pane-close", compare:"pane-compare" };
   Object.keys(panes).forEach(function(k){
     $(panes[k]).hidden = (k!==which);
     $("tab-"+k).setAttribute("aria-selected", k===which ? "true":"false");
   });
+  /* the live number belongs to the quarter of the hour where the number is asked */
   $("stickyBar").hidden = (which!=="ask");
+  /* the sheet is the one screen he sees. No other office's name on it. */
   $("visitBar").hidden  = (which==="sheet");
   window.scrollTo(0,0);
 }
@@ -858,11 +1185,14 @@ document.addEventListener("input", function(e){
   if(e.target && e.target.id && e.target.id!=="visitPick") refresh();
 });
 document.addEventListener("change", function(e){
-  if(e.target && e.target.id==="outcome") refresh();
+  if(!e.target || !e.target.id) return;
+  if(e.target.id==="outcome" || e.target.id==="priceSaid" || e.target.id==="mapPaid") refresh();
 });
 
+$("tab-words").addEventListener("click", function(){ showTab("words"); });
 $("tab-ask").addEventListener("click", function(){ showTab("ask"); });
 $("tab-sheet").addEventListener("click", function(){ showTab("sheet"); });
+$("tab-close").addEventListener("click", function(){ showTab("close"); });
 $("tab-compare").addEventListener("click", function(){ showTab("compare"); });
 $("toSheet").addEventListener("click", function(){ showTab("sheet"); });
 $("backBtn").addEventListener("click", function(){ showTab("ask"); });
@@ -899,6 +1229,15 @@ $("delBtn").addEventListener("click", function(){
   toast("נמחק: "+(gone.biz||"ביקור ללא שם"));
 });
 
+$("followBtn").addEventListener("click", function(){
+  var t = $("followMsg").value;
+  if(!t){ toast("אין עוד הודעה"); return; }
+  var done=function(){ toast("הועתק"); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
+  } else { fallback(t,done); }
+});
+
 $("waBtn").addEventListener("click", function(){
   if(!current || !current.ready){ toast("אין עוד מספר להעתיק"); return; }
   var t = waText(current);
@@ -926,8 +1265,9 @@ $("clearBtn").addEventListener("click", function(){
 
 book = readBook();
 visitToForm(active());
+$("bookedN").value = (book.booked==null ? "" : book.booked);
 refresh();
-showTab("ask");
+showTab("words");
 if(migrated) toast("הביקור מליל אתמול נשמר כאן.");
 </script>
 </body>
