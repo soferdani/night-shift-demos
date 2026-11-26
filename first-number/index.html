@@ -196,6 +196,11 @@ textarea.w{font:inherit;width:100%;min-height:62px;padding:9px 11px;line-height:
 /* ---- the comparison (night 2) ---- */
 table.cmp{font-size:.92rem}
 table.cmp td:first-child{font-weight:600}
+.rung{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.rung div{flex:1 1 150px;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--bg)}
+.rung div.fits{border-color:var(--accent);background:var(--accent-soft)}
+.rung b{display:block;font-size:.95rem}
+.rung span{display:block;color:var(--soft);font-size:.82rem;margin-top:2px}
 .gate{border-inline-start:4px solid var(--accent);background:var(--accent-soft);
   border-radius:0 12px 12px 0;padding:14px 16px;margin:4px 0 0}
 .gate.bad{border-color:var(--warn);background:var(--warn-soft)}
@@ -256,14 +261,18 @@ table.cmp td:first-child{font-weight:600}
 <div class="wrap">
 
   <header class="top">
-    <div class="brand">Atidi&nbsp;Labs <span>· עתידי</span></div>
+    <div class="brand">Atidilabs <span>· עתידי</span></div>
     <div class="sep">|</div>
     <h1>המספר הראשון</h1>
   </header>
-  <p class="lede">הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד — בנוי מהתשובות שלו, לא משלנו.</p>
+  <p class="lede" id="lede">הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד, בנוי מהתשובות שלו, לא משלנו.</p>
 
   <div class="visitbar noprint" id="visitBar">
     <select id="visitPick" aria-label="הביקור הפתוח"></select>
+    <select id="mode" aria-label="סוג המפגש">
+      <option value="office">ביקור במשרד · 60 דק׳</option>
+      <option value="call">שיחת וידאו · 30 דק׳</option>
+    </select>
     <div class="foot">
       <span class="cnt" id="visitCount"></span>
       <button class="btn" id="newBtn">ביקור חדש</button>
@@ -283,7 +292,7 @@ table.cmp td:first-child{font-weight:600}
        Source: Engineering offices — first 5 messages (2026-11-21), the card
        added after the talk with Benji. The questions are his, not the tool's. -->
   <div id="pane-words" role="tabpanel">
-    <section class="card">
+    <section class="card" id="cardOffice">
       <h2>ארבעים הדקות הראשונות</h2>
       <p class="hint">הוא מדבר, אתה כותב. במילים שלו, לא שלך. המספר בא ברביע האחרון של השעה.</p>
       <div class="clock">
@@ -305,6 +314,45 @@ table.cmp td:first-child{font-weight:600}
       <div class="wq"><p><span class="n">6</span>איפה אתם פוגשים בעלי משרדים אחרים? כנס, ארגון, קבוצת וואטסאפ?</p>
         <textarea class="w" id="w6" rows="2"></textarea></div>
 
+    </section>
+
+    <!-- The booked call is a different hour: 30 minutes on a Meet, not 60 in his
+         office, and five questions, not six. Source: the call prep note of
+         26.11.2026 (sections 4 and 10) and the call card built the same day.
+         Neither file is this tool's invention. -->
+    <section class="card" id="cardCall" hidden>
+      <h2>שלושים הדקות</h2>
+      <p class="hint">הוא מדבר, אתה כותב. חמש שאלות, ואז המספר. הבקשה בסוף היא תאריך.</p>
+      <div class="clock">
+        <span>2 דק׳ · פתיחה</span>
+        <span>15 דק׳ · חמש השאלות</span>
+        <span>5 דק׳ · המספר בחזרה</span>
+        <span>5 דק׳ · צעד אחד</span>
+        <span>3 דק׳ · תאריך</span>
+      </div>
+
+      <div class="wq"><p><span class="n">1</span>איך דייר מקבל היום תשובה לשאלה? מה עובר דרך GetStatus, ומה עדיין מגיע בוואטסאפ ובטלפון?</p>
+        <textarea class="w" id="c1" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">2</span>כמה פניות כאלה מגיעות בשבוע, ומי עונה עליהן?</p>
+        <textarea class="w" id="c2" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">3</span>אילו שאלות חוזרות הכי הרבה?</p>
+        <textarea class="w" id="c3" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">4</span>חוץ משאלות דיירים, איזו עבודה חוזרת כל שבוע ואוכלת הכי הרבה שעות? דוחות, פרוטוקולים, מפרטים?</p>
+        <textarea class="w" id="c4" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">5</span>אם הייתי מוריד לכם דבר אחד מהשולחן עד פברואר, מה הוא היה?</p>
+        <textarea class="w" id="c5" rows="2"></textarea></div>
+
+      <h2 style="margin-top:18px">GetStatus · שתי דקות מתוך ה-15</h2>
+      <p class="hint">לא מתחברים ל-GetStatus ולא קוראים ממנו. התקנון אוסר את זה. השאלות כאן רק כדי לדעת מה הוא עושה ומה לא.</p>
+      <div class="wq"><p><span class="n">6</span>מה אתם מעלים ל-GetStatus, וכל כמה זמן?</p>
+        <textarea class="w" id="g1" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">7</span>מה הדיירים שואלים אתכם למרות שהמידע כבר שם?</p>
+        <textarea class="w" id="g2" rows="2"></textarea></div>
+      <div class="wq"><p><span class="n">8</span>מי אצלכם מעדכן את המערכת, וכמה זמן זה לוקח בשבוע?</p>
+        <textarea class="w" id="g3" rows="2"></textarea></div>
+    </section>
+
+    <section class="card">
       <div class="pain">
         <label for="painWord">המילה שלו לכאב</label>
         <input type="text" id="painWord" placeholder="בדיוק כמו שהוא אמר את זה">
@@ -337,9 +385,21 @@ table.cmp td:first-child{font-weight:600}
       <p class="said-note" id="rateNote"></p>
     </section>
 
+    <section class="card" data-leak="tenant">
+      <h2><span class="n">1</span>שאלות של דיירים</h2>
+      <p class="ask">"כמה פניות כאלה מגיעות בשבוע, ומי עונה עליהן?"</p>
+      <div class="row"><label>פניות דיירים בשבוע<span class="sub">וואטסאפ, טלפון, מייל. מה שלא עובר במערכת</span></label>
+        <div class="val"><input type="number" id="tenantCount" min="0" step="1"></div></div>
+      <div class="row"><label>זמן לפנייה אחת<span class="sub">כולל החיפוש של התשובה</span></label>
+        <div class="val"><input type="number" id="tenantMin" min="0" step="5"><span class="unit">דקות</span></div></div>
+      <div class="row"><label>עלות השעה של מי שעונה</label>
+        <div class="val"><input type="number" id="tenantRate" min="0" step="1"><span class="unit">₪</span></div></div>
+      <div class="leakfoot"><span id="tenantSaid"></span><b id="tenantOut"></b></div>
+    </section>
+
     <section class="card" data-leak="paper">
-      <h2><span class="n">1</span>הניירת</h2>
-      <p class="ask">"כמה דוחות פיקוח, פרוטוקולים ומעקבי אישורים נכתבים אצלכם בשבוע?"</p>
+      <h2><span class="n">2</span>הניירת</h2>
+      <p class="ask">"איזו עבודה חוזרת כל שבוע ואוכלת הכי הרבה שעות? דוחות, פרוטוקולים, מפרטים?"</p>
       <div class="row"><label>מסמכים חוזרים בשבוע</label>
         <div class="val"><input type="number" id="paperCount" min="0" step="1"></div></div>
       <div class="row"><label>זמן למסמך אחד<span class="sub">מההתחלה עד שהוא נשלח</span></label>
@@ -350,7 +410,7 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card" data-leak="quote">
-      <h2><span class="n">2</span>הצעות מחיר</h2>
+      <h2><span class="n">3</span>הצעות מחיר</h2>
       <p class="ask">"כמה הצעות אתם מוציאים בחודש, וכמה זמן לוקח להרכיב אחת?"</p>
       <div class="row"><label>הצעות בחודש</label>
         <div class="val"><input type="number" id="quoteCount" min="0" step="1"></div></div>
@@ -362,7 +422,7 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card" data-leak="chase">
-      <h2><span class="n">3</span>רדיפה אחרי אישורים וחשבוניות</h2>
+      <h2><span class="n">4</span>רדיפה אחרי אישורים וחשבוניות</h2>
       <p class="ask">"כמה שעות בחודש מישהו אצלכם רודף אחרי אישור חשבון או חשבונית?"</p>
       <div class="row"><label>שעות בחודש<span class="sub">טלפונים, מיילים, תזכורות</span></label>
         <div class="val"><input type="number" id="chaseHours" min="0" step="1"></div></div>
@@ -372,7 +432,7 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card">
-      <h2><span class="n">4</span>פניות שלא נענו</h2>
+      <h2><span class="n">5</span>פניות שלא נענו</h2>
       <p class="hint">זה לא שעות, זה הכנסה. בדף זה יושב בנפרד, ועל שמו — זאת ההערכה שלו.</p>
       <p class="ask">"כמה פניות חדשות מגיעות בחודש, וכמה מהן לא מקבלות מענה באותו יום?"</p>
       <div class="row"><label>פניות חדשות בחודש</label>
@@ -387,7 +447,7 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card">
-      <h2><span class="n">5</span>הדיאלים שלך</h2>
+      <h2><span class="n">6</span>הדיאלים שלך</h2>
       <p class="hint">לא מספרים מהשוק. אלה הקווים שאתה מעמיד, והם כתובים על הדף.</p>
       <div class="row"><label>"קטן" זה עד<span class="sub">חלק ממהנדס אחד במשרה מלאה</span></label>
         <div class="val"><input type="number" id="cutSmall" min="0" step="0.05"></div></div>
@@ -399,7 +459,7 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card">
-      <h2><span class="n">6</span>איך נגמרה השעה</h2>
+      <h2><span class="n">7</span>איך נגמרה השעה</h2>
       <p class="hint">עבר לטאב „הסגירה”, כי זה נמלא אחרי שיצאת ולא בחדר.</p>
     </section>
   </div>
@@ -407,6 +467,7 @@ table.cmp td:first-child{font-weight:600}
   <div id="pane-sheet" role="tabpanel" hidden>
     <div class="toolbar noprint">
       <button class="btn" id="printBtn">הדפס או שמור PDF</button>
+      <button class="btn ghost" id="mailBtn">העתק מייל של עמוד אחד</button>
       <button class="btn ghost" id="waBtn">העתק הודעת וואטסאפ</button>
       <button class="btn quiet" id="backBtn">חזרה לביקור</button>
     </div>
@@ -424,6 +485,18 @@ table.cmp td:first-child{font-weight:600}
     </section>
 
     <section class="card">
+      <h2>איזה שלב המספר שלו נושא</h2>
+      <p class="hint">לפי כלל השליש של דני: המחיר החודשי הוא עד שליש מהמספר שלו.</p>
+      <div id="rungBox"></div>
+    </section>
+
+    <section class="card" id="cardPlayB" hidden>
+      <h2>אם הוא אומר „אל תאפיין, תבנו לנו בוט”</h2>
+      <p class="hint">המסלול השני של השיחה. גם הוא שלך בלבד.</p>
+      <div id="playBox"></div>
+    </section>
+
+    <section class="card">
       <h2>אם הוא שאל כמה עולה המפה</h2>
       <p class="hint">המחיר נאמר בקול. החשבון שלמטה בנוי מהמספר שלו, לא מהשוק.</p>
       <div id="priceBox"></div>
@@ -436,7 +509,12 @@ table.cmp td:first-child{font-weight:600}
         <div class="val"><input type="date" id="nextDate"></div></div>
       <div class="row"><label>שם של בעל משרד אחר<span class="sub">הבקשה השנייה של סוף השעה</span></label>
         <div class="val"><input type="text" id="nextName" placeholder="שם, או ריק"></div></div>
-      <div class="row"><label>אמרת את המחיר בקול?<span class="sub">3,500 ₪ למפה</span></label>
+      <div class="row"><label>מחיר המפה בביקור הזה<span class="sub">שתי נקודות עיגון בלבד, בלי קו באמצע</span></label>
+        <div class="val"><select id="mapPrice">
+          <option value="3500">3,500 ₪ · סולם המחירים, 14.11</option>
+          <option value="5000">5,000 ₪ · משרד עם 30 פרויקטים, 26.11</option>
+        </select></div></div>
+      <div class="row"><label>אמרת את המחיר בקול?<span class="sub">המחיר שבחרת למעלה</span></label>
         <div class="val"><select id="priceSaid">
           <option value="">עוד לא סומן</option>
           <option value="yes">כן, אמרתי</option>
@@ -448,7 +526,7 @@ table.cmp td:first-child{font-weight:600}
           <option value="asked">כן, שאל</option>
           <option value="no">לא שאל</option>
         </select></div></div>
-      <div class="row"><label>שילם על המפה?<span class="sub">3,500 ₪ · הרף האמיתי של מבחן המחיר</span></label>
+      <div class="row"><label>שילם על המפה?<span class="sub">הרף האמיתי של מבחן המחיר</span></label>
         <div class="val"><select id="mapPaid">
           <option value="">עוד לא סומן</option>
           <option value="yes">כן, שילם</option>
@@ -472,10 +550,27 @@ table.cmp td:first-child{font-weight:600}
     <section class="card">
       <h2>הרף של הניסוי עצמו</h2>
       <p class="hint">זה נמדד לפני שנכנסת לחדר, ולא מתוך הביקורים. מלא כאן.</p>
-      <div class="row"><label>בעלי משרדים שקבעו תאריך<span class="sub">תשובה מנומסת בלי תאריך נחשבת אפס</span></label>
+      <div class="row"><label>מחמשת המשרדים של אידן, כמה קבעו תאריך<span class="sub">רק החמישה מהרשימה ההיא. תשובה מנומסת בלי תאריך נחשבת אפס</span></label>
         <div class="val"><input type="number" id="bookedN" min="0" max="5" step="1"></div></div>
       <div id="bookBox"></div>
     </section>
+
+    <!-- Two channels, not one. The 2-of-5 threshold above belongs to Aidan's five
+         named offices (0 sent as of 21.11.2026). The booked call came from a
+         different batch: Daria's cold emails of 25.11. Counting it above would
+         pass a threshold nobody tested. -->
+    <section class="card">
+      <h2>הערוץ השני · המיילים הקרים של דריה</h2>
+      <p class="hint">ערוץ אחר, רשימה אחרת. אין לו ניסוי רשום ואין לו רף.</p>
+      <div class="row"><label>מיילים שנשלחו</label>
+        <div class="val"><input type="number" id="coldSent" min="0" step="1"></div></div>
+      <div class="row"><label>תשובות שחזרו</label>
+        <div class="val"><input type="number" id="coldReplies" min="0" step="1"></div></div>
+      <div class="row"><label>שיחות שנקבעו</label>
+        <div class="val"><input type="number" id="coldCalls" min="0" step="1"></div></div>
+      <div id="coldBox"></div>
+    </section>
+
     <div id="compare"></div>
   </div>
 
@@ -501,15 +596,19 @@ var DAY   = 8;                /* one engineer-day, for the "days" reading */
 
 var SAMPLE = {
   biz:"משרד פיקוח (דוגמה)", team:6, rate:170, monthly:0, hpm:182,
+  tenantCount:22, tenantMin:12, tenantRate:110,
   paperCount:14, paperMin:45, paperRate:170,
   quoteCount:8,  quoteMin:120, quoteRate:170,
   chaseHours:12, chaseRate:110,
   leads:18, leadsMissed:5, dealValue:30000, leadsWin:1,
   cutSmall:0.2, cutBig:0.5, share:50, showSave:false
 };
-var WORDS = ["w1","w2","w3","w4","w5","w6"];
-var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note"])
-  .concat(WORDS).concat(["painWord","nextDate","nextName","priceSaid","mapPaid"]);
+var WORDS = ["w1","w2","w3","w4","w5","w6"];          /* the 60-minute office visit */
+var CALLW = ["c1","c2","c3","c4","c5"];                /* the 30-minute video call */
+var GETS  = ["g1","g2","g3"];                          /* GetStatus, 2 of the 15 minutes */
+var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note","mode","mapPrice"])
+  .concat(WORDS).concat(CALLW).concat(GETS)
+  .concat(["painWord","nextDate","nextName","priceSaid","mapPaid"]);
 
 var KEY   = "atidi-first-number-v2";   /* { visits:[ ... ], activeId } */
 var KEY_1 = "atidi-first-number-v1";   /* night 1 kept one visit here. migrated, never erased. */
@@ -535,7 +634,42 @@ var MAP = { price:3500, weeks:2, low:4, high:6, creditDays:30, workDays:22 };
 /* the tool's own observation, demoted from a gate on 25.11 */
 var OBS = { asked:2, of:4 };
 
-var LEAK_NAMES = { paper:"הניירת", quote:"הצעות מחיר", chase:"רדיפה אחרי אישורים וחשבוניות" };
+/* The ladder, and the one-third rule that decides which rung a number can carry.
+   Both are Dani's, from Pricing Method — decisions & resume (v2, 21.11.2026).
+   That note files v2 under "proposed by the agent, not confirmed", and Marketing
+   HQ says no owner has heard these prices. Both sentences are printed with them. */
+var LADDER = {
+  src:"Pricing Method — decisions & resume · v2, 21.11.2026",
+  caveat:"מחירי v2 רשומים בפתק של דני כ„הצעת הסוכן, לא אושרו”, ו-Marketing HQ מוסיף שאף בעל עסק עוד לא שמע אותם.",
+  rungs:[
+    { id:"keep",  name:"Keep",     month:750,  setup:0,
+      need:0,     op:"gte", fit:"אחזקה בלבד: עדכוני אבטחה, תיקונים, זכות לבקש שינוי, איש אחד אחראי" },
+    { id:"small", name:"Small",    month:2500, setup:6500,
+      need:7500,  op:"gte", fit:"עד יום עבודה אחד בחודש" },
+    { id:"std",   name:"Standard", month:4500, setup:8500,
+      need:13500, op:"gt",  fit:"עד יומיים בחודש" }
+  ]
+};
+
+/* The second route of the booked call: "do not diagnose, build us a bot".
+   Source: 3 Call prep and prices · 26.11.2026, section 6. */
+var PLAY_B = {
+  pilot:8500, weeks:3, setupLow:15000, setupHigh:25000,
+  monthLow:1500, monthHigh:2500,
+  src:"3 Call prep and prices · 26.11.2026"
+};
+
+/* The map has two anchor prices in Dani's notes and no line between them.
+   3,500 is the ladder's price (14.11). 5,000 is what the call prep of 26.11
+   calls defensible for a firm with 30 projects, and it says a three-person
+   office stays at 3,500. The tool does not invent a cutoff: Dani picks. */
+var MAP_PRICES = {
+  "3500":"סולם המחירים · Pricing Method, 14.11.2026",
+  "5000":"משרד עם 30 פרויקטים · 3 Call prep and prices, 26.11.2026"
+};
+
+var LEAK_NAMES = { tenant:"שאלות של דיירים", paper:"הניירת",
+  quote:"הצעות מחיר", chase:"רדיפה אחרי אישורים וחשבוניות" };
 
 function $(id){ return document.getElementById(id); }
 
@@ -573,6 +707,19 @@ function blank(){
   FIELDS.forEach(function(k){ v[k]=""; });
   v.visitDate=today(); v.hpm=182; v.cutSmall=0.2; v.cutBig=0.5; v.share=50;
   v.showSave=false; v.outcome=""; v.note="";
+  v.mode="office"; v.mapPrice="3500";
+  return v;
+}
+/* The hour that is actually booked: Sunday 6.12.2026, 09:30, on a Meet.
+   Source: Leads board + 3 Call prep and prices, both 26.11.2026. Two things
+   stay out of it on purpose. The numbers, because they come out of his mouth
+   on the call. And the customer's name, because this page is public and the
+   name is his information, not ours — Dani types it in the room. */
+function bookedCall(){
+  var v=blank();
+  v.visitDate="2026-12-06";
+  v.mode="call";
+  v.mapPrice="5000";
   return v;
 }
 function sampleVisit(){
@@ -585,15 +732,22 @@ function isSampleVisit(v){
   return !!v && (v.sample===true || String(v.biz||"").trim()===SAMPLE.biz);
 }
 
-var book = { visits:[], activeId:"", booked:"" };
+var book = { visits:[], activeId:"", booked:"",
+             coldSent:"", coldReplies:"", coldCalls:"" };
+var COLD_KEYS = ["coldSent","coldReplies","coldCalls"];
 var migrated = false;
 
 function readBook(){
   var b=null;
   try{ var raw=localStorage.getItem(KEY); if(raw) b=JSON.parse(raw); }catch(e){}
   if(b && b.visits && b.visits.length){
-    b.visits.forEach(function(v){ if(!v.id) v.id=newId(); });
+    b.visits.forEach(function(v){
+      if(!v.id) v.id=newId();
+      if(!v.mode) v.mode="office";          /* visits from nights 1-3 are office visits */
+      if(!v.mapPrice) v.mapPrice="3500";
+    });
     if(b.booked===undefined) b.booked="";
+    COLD_KEYS.forEach(function(k){ if(b[k]===undefined) b[k]=""; });
     return b;
   }
   var old=null;
@@ -604,10 +758,12 @@ function readBook(){
     if(!v.visitDate) v.visitDate=today();
     if(isSampleVisit(v)) v.sample=true;
     migrated = true;
-    return { visits:[v], activeId:v.id, booked:"" };
+    return { visits:[v], activeId:v.id, booked:"",
+             coldSent:"", coldReplies:"", coldCalls:"" };
   }
   var s=sampleVisit();
-  return { visits:[s], activeId:s.id, booked:"" };
+  return { visits:[s, bookedCall()], activeId:s.id, booked:"",
+           coldSent:"", coldReplies:"", coldCalls:"" };
 }
 function saveBook(){
   try{ localStorage.setItem(KEY, JSON.stringify(book)); }catch(e){}
@@ -657,6 +813,15 @@ function modelOf(v){
 
   var leaks = [];
 
+  /* The leak the booked call is about. Its week figure is the sentence Dani says
+     out loud: questions a week x minutes each. Source: the call card, 26.11.2026. */
+  var tc=nv(v,"tenantCount"), tm=nv(v,"tenantMin");
+  if(tc&&tm){
+    leaks.push({ id:"tenant", name:LEAK_NAMES.tenant,
+      said: tc+" פניות בשבוע × "+h(tm)+" דקות",
+      hours: tc*(tm/60)*WEEKS,
+      rate: nv(v,"tenantRate")||base });
+  }
   var pc=nv(v,"paperCount"), pm=nv(v,"paperMin");
   if(pc&&pm){
     leaks.push({ id:"paper", name:LEAK_NAMES.paper,
@@ -686,6 +851,7 @@ function modelOf(v){
     l.hours = r1(l.hours);
     l.rate  = Math.round(l.rate||0);
     l.cost  = Math.round(l.hours * l.rate);
+    l.week  = r1(l.hours / WEEKS);
   });
   leaks.sort(function(a,b){ return b.cost - a.cost; });
 
@@ -700,6 +866,7 @@ function modelOf(v){
     biz: sv(v,"biz"), date: sv(v,"visitDate"), team: nv(v,"team"),
     hpm: hpm, base: base, leaks: leaks,
     hours: hours, cost: cost, year: cost*12,
+    week: r1(hours/WEEKS),
     days: hours/DAY, engineers: hpm? hours/hpm : 0,
     leads: nv(v,"leads"), missed: nv(v,"leadsMissed"),
     win: win, dealValue: nv(v,"dealValue"), atRisk: atRisk,
@@ -710,6 +877,10 @@ function modelOf(v){
     pain: sv(v,"painWord"),
     nextDate: sv(v,"nextDate"), nextName: sv(v,"nextName"),
     priceSaid: sv(v,"priceSaid"), mapPaid: sv(v,"mapPaid"),
+    mode: sv(v,"mode")==="call" ? "call" : "office",
+    mapPrice: nv(v,"mapPrice") || MAP.price,
+    callWords: CALLW.map(function(k){ return sv(v,k); }),
+    getWords: GETS.map(function(k){ return sv(v,k); }),
     ready: !!(cost>0)
   };
 }
@@ -745,7 +916,7 @@ function renderAsk(m,v){
   } else { rn.textContent = ""; }
 
   var by={}; m.leaks.forEach(function(l){ by[l.id]=l; });
-  [["paper"],["quote"],["chase"]].forEach(function(p){
+  [["tenant"],["paper"],["quote"],["chase"]].forEach(function(p){
     var l=by[p[0]];
     $(p[0]+"Said").textContent = l ? l.said : "";
     $(p[0]+"Out").textContent  = l ? (h(l.hours)+" שעות · "+nis(l.cost)+" בחודש") : "";
@@ -758,7 +929,10 @@ function renderAsk(m,v){
 
   if(m.ready){
     $("sBig").textContent  = nis(m.cost)+" בחודש";
-    $("sMeta").textContent = h(m.hours)+" שעות · "+d1(m.days)+" ימי מהנדס · "+
+    /* On the 30-minute call the sentence he hears is per week, so the week
+       figure sits first. Source: the call card of 26.11.2026. */
+    $("sMeta").textContent = (m.mode==="call" ? h(m.week)+" שעות בשבוע · " : "")+
+                             h(m.hours)+" שעות בחודש · "+d1(m.days)+" ימי מהנדס · "+
                              d1(m.engineers)+" מהנדס במשרה מלאה";
   } else {
     $("sBig").textContent = "—";
@@ -808,7 +982,7 @@ function renderSheet(m){
   }
 
   var riskRow = m.atRisk ?
-    '<div class="box"><h3>פניות שלא נענו — ההערכה שלו</h3>'+
+    '<div class="box"><h3>פניות שלא נענו, בהערכה שלו</h3>'+
     '<div class="big2">'+nis(m.atRisk)+' בחודש</div>'+
     '<p>'+m.missed+' מתוך '+m.leads+' פניות בחודש לא מקבלות מענה באותו יום. '+
     'הוא מעריך ש-'+m.win+' מהן היו נסגרות, בשווי '+nis(m.dealValue)+' לפרויקט. '+
@@ -818,7 +992,7 @@ function renderSheet(m){
   '<div class="sheet">'+
     '<div class="sh-top">'+
       '<div class="who">'+esc(m.biz||"הביקור")+'</div>'+
-      '<div class="when">ביקור של שעה · '+esc(heDate(m.date))+
+      '<div class="when">'+(m.mode==="call" ? 'שיחת וידאו · 30 דקות' : 'ביקור של שעה')+' · '+esc(heDate(m.date))+
         (m.team? ' · '+m.team+' מהנדסים ומפקחים':'')+'</div>'+
     '</div>'+
 
@@ -830,7 +1004,9 @@ function renderSheet(m){
 
     '<div class="trio">'+
       '<div><b>'+h(m.hours)+'</b><span>שעות בחודש</span></div>'+
-      '<div><b>'+d1(m.days)+'</b><span>ימי מהנדס בחודש</span></div>'+
+      (m.mode==="call"
+        ? '<div><b>'+h(m.week)+'</b><span>שעות בשבוע</span></div>'
+        : '<div><b>'+d1(m.days)+'</b><span>ימי מהנדס בחודש</span></div>')+
       '<div><b>'+d1(m.engineers)+'</b><span>מהנדס במשרה מלאה</span></div>'+
     '</div>'+
 
@@ -859,7 +1035,7 @@ function renderSheet(m){
     '</ul>'+
 
     '<div class="sh-foot">'+
-      '<div><b>דני סופר</b> · Atidi Labs · מהנדס תעשייה וניהול</div>'+
+      '<div><b>דני סופר</b> · Atidilabs · מהנדס תעשייה וניהול</div>'+
       '<div>054-3074547 · atidilabs.com</div>'+
     '</div>'+
   '</div>';
@@ -911,6 +1087,24 @@ function renderCompare(){
   $("bookBox").innerHTML =
     '<div class="gate '+bCls+'"><b>'+esc(bHead)+'</b><p>'+esc(bBody)+'</p>'+
     '<span class="src">מקור: '+esc(BOOKED.src)+'</span></div>';
+
+  /* The five offices and the cold emails are two channels. The threshold above
+     belongs to the five; the booked call came from the other one. */
+  var cs=parseInt(book.coldSent,10),  cr=parseInt(book.coldReplies,10),
+      cc=parseInt(book.coldCalls,10);
+  if(!isFinite(cs)||cs<0) cs=0;
+  if(!isFinite(cr)||cr<0) cr=0;
+  if(!isFinite(cc)||cc<0) cc=0;
+  $("coldBox").innerHTML =
+    '<div class="gate wait"><b>'+
+      (cs ? cs+" מיילים · "+cr+" תשובות · "+cc+" שיחות שנקבעו" : "עוד לא סומן.")+'</b>'+
+    '<p>הערוץ הזה הוא המיילים שדריה שלחה ב-25.11, לא חמשת המשרדים של אידן. '+
+    'הרף של '+BOOKED.need+' מתוך '+BOOKED.of+' למעלה הוא של החמישה, ושם עוד לא נשלחה אף הודעה '+
+    'לפי היומן של 21.11. שיחה שהגיעה מכאן לא נספרת שם.</p>'+
+    '<p style="margin-top:7px">בפתק של 26.11 כתובה השורה „שלוש תשובות וביקור אחד מתוך עשר”. '+
+    'היא נכתבה אחרי שהמיילים יצאו, היא לא רף שנקבע לפני הריצה, '+
+    'והאצווה עצמה הייתה 13 מיילים ולא 10. לכן אין כאן פס הצלחה.</p>'+
+    '<span class="src">מקור: 3 Call prep and prices · 26.11.2026 · Leads board</span></div>';
 
   if(!real.length){
     el.innerHTML = '<div class="card"><div class="empty">עוד אין ביקור אמיתי להשוות.<br>'+
@@ -1050,42 +1244,55 @@ function renderClose(m){
     say.push({q:"„נקבע חצי שעה להמשך. מתי נוח לך?”",
       e:"הבקשה בסוף השעה היא תאריך. המחיר נאמר רק אם הוא שואל."});
   }
-  say.push({q:"„ואיפה אתם נפגשים, בעלי משרדים כמוך?”",
-    e:"שאלה 6 של כרטיס ההקשבה. היא מביאה את החדר הבא."});
+  if(m.mode==="call"){
+    say.push({q:"„עד מחר אני שולח לך מייל של עמוד אחד עם ההצעה. מתי נוח לך שנדבר שוב כדי לסגור?”",
+      e:"המשפט האחרון של כרטיס השיחה. אחרי שהוא נאמר, המייל הוא התחייבות עם תאריך."});
+  } else {
+    say.push({q:"„ואיפה אתם נפגשים, בעלי משרדים כמוך?”",
+      e:"שאלה 6 של כרטיס ההקשבה. היא מביאה את החדר הבא."});
+  }
 
   $("sayBox").innerHTML = '<ul class="say">'+say.map(function(x){
     return '<li><q>'+esc(x.q)+'</q><em>'+esc(x.e)+'</em></li>';
   }).join("")+'</ul>'+
-  '<span class="src">מקור: כרטיס ההקשבה · Engineering offices — first 5 messages · 21.11.2026</span>';
+  '<span class="src">מקור: '+(m.mode==="call"
+    ? '2 Call card · 3 Call prep and prices · 26.11.2026'
+    : 'כרטיס ההקשבה · Engineering offices — first 5 messages · 21.11.2026')+'</span>';
 
   /* the price, and the arithmetic against his own number */
   var box="";
+  var price = m.mapPrice;
+  var priceSrc = MAP_PRICES[String(price)] || "";
   var bound =
     '<div class="box"><h3>הגבולות של המפה, כפי שנקבעו</h3>'+
     '<p>'+MAP.weeks+' שבועות · '+MAP.low+'–'+MAP.high+' דליפות מדורגות, לכל אחת שווי משלה · '+
     'מה וכמה, לא איך · אין בה אפיון ואין בה בנייה · '+
-    'ה-'+MAP.price.toLocaleString("en-US")+' ₪ נכנסים לתיקון הראשון אם מזמינים אותו תוך '+
+    'ה-'+price.toLocaleString("en-US")+' ₪ נכנסים לתיקון הראשון אם מזמינים אותו תוך '+
     MAP.creditDays+' יום · אין סעיף הגנה בחוזה.</p>'+
-    '<span class="src">מקור: Pricing Method — decisions & resume · 14.11.2026</span></div>';
+    '<p style="margin-top:8px">בפתקים של דני יש שתי נקודות עיגון למפה, '+
+    nis(3500)+' ו-'+nis(5000)+', ואין ביניהן קו. '+
+    'הפתק של 26.11 אומר ש-5,000 מגן על עצמו במשרד עם 30 פרויקטים, ושמשרד של שלושה אנשים נשאר על 3,500. '+
+    'הכלי לא ממציא את הגבול, אתה בוחר אותו.</p>'+
+    '<span class="src">נבחר כאן: '+esc(priceSrc)+'</span></div>';
 
   if(!m.ready){
     box = '<p class="hint" style="margin:0">אין עוד מספר, ולכן אין ביחס למה להעמיד את המחיר.</p>'+bound;
   } else if(v.small){
     box = '<div class="gate bad"><b>אל תמכור כאן את המפה.</b>'+
       '<p>המספר שלו הוא '+nis(m.cost)+' בחודש, '+d1(m.engineers)+' מהנדס במשרה מלאה. '+
-      'מפה ב-'+MAP.price.toLocaleString("en-US")+' ₪ על מספר כזה היא הדבר ששורף את הליד. '+
+      'מפה ב-'+price.toLocaleString("en-US")+' ₪ על מספר כזה היא הדבר ששורף את הליד. '+
       'אם הוא שואל, תגיד את המחיר, ותגיד באותה נשימה שאצלו זה לא משתלם.</p></div>'+bound;
-  } else if(m.cost < MAP.price){
+  } else if(m.cost < price){
     box = '<div class="gate bad"><b>המפה יוצאת יותר מחודש של הבעיה.</b>'+
       '<p>חודש של העבודה הידנית אצלו הוא '+nis(m.cost)+'. המפה היא '+
-      MAP.price.toLocaleString("en-US")+' ₪. '+
+      price.toLocaleString("en-US")+' ₪. '+
       'אמור את המחיר אם הוא שואל, ואמור גם את השורה הזאת. אל תעגל אותה.</p></div>'+bound;
   } else {
-    var sharePct = Math.round(MAP.price / m.cost * 100);
+    var sharePct = Math.round(price / m.cost * 100);
     var perDay   = m.cost / MAP.workDays;
-    var days     = perDay>0 ? MAP.price/perDay : 0;
+    var days     = perDay>0 ? price/perDay : 0;
     box =
-      '<div class="gate ok"><b>'+MAP.price.toLocaleString("en-US")+' ₪, '+MAP.weeks+' שבועות.</b>'+
+      '<div class="gate ok"><b>'+price.toLocaleString("en-US")+' ₪, '+MAP.weeks+' שבועות.</b>'+
       '<p>זה '+sharePct+'% מחודש אחד של מה שמדדתם עכשיו ביחד. '+
       'לפי המספר שלו, '+nis(m.cost)+' בחודש, הדליפה שווה בערך '+nis(perDay)+
       ' ליום עבודה. המפה עולה כמו '+d1(days)+' ימי עבודה מאותה דליפה.</p>'+
@@ -1094,14 +1301,88 @@ function renderClose(m){
       '</div>'+bound;
   }
   $("priceBox").innerHTML = box;
+  renderRungs(m);
+  renderPlayB(m);
 
   $("followMsg").value = followText(m);
+}
+
+/* Which rung of the ladder his own number can carry, by Dani's one-third rule.
+   The rule and the prices are both from his pricing note; the note calls v2
+   unconfirmed and that line is printed under them. */
+function rungCarries(r,cost){
+  return r.op==="gt" ? cost>r.need : cost>=r.need;
+}
+function rungFor(cost){
+  var fits=null;
+  LADDER.rungs.forEach(function(r){
+    if(rungCarries(r,cost) && (!fits || r.need>fits.need)) fits=r;
+  });
+  return fits;
+}
+function renderRungs(m){
+  var el=$("rungBox");
+  if(!m.ready){
+    el.innerHTML = '<p class="hint" style="margin:0">אין עוד מספר, ולכן אין מה לשאת. '+
+      'מלא עלות שעה ולפחות דליפה אחת.</p>';
+    return;
+  }
+  /* "Above 13,500" is written as above, and "7,500 or more" as or more. The
+     tool keeps that difference instead of rounding it into one word. */
+  var fits = rungFor(m.cost);
+  var third = m.cost/3;
+  var cards = LADDER.rungs.map(function(r){
+    var on = fits && r.id===fits.id;
+    return '<div'+(on?' class="fits"':'')+'><b>'+esc(r.name)+' · '+nis(r.month)+' בחודש</b>'+
+      '<span>'+(r.setup? 'הקמה '+nis(r.setup)+' · ':'')+esc(r.fit)+'</span>'+
+      '<span>'+(r.need
+        ? (r.op==="gt" ? 'נמכר רק מעל מספר של '+nis(r.need)+' בחודש'
+                       : 'נמכר ממספר של '+nis(r.need)+' בחודש ומעלה')
+        : 'בלי רצפה בפתק')+'</span></div>';
+  }).join("");
+
+  var head, body;
+  if(fits && fits.id==="keep"){
+    head = "המספר שלו נושא רק את Keep.";
+    body = "שליש מ-"+nis(m.cost)+" הוא "+nis(third)+" בחודש. "+
+           "המנוי הקטן ביותר מעל Keep הוא "+nis(2500)+", והפתק מוכר אותו רק ממספר של "+
+           nis(7500)+" בחודש. אל תציע כאן מנוי גדול.";
+  } else {
+    head = "המספר שלו נושא "+fits.name+", "+nis(fits.month)+" בחודש.";
+    body = "שליש מ-"+nis(m.cost)+" הוא "+nis(third)+" בחודש, והמנוי הזה נמצא מתחתיו. "+
+           "ההקמה שלו היא "+nis(fits.setup)+".";
+  }
+  el.innerHTML = '<div class="gate ok"><b>'+esc(head)+'</b><p>'+esc(body)+'</p>'+
+    '<span class="src">מקור: '+esc(LADDER.src)+'</span></div>'+
+    '<div class="rung">'+cards+'</div>'+
+    '<p class="hint" style="margin:10px 0 0">'+esc(LADDER.caveat)+'</p>';
+}
+
+/* Play B of the booked call. Dani's side only, and the prices come with the
+   one sentence that matters about them: they are seller prices. */
+function renderPlayB(m){
+  var o = m.ready ? m.cost : 0;
+  var within = o ? (PLAY_B.monthLow <= o/3) : false;
+  $("playBox").innerHTML =
+    '<div class="box"><h3>בניין אחד קודם</h3>'+
+    '<p>פילוט בבניין אחד: '+nis(PLAY_B.pilot)+' מחיר סגור, '+PLAY_B.weeks+' שבועות. '+
+    'כל הבניינים אחר כך: '+nis(PLAY_B.setupLow)+' עד '+nis(PLAY_B.setupHigh)+
+    ' הקמה בסך הכל, הפילוט בתוך זה. חודשי: '+nis(PLAY_B.monthLow)+' עד '+
+    nis(PLAY_B.monthHigh)+', כולל וואטסאפ, עדכונים ואחריות.</p>'+
+    (o ? '<p style="margin-top:8px">שליש מהמספר שלו הוא '+nis(o/3)+' בחודש. '+
+         (within ? 'החודשי הנמוך נכנס לתוכו.'
+                 : 'גם החודשי הנמוך לא נכנס לתוכו, אז אל תמכור כאן מנוי.')+'</p>' : '')+
+    '<p style="margin-top:8px"><b>מאיפה המחירים.</b> מבלוגים של מוכרים, בעיקר מוכר אחד. '+
+    'אף קונה לא דיווח על הצעה אמיתית, והחודשי הפומבי הגבוה ביותר הוא בסביבות '+
+    nis(1500)+'. מעל זה, תגיד מה החודש כולל.</p>'+
+    '<span class="src">מקור: '+esc(PLAY_B.src)+'</span></div>';
 }
 
 /* the day-after message: his word, his number, one ask, no price */
 function followText(m){
   var L=[];
-  L.push((m.biz? m.biz+", ":"")+"דני סופר. תודה על השעה.");
+  L.push((m.biz? m.biz+", ":"")+"דני סופר. "+
+         (m.mode==="call" ? "תודה על השלושים הדקות." : "תודה על השעה."));
   L.push("");
   if(m.pain) L.push("אמרת: „"+m.pain+"”. זה נשאר איתי.");
   if(m.ready){
@@ -1109,17 +1390,70 @@ function followText(m){
            " שעות בחודש. בערך "+nis(m.cost)+" בחודש.");
     if(m.leaks[0]) L.push("הגדולה מכולן: "+m.leaks[0].name+".");
     L.push("");
-    L.push("הדף שיצא מהשעה מצורף. הוא שלך, גם אם לא נמשיך מכאן.");
+    L.push(m.mode==="call"
+      ? "הדף שיצא מהשיחה מצורף. הוא שלך, גם אם לא נמשיך מכאן."
+      : "הדף שיצא מהשעה מצורף. הוא שלך, גם אם לא נמשיך מכאן.");
   } else {
     L.push("");
     L.push("הדף עם המספר יגיע אליך בנפרד.");
   }
   L.push("");
-  L.push("שתי אפשרויות, ושתיהן בסדר מצידי:");
-  L.push("1. נקבע חצי שעה להמשך.");
-  L.push("2. תיתן לי שם של בעל משרד אחד שכדאי שאשב איתו.");
+  if(m.mode==="call"){
+    L.push("נקבע חצי שעה לסגור את הצעד הראשון. מתי נוח לך?");
+  } else {
+    L.push("שתי אפשרויות, ושתיהן בסדר מצידי:");
+    L.push("1. נקבע חצי שעה להמשך.");
+    L.push("2. תיתן לי שם של בעל משרד אחד שכדאי שאשב איתו.");
+  }
   L.push("");
-  L.push("דני סופר · Atidi Labs · 054-3074547");
+  L.push("דני סופר · Atidilabs · 054-3074547");
+  return L.join("\n");
+}
+
+/* The one-page email. A video call cannot be handed a printed page, and the
+   call's own closing line promises this email by the next day. The price goes
+   in only when the close tab says it was said out loud first. */
+function mailText(m){
+  var L=[];
+  var who = m.biz || "שלום";
+  L.push("נושא: "+who+", המספר מהשיחה והצעד הבא");
+  L.push("");
+  L.push("שלום,");
+  L.push("");
+  L.push(m.mode==="call" ? "תודה על השלושים הדקות." : "תודה על השעה.");
+  if(m.pain) L.push("אמרת: „"+m.pain+"”. זאת השורה שנשארה איתי.");
+  L.push("");
+  if(m.ready){
+    L.push("מה שספרנו ביחד, מהמספרים שלך:");
+    m.leaks.forEach(function(l){
+      L.push("· "+l.name+": "+h(l.week)+" שעות בשבוע, "+h(l.hours)+
+             " שעות בחודש, בערך "+nis(l.cost)+" בחודש.");
+    });
+    L.push("");
+    L.push("ביחד: "+h(m.week)+" שעות בשבוע, בערך "+nis(m.cost)+" בחודש.");
+    L.push("המספר בנוי מהתשובות שלך בשיחה. הוא אומדן, לא מדידה.");
+    if(m.atRisk){
+      L.push("");
+      L.push("בנפרד, ההערכה שלך על פניות שלא נענו: "+nis(m.atRisk)+" בחודש. "+
+             "היא לא נכנסת לסכום שלמעלה.");
+    }
+  } else {
+    L.push("המספר עוד לא מלא אצלי. אני שולח אותו בנפרד.");
+  }
+  L.push("");
+  L.push("הצעד הראשון: "+MAP.weeks+" שבועות של מיפוי. "+
+         MAP.low+" עד "+MAP.high+" מקומות שבהם הולך זמן וכסף, מדורגים, "+
+         "עם מספר ליד כל אחד. מה וכמה, לא איך.");
+  if(m.priceSaid==="yes"){
+    L.push("המחיר, כמו שאמרתי בשיחה: "+nis(m.mapPrice)+". "+
+           "אם ממשיכים לתיקון הראשון בתוך "+MAP.creditDays+" יום, הסכום מתקזז במלואו.");
+  }
+  L.push("");
+  L.push(m.nextDate
+    ? "נדבר שוב ב-"+heDate(m.nextDate)+"."
+    : "נקבע חצי שעה לסגור את הצעד הראשון. מתי נוח לך?");
+  L.push("");
+  L.push("דני סופר · Atidilabs · 054-3074547 · atidilabs.com");
   return L.join("\n");
 }
 
@@ -1135,7 +1469,7 @@ function waText(m){
   L.push("");
   L.push("המספר בנוי מהתשובות שלך והוא אומדן גס, לא מדידה. הדף המלא מצורף.");
   L.push("");
-  L.push("דני סופר · Atidi Labs · 054-3074547");
+  L.push("דני סופר · Atidilabs · 054-3074547");
   return L.join("\n");
 }
 
@@ -1150,8 +1484,16 @@ var current = null;
 function refresh(){
   formToVisit();
   book.booked = $("bookedN").value;
+  COLD_KEYS.forEach(function(k){ book[k] = $(k).value; });
   var v = active();
   current = modelOf(v);
+  /* one hour on screen at a time: the office visit or the booked call */
+  $("cardOffice").hidden = current.mode==="call";
+  $("cardCall").hidden   = current.mode!=="call";
+  $("cardPlayB").hidden  = current.mode!=="call";
+  $("lede").textContent = current.mode==="call"
+    ? "הכלי של השיחה. שלושים דקות, ובסוף מספר אחד, בנוי מהתשובות שלו, לא משלנו."
+    : "הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד, בנוי מהתשובות שלו, לא משלנו.";
   renderAsk(current,v);
   renderSheet(current);
   renderClose(current);
@@ -1212,6 +1554,13 @@ $("newBtn").addEventListener("click", function(){
   toast("ביקור חדש. שום דבר לא נמחק.");
 });
 
+/* Changing the hour's kind changes the questions, the clock and the sheet's
+   heading. It never touches a number he already gave. */
+$("mode").addEventListener("change", function(){
+  refresh();
+  toast($("mode").value==="call" ? "שיחת וידאו, 30 דקות" : "ביקור במשרד, שעה");
+});
+
 /* Deleting takes two taps. Nothing here ever removes a visit on its own. */
 $("delBtn").addEventListener("click", function(){
   var b=$("delBtn");
@@ -1233,6 +1582,15 @@ $("followBtn").addEventListener("click", function(){
   var t = $("followMsg").value;
   if(!t){ toast("אין עוד הודעה"); return; }
   var done=function(){ toast("הועתק"); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
+  } else { fallback(t,done); }
+});
+
+$("mailBtn").addEventListener("click", function(){
+  if(!current){ toast("אין עוד ביקור"); return; }
+  var t = mailText(current);
+  var done=function(){ toast("המייל הועתק"); };
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
   } else { fallback(t,done); }
@@ -1266,6 +1624,7 @@ $("clearBtn").addEventListener("click", function(){
 book = readBook();
 visitToForm(active());
 $("bookedN").value = (book.booked==null ? "" : book.booked);
+COLD_KEYS.forEach(function(k){ $(k).value = (book[k]==null ? "" : book[k]); });
 refresh();
 showTab("words");
 if(migrated) toast("הביקור מליל אתמול נשמר כאן.");

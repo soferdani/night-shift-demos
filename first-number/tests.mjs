@@ -97,27 +97,27 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
   const bCost = nisToInt(await page.locator('#sBig').textContent());
   ok('2.2 office B has its own number', bCost > 0 && bCost !== aCost);
 
-  eq('2.3 the picker holds sample + A + B',
-     await page.locator('#visitPick option').count(), 3);
-  ok('2.4 the count line says three visits',
-     /3/.test(await page.locator('#visitCount').textContent()));
+  eq('2.3 the picker holds sample + the booked call + A + B',
+     await page.locator('#visitPick option').count(), 4);
+  ok('2.4 the count line says four visits',
+     /4/.test(await page.locator('#visitCount').textContent()));
 
   /* this is the night-1 defect: go back to A and it must still be there */
   const ids = await page.locator('#visitPick option').evaluateAll(o => o.map(x => x.value));
-  await page.locator('#visitPick').selectOption(ids[1]);
+  await page.locator('#visitPick').selectOption(ids[2]);
   eq('2.5 office A survived the second visit', await page.locator('#biz').inputValue(), OFFICE_A.biz);
   eq('2.6 office A kept its own number', nisToInt(await page.locator('#sBig').textContent()), aCost);
   eq('2.7 office A kept its own rate', await page.locator('#rate').inputValue(), OFFICE_A.rate);
 
-  await page.locator('#visitPick').selectOption(ids[2]);
+  await page.locator('#visitPick').selectOption(ids[3]);
   eq('2.8 office B is intact too', await page.locator('#biz').inputValue(), OFFICE_B.biz);
   eq('2.9 office B kept its number', nisToInt(await page.locator('#sBig').textContent()), bCost);
 
   /* survives a reload */
   await page.reload();
   await page.locator('#tab-ask').click();
-  eq('2.10 all three visits survive a reload',
-     await page.locator('#visitPick option').count(), 3);
+  eq('2.10 all four visits survive a reload',
+     await page.locator('#visitPick option').count(), 4);
   eq('2.11 the open visit is remembered', await page.locator('#biz').inputValue(), OFFICE_B.biz);
   ok('2.12 no console errors across two visits', errs.length === 0, errs.join(' | '));
   await ctx.close();
@@ -151,21 +151,32 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
 /* ───────────────────────── 4. nothing deletes a visit on its own ──────────────────── */
 {
   const { ctx, page } = await fresh();
-  ok('4.1 delete is hidden while there is one visit', await page.locator('#delBtn').isHidden());
   await page.locator('#clearBtn').click();
   await fillVisit(page, OFFICE_A);
-  ok('4.2 delete appears once a second visit exists', await page.locator('#delBtn').isVisible());
+  ok('4.2 delete appears while more than one visit exists', await page.locator('#delBtn').isVisible());
 
+  const n0 = await page.locator('#visitPick option').count();
   await page.locator('#delBtn').click();                     /* first tap = arm only */
-  eq('4.3 one tap does not delete', await page.locator('#visitPick option').count(), 2);
+  eq('4.3 one tap does not delete', await page.locator('#visitPick option').count(), n0);
   ok('4.4 the button asks again', /שוב/.test(await page.locator('#delBtn').textContent()));
   await page.locator('#delBtn').click();                     /* second tap = delete */
-  eq('4.5 two taps delete one visit', await page.locator('#visitPick option').count(), 1);
+  eq('4.5 two taps delete one visit', await page.locator('#visitPick option').count(), n0 - 1);
 
   /* the arming resets, so a stray tap later cannot delete */
   await page.locator('#newBtn').click();
+  const n1 = await page.locator('#visitPick option').count();
   await page.locator('#delBtn').click();
-  eq('4.6 arming resets between visits', await page.locator('#visitPick option').count(), 2);
+  eq('4.6 arming resets between visits', await page.locator('#visitPick option').count(), n1);
+
+  /* delete down to the last one: it must refuse to go */
+  await page.evaluate(() => {
+    const b = JSON.parse(localStorage.getItem('atidi-first-number-v2'));
+    b.visits = [b.visits[0]];
+    b.activeId = b.visits[0].id;
+    localStorage.setItem('atidi-first-number-v2', JSON.stringify(b));
+  });
+  await page.reload();
+  ok('4.1 the last remaining visit cannot be deleted', await page.locator('#delBtn').isHidden());
   await ctx.close();
 }
 
@@ -404,7 +415,9 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
   ok('11.5 the six questions are the card\'s, not the calculator\'s',
      /שבוע רגיל של מפקח/.test(card) && /מי אצלכם מחליט/.test(card) &&
      /פוגשים בעלי משרדים אחרים/.test(card));
-  eq('11.6 there are six of them', await page.locator('#pane-words textarea.w').count(), 6);
+  eq('11.6 there are six of them', await page.locator('#cardOffice textarea.w').count(), 6);
+  ok('11.6b and the call\'s questions are not on screen during an office visit',
+     await page.locator('#cardCall').isHidden());
 
   await page.locator('#w2').fill('הדוחות של שישי. אני יושב עליהם בלילה');
   await page.locator('#painWord').fill('הדוחות של שישי');
@@ -560,6 +573,351 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
   const pdf = await page.pdf({ format:'A4', printBackground:true });
   const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
   eq('14.11 the fuller sheet still prints on one A4 page', pages, 1);
+  await ctx.close();
+}
+
+/* ───────── 15. night 4: the hour that is actually booked, and the ladder ───────── */
+
+/* the call that is booked: 30 minutes on a Meet, five questions, 6.12.2026 */
+{
+  const { ctx, page, errs } = await fresh({ stayOnBootTab:true });
+  const ids = await page.locator('#visitPick option').evaluateAll(o => o.map(x => x.value));
+  eq('15.1 the book boots with the sample and the booked call', ids.length, 2);
+
+  await page.locator('#visitPick').selectOption(ids[1]);
+  eq('15.2 the booked one is a video call', await page.locator('#mode').inputValue(), 'call');
+  await page.locator('#tab-ask').click();
+  eq('15.3 and it is dated for the booked Sunday',
+     await page.locator('#visitDate').inputValue(), '2026-12-06');
+  eq('15.4 its map price is the one the call prep chose for a firm that size',
+     await page.locator('#mapPrice').inputValue(), '5000');
+  ok('15.5 it carries no number yet: those come out of his mouth',
+     (await page.locator('#rate').inputValue()) === '' &&
+     (await page.locator('#tenantCount').inputValue()) === '');
+
+  await page.locator('#tab-words').click();
+  const card = await page.locator('#cardCall').textContent();
+  ok('15.6 the office card is off screen', await page.locator('#cardOffice').isHidden());
+  ok('15.7 the clock is the call\'s 2/15/5/5/3, not the 40/15 split',
+     /15 דק׳ · חמש השאלות/.test(card) && !/0–40/.test(card));
+  eq('15.8 five questions, not six', await page.locator('#cardCall .wq textarea').count(), 8);
+  ok('15.9 they are the call prep\'s five',
+     /איך דייר מקבל היום תשובה/.test(card) && /כמה פניות כאלה מגיעות בשבוע/.test(card) &&
+     /אילו שאלות חוזרות/.test(card) && /עד פברואר/.test(card));
+  ok('15.10 the three GetStatus questions ride along',
+     /מה אתם מעלים ל-GetStatus/.test(card) && /מי אצלכם מעדכן את המערכת/.test(card));
+  ok('15.11 and the page says plainly not to connect to GetStatus',
+     /התקנון אוסר/.test(card));
+
+  await page.locator('#c2').fill('בערך עשרים בשבוע, דלית עונה');
+  await page.locator('#painWord').fill('הטלפונים של הדיירים');
+  await page.reload();
+  await page.locator('#tab-words').click();
+  eq('15.12 his words on the call survive a reload',
+     await page.locator('#c2').inputValue(), 'בערך עשרים בשבוע, דלית עונה');
+  ok('15.13 no console errors on the call path', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the number the call card asks for: questions a week x minutes x who answers */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await page.locator('#mode').selectOption('call');
+  await fillVisit(page, { biz:'משרד פיקוח', visitDate:'2026-12-06', rate:'180',
+                          tenantCount:'25', tenantMin:'12', tenantRate:'110' });
+
+  const said = await page.locator('#tenantSaid').textContent();
+  ok('15.14 the leak repeats his own two numbers back',
+     /25 פניות בשבוע/.test(said) && /12 דקות/.test(said), said);
+
+  const out = await page.locator('#tenantOut').textContent();
+  const hM  = parseFloat(out);
+  const cost = nisToInt(out.match(/₪[\d,]+/)[0]);
+  /* 25 x 12/60 = 5 hours a week; the month is 52/12 of that */
+  eq('15.15 the month is the week times 52/12, rounded to one place',
+     hM, Math.round(5 * (52/12) * 10) / 10);
+  eq('15.16 and the cost is those hours times the rate he gave',
+     cost, Math.round(hM * 110));
+
+  const meta = await page.locator('#sMeta').textContent();
+  ok('15.17 on a call the week figure comes first, because that is the sentence he hears',
+     /^5 שעות בשבוע/.test(meta.trim()), meta);
+
+  await page.locator('#mode').selectOption('office');
+  ok('15.18 in an office visit the sticky bar keeps the month framing',
+     !/שעות בשבוע/.test(await page.locator('#sMeta').textContent()));
+  await page.locator('#mode').selectOption('call');
+
+  await page.locator('#tab-sheet').click();
+  const sheet = await page.locator('#sheet').textContent();
+  ok('15.19 his sheet says it came out of a 30-minute call', /שיחת וידאו · 30 דקות/.test(sheet));
+  ok('15.20 and it shows the week figure he heard', /שעות בשבוע/.test(sheet));
+  ok('15.21 the tenant leak is a row on his sheet', /שאלות של דיירים/.test(sheet));
+  ok('15.22 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the ladder: which rung his own number carries, by the one-third rule */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await page.locator('#mode').selectOption('call');
+
+  /* the rule in Dani's note: 2,500 from 7,500 "or more", 4,500 only "above" 13,500 */
+  const rungAt = async (monthCost) => {
+    /* one leak, 1 hour a month at a rate that makes the month come out exactly */
+    await fillVisit(page, { biz:'מ', rate:'100', chaseHours:'1', chaseRate:String(monthCost) });
+    await page.locator('#tab-close').click();
+    const box = await page.locator('#rungBox').textContent();
+    const fit = await page.locator('#rungBox .rung div.fits b').textContent().catch(() => '');
+    await page.locator('#tab-ask').click();
+    return { box, fit };
+  };
+
+  let r = await rungAt(7400);
+  ok('15.23 below 7,500 only Keep fits', /Keep/.test(r.fit) && !/Small/.test(r.fit), r.fit);
+  ok('15.24 and it says not to offer the bigger subscription', /אל תציע כאן מנוי גדול/.test(r.box));
+
+  r = await rungAt(7500);
+  ok('15.25 at exactly 7,500 Small fits, because the note says "or more"',
+     /Small/.test(r.fit), r.fit);
+
+  r = await rungAt(13500);
+  ok('15.26 at exactly 13,500 it is still Small, because the note says "above"',
+     /Small/.test(r.fit), r.fit);
+
+  r = await rungAt(13600);
+  ok('15.27 above 13,500 Standard fits', /Standard/.test(r.fit), r.fit);
+  ok('15.28 the monthly fee it names sits under a third of his number',
+     /4,500/.test(r.fit) && 4500 <= 13600/3);
+
+  await page.locator('#tab-close').click();
+  const close = await page.locator('#pane-close').textContent();
+  ok('15.29 the ladder box says these prices are unconfirmed and unheard',
+     /לא אושרו/.test(close) && /אף בעל עסק עוד לא שמע/.test(close));
+  ok('15.30 and it names the note they come from', /Pricing Method/.test(close));
+  ok('15.31 no console errors across the rungs', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the map price is chosen, not hardcoded, and the arithmetic follows it */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, { biz:'משרד גדול', rate:'180', chaseHours:'100', chaseRate:'200' });
+
+  await page.locator('#tab-close').click();
+  const at3500 = await page.locator('#priceBox').textContent();
+  ok('15.32 the default map price is the ladder\'s 3,500', /3,500 ₪, 2 שבועות/.test(at3500));
+  const pct3500 = parseInt(at3500.match(/(\d+)% מחודש אחד/)[1], 10);
+  eq('15.33 the share is the price over his own month', pct3500, Math.round(3500/20000*100));
+
+  /* the price lives on the close tab, where the price conversation happens */
+  await page.locator('#mapPrice').selectOption('5000');
+  const at5000 = await page.locator('#priceBox').textContent();
+  ok('15.34 choosing 5,000 moves the headline price', /5,000 ₪, 2 שבועות/.test(at5000));
+  const pct5000 = parseInt(at5000.match(/(\d+)% מחודש אחד/)[1], 10);
+  eq('15.35 and the share follows it', pct5000, Math.round(5000/20000*100));
+  ok('15.36 the credit line names the chosen price, not the old one',
+     /ה-5,000 ₪ נכנסים לתיקון הראשון/.test(at5000) && !/ה-3,500 ₪ נכנסים/.test(at5000));
+  ok('15.37 it says the notes give two anchors and no cutoff, and that Dani picks',
+     /אין ביניהן קו/.test(at5000) && /הכלי לא ממציא את הגבול/.test(at5000));
+  ok('15.38 it still refuses to call the ratio a saving', /זה לא חיסכון/.test(at5000));
+  ok('15.39 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* play B, and what must not be on a public page */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, { biz:'מ', rate:'180', chaseHours:'10', chaseRate:'200' });
+  await page.locator('#tab-close').click();
+  ok('15.40 play B is off screen in an office visit', await page.locator('#cardPlayB').isHidden());
+
+  await page.locator('#tab-ask').click();
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-close').click();
+  ok('15.41 and on screen for the booked call', await page.locator('#cardPlayB').isVisible());
+  const playB = await page.locator('#playBox').textContent();
+  ok('15.42 it carries the pilot and the range', /8,500/.test(playB) && /15,000/.test(playB) && /25,000/.test(playB));
+  ok('15.43 and says the prices are sellers\' prices with no buyer quote',
+     /בלוגים של מוכרים/.test(playB) && /אף קונה לא דיווח/.test(playB));
+  ok('15.44 the close tab never prints', await page.evaluate(() =>
+     getComputedStyle(document.getElementById('pane-close')).display === 'block'));
+
+  const src = await page.content();
+  ok('15.45 the public page carries no prospect\'s name', !/צ\.ב\./.test(src));
+  ok('15.46 and does not publish our own cost base',
+     !/העלות שלנו להרצה/.test(src) && !/400/.test(await page.locator('#playBox').textContent()));
+  ok('15.47 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the one-page email, because a Meet cannot be handed a printed page */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await page.locator('#mode').selectOption('call');
+  await fillVisit(page, { biz:'משרד פיקוח', visitDate:'2026-12-06', rate:'180',
+                          tenantCount:'25', tenantMin:'12', tenantRate:'110',
+                          paperCount:'6', paperMin:'40' });
+  await page.locator('#tab-words').click();
+  await page.locator('#painWord').fill('הטלפונים של הדיירים');
+
+  const mail = () => page.evaluate(() => mailText(current));
+
+  let t = await mail();
+  ok('15.48 the email has a subject line',
+     /^נושא: משרד פיקוח, המספר מהשיחה והצעד הבא/.test(t), t.split('\n')[0]);
+  ok('15.49 it quotes his own word', /„הטלפונים של הדיירים”/.test(t));
+  ok('15.50 it carries the week and the month', /שעות בשבוע/.test(t) && /שעות בחודש/.test(t));
+  ok('15.51 it names the map without a price, because the price was not said',
+     /שבועות של מיפוי/.test(t) && !/5,000/.test(t) && !/3,500/.test(t));
+  ok('15.52 it says the number is an estimate, not a measurement', /אומדן, לא מדידה/.test(t));
+  ok('15.53 it asks for one thing: the half hour to close', /מתי נוח לך/.test(t));
+  ok('15.54 no em dash anywhere in it, it goes to a customer in Dani\'s voice',
+     !/—/.test(t), t);
+
+  await page.locator('#tab-close').click();
+  await page.locator('#mapPrice').selectOption('5000');
+  await page.locator('#priceSaid').selectOption('yes');
+  t = await mail();
+  ok('15.55 once the price was said aloud, the email may carry it', /5,000/.test(t));
+  ok('15.56 with the credit rule beside it', /מתקזז במלואו/.test(t));
+
+  await page.locator('#nextDate').fill('2026-12-10');
+  t = await mail();
+  ok('15.57 and an agreed date replaces the ask', /נדבר שוב ב-10\.12\.2026/.test(t) && !/מתי נוח לך/.test(t));
+
+  const follow = await page.locator('#followMsg').inputValue();
+  ok('15.58 the day-after message thanks him for thirty minutes, not an hour',
+     /תודה על השלושים הדקות/.test(follow));
+  ok('15.59 and it does not ask a remote lead for another owner\'s name',
+     !/שם של בעל משרד/.test(follow));
+  ok('15.60 no em dash in it either', !/—/.test(follow), follow);
+  ok('15.61 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the two channels stay apart, so no threshold passes on the wrong evidence */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#tab-compare').click();
+  const pane0 = await page.locator('#pane-compare').textContent();
+  ok('15.62 the 2-of-5 threshold says which five it means',
+     /מחמשת המשרדים של אידן/.test(await page.locator('#pane-compare').innerHTML()) ||
+     /החמישה/.test(pane0));
+  ok('15.63 the cold-email channel starts unmarked', /עוד לא סומן/.test(
+     await page.locator('#coldBox').textContent()));
+
+  await fillVisit(page, { coldSent:'13', coldReplies:'1', coldCalls:'1' });
+  const cold = await page.locator('#coldBox').textContent();
+  ok('15.64 it counts the batch on its own', /13 מיילים/.test(cold) && /1 שיחות שנקבעו/.test(cold));
+  ok('15.65 and says a call from here does not count toward the five',
+     /לא נספרת שם/.test(cold));
+  ok('15.66 it names the 13-vs-10 mismatch instead of picking one',
+     /13 מיילים ולא 10/.test(cold));
+  ok('15.67 the cold channel has no pass band at all',
+     !/עובר\./.test(cold) && (await page.locator('#coldBox .gate.ok').count()) === 0);
+
+  const book = await page.locator('#bookBox').textContent();
+  ok('15.68 the five offices still read as undecided', /לא סומן|מתוך 5/.test(book));
+
+  await page.reload();
+  await page.locator('#tab-compare').click();
+  eq('15.69 the channel numbers survive a reload',
+     await page.locator('#coldSent').inputValue(), '13');
+  ok('15.70 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the call, on a phone, and still one page when he prints it */
+{
+  const { ctx, page, errs } = await fresh({ viewport:{width:390,height:844} });
+  await page.locator('#clearBtn').click();
+  await page.locator('#mode').selectOption('call');
+  await fillVisit(page, { biz:'משרד פיקוח בניין', visitDate:'2026-12-06', rate:'180', team:'20',
+                          tenantCount:'25', tenantMin:'12', tenantRate:'110',
+                          paperCount:'6', paperMin:'40', chaseHours:'8',
+                          leads:'12', leadsMissed:'4', dealValue:'18000', leadsWin:'1' });
+  for (const t of ['words','ask','sheet','close','compare']) {
+    await page.locator('#tab-' + t).click();
+    const over = await page.evaluate(() =>
+      document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    ok('15.71 no sideways scroll at 390px on the ' + t + ' tab', !over);
+  }
+  await page.locator('#tab-sheet').click();
+  const pdf = await page.pdf({ format:'A4', printBackground:true });
+  const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+  eq('15.76 the call\'s sheet still prints on one A4 page', pages, 1);
+  ok('15.77 no console errors on the phone', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* nothing in Dani's voice carries an AI tell, on any of the three surfaces */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await page.locator('#mode').selectOption('call');
+  await fillVisit(page, { biz:'משרד פיקוח', visitDate:'2026-12-06', rate:'180',
+                          tenantCount:'25', tenantMin:'12', tenantRate:'110',
+                          paperCount:'6', paperMin:'40',
+                          leads:'12', leadsMissed:'4', dealValue:'18000', leadsWin:'1' });
+  await page.locator('#tab-sheet').click();
+  const sheet = await page.locator('#sheet').textContent();
+  ok('15.80 no em dash on the sheet he keeps', !/—/.test(sheet), sheet.match(/.{0,30}—.{0,30}/)?.[0]);
+  const wa = await page.evaluate(() => waText(current));
+  ok('15.81 no em dash in the whatsapp summary', !/—/.test(wa), wa);
+  const follow = await page.locator('#followMsg').inputValue();
+  ok('15.82 no em dash in the day-after message', !/—/.test(follow), follow);
+  const mail = await page.evaluate(() => mailText(current));
+  ok('15.83 no em dash in the email', !/—/.test(mail), mail);
+
+  /* the week figure he hears must agree with the month on his own sheet */
+  const agree = await page.evaluate(() => {
+    const m = current;
+    return m.leaks.every(l => Math.abs(l.week * (52/12) - l.hours) <= 0.15)
+        && Math.abs(m.week * (52/12) - m.hours) <= 0.15;
+  });
+  ok('15.84 the week figures and the month figures are the same arithmetic', agree);
+  ok('15.85 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the brand is spelled the way Dani fixed it on 26.11 */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, { biz:'מ', rate:'180', chaseHours:'10' });
+  const head = await page.locator('.brand').textContent();
+  ok('15.86 the header spells the brand as one word', /Atidilabs/.test(head) && !/Atidi Labs/.test(head), head);
+  await page.locator('#tab-sheet').click();
+  const foot = await page.locator('#sheet .sh-foot').textContent();
+  ok('15.87 so does the sheet the owner keeps', /Atidilabs/.test(foot) && !/Atidi Labs/.test(foot), foot);
+  ok('15.88 and the business phone is the one business number', /054-3074547/.test(foot));
+  const wa = await page.evaluate(() => waText(current));
+  ok('15.89 and the signature on a message to a customer', /Atidilabs/.test(wa) && !/Atidi Labs/.test(wa));
+
+  /* the first line of the page names the hour that is on screen */
+  await page.locator('#tab-ask').click();
+  ok('15.90 the lede says an hour at the office for an office visit',
+     /שעה אחת במשרד/.test(await page.locator('#lede').textContent()));
+  await page.locator('#mode').selectOption('call');
+  ok('15.91 and thirty minutes for the booked call',
+     /שלושים דקות/.test(await page.locator('#lede').textContent()));
+  ok('15.92 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* dark mode, both hours */
+{
+  const { ctx, page, errs } = await fresh({ colorScheme:'dark' });
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-words').click();
+  ok('15.78 the call card reads in dark mode', await page.locator('#cardCall').isVisible());
+  ok('15.79 no console errors in dark mode', errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
 
