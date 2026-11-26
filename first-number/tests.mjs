@@ -632,13 +632,23 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
      /25 פניות בשבוע/.test(said) && /12 דקות/.test(said), said);
 
   const out = await page.locator('#tenantOut').textContent();
-  const hM  = parseFloat(out);
+  const hW  = parseFloat(out.match(/([\d.]+) שעות בשבוע/)[1]);
+  const hM  = parseFloat(out.match(/([\d.]+) שעות ·/)[1]);
   const cost = nisToInt(out.match(/₪[\d,]+/)[0]);
+  eq('15.14b the week figure is his two numbers multiplied', hW, 25 * 12 / 60);
   /* 25 x 12/60 = 5 hours a week; the month is 52/12 of that */
   eq('15.15 the month is the week times 52/12, rounded to one place',
      hM, Math.round(5 * (52/12) * 10) / 10);
   eq('15.16 and the cost is those hours times the rate he gave',
      cost, Math.round(hM * 110));
+
+  ok('15.17a on a call the leak itself carries the week figure he hears',
+     /^5 שעות בשבוע · /.test((await page.locator('#tenantOut').textContent()).trim()),
+     await page.locator('#tenantOut').textContent());
+  await page.locator('#mode').selectOption('office');
+  ok('15.17b in an office visit the leak line stays as it was',
+     !/בשבוע/.test(await page.locator('#tenantOut').textContent()));
+  await page.locator('#mode').selectOption('call');
 
   const meta = await page.locator('#sMeta').textContent();
   ok('15.17 on a call the week figure comes first, because that is the sentence he hears',

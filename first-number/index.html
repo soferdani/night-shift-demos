@@ -919,7 +919,10 @@ function renderAsk(m,v){
   [["tenant"],["paper"],["quote"],["chase"]].forEach(function(p){
     var l=by[p[0]];
     $(p[0]+"Said").textContent = l ? l.said : "";
-    $(p[0]+"Out").textContent  = l ? (h(l.hours)+" שעות · "+nis(l.cost)+" בחודש") : "";
+    $(p[0]+"Out").textContent  = l
+      ? ((m.mode==="call" ? h(l.week)+" שעות בשבוע · " : "")+
+         h(l.hours)+" שעות · "+nis(l.cost)+" בחודש")
+      : "";
   });
 
   if(m.win && m.dealValue){
