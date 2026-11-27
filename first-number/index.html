@@ -125,6 +125,12 @@ tr.tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800}
 .verdict.small{border-color:var(--warn);background:var(--warn-soft)}
 .verdict b{display:block;margin-bottom:2px}
 .verdict p{margin:0;font-size:.93rem}
+.olist{margin:9px 0 0;padding:0;list-style:none;font-size:.93rem}
+.olist li{padding:3px 0;display:flex;gap:8px}
+.olist li::before{content:"·";font-weight:800;color:var(--accent)}
+.ofr .box{margin:14px 0 0}
+.ofr .box h3{margin:0 0 2px;font-size:.98rem}
+.ofr .price{font-size:1.5rem;font-weight:800;letter-spacing:-.5px}
 .fine{margin:20px 0 0;padding:0;list-style:none;color:var(--soft);font-size:.88rem}
 .fine li{padding:4px 0 4px 0;display:flex;gap:8px}
 .fine li::before{content:"·";font-weight:800;color:var(--accent)}
@@ -249,6 +255,11 @@ table.cmp td:first-child{font-weight:600}
   header.top,.tabs,.sticky,.toolbar,.sample,.toast,.noprint{display:none !important}
   .visitbar,#pane-ask,#pane-compare,#pane-words,#pane-close{display:none !important}
   #pane-sheet{display:block !important}
+  /* two documents leave the room now, and only one of them prints at a time:
+     the sheet by default, the offer when the offer tab is the open one. */
+  #pane-offer{display:none !important}
+  body[data-print="offer"] #pane-sheet{display:none !important}
+  body[data-print="offer"] #pane-offer{display:block !important}
   .sheet{border:0;padding:0;box-shadow:none}
   .trio div,.box{background:#fff}
   .hero .v{font-size:2.4rem}
@@ -284,6 +295,7 @@ table.cmp td:first-child{font-weight:600}
     <button role="tab" id="tab-words" aria-selected="true"  aria-controls="pane-words">השעה</button>
     <button role="tab" id="tab-ask"   aria-selected="false" aria-controls="pane-ask">המספר</button>
     <button role="tab" id="tab-sheet" aria-selected="false" aria-controls="pane-sheet">הדף שלו</button>
+    <button role="tab" id="tab-offer" aria-selected="false" aria-controls="pane-offer">ההצעה</button>
     <button role="tab" id="tab-close" aria-selected="false" aria-controls="pane-close">הסגירה</button>
     <button role="tab" id="tab-compare" aria-selected="false" aria-controls="pane-compare">ההשוואה</button>
   </div>
@@ -474,6 +486,29 @@ table.cmp td:first-child{font-weight:600}
     <div id="sheet"></div>
   </div>
 
+  <!-- The one-page offer. The call's closing line promises it by the next day:
+       „עד מחר אני שולח לך מייל של עמוד אחד עם ההצעה”, and the pushback table
+       answers „שלח הצעה” with „אשלח, עמוד אחד”. Until tonight it existed nowhere.
+       The document itself goes to the customer. The grey box under it is Dani's
+       and does not print. -->
+  <div id="pane-offer" role="tabpanel" hidden>
+    <div class="toolbar noprint">
+      <select id="offerPlay" aria-label="איזו הצעה">
+        <option value="a">מסלול A · המפה, שבועיים</option>
+        <option value="b">מסלול B · בניין אחד, שלושה שבועות</option>
+      </select>
+      <select id="pay" aria-label="תנאי התשלום">
+        <option value="">תנאי תשלום: עוד לא נבחר</option>
+        <option value="start">תשלום עם החתימה</option>
+        <option value="steps">תשלום בסוף השלב</option>
+      </select>
+      <button class="btn" id="offerPrintBtn">הדפס או שמור PDF</button>
+      <button class="btn ghost" id="offerMailBtn">העתק את מייל ההצעה</button>
+    </div>
+    <div id="offer"></div>
+    <div id="offerGate" class="noprint"></div>
+  </div>
+
   <!-- Dani's side. Never printed, never turned toward the owner. -->
   <div id="pane-close" role="tabpanel" hidden>
     <div class="mine"><b>המסך הזה שלך.</b> הוא לא נכנס להדפסה ולא מסתובב אליו.</div>
@@ -606,7 +641,8 @@ var SAMPLE = {
 var WORDS = ["w1","w2","w3","w4","w5","w6"];          /* the 60-minute office visit */
 var CALLW = ["c1","c2","c3","c4","c5"];                /* the 30-minute video call */
 var GETS  = ["g1","g2","g3"];                          /* GetStatus, 2 of the 15 minutes */
-var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note","mode","mapPrice"])
+var FIELDS = Object.keys(SAMPLE).concat(["visitDate","outcome","note","mode","mapPrice",
+  "offerPlay","pay"])
   .concat(WORDS).concat(CALLW).concat(GETS)
   .concat(["painWord","nextDate","nextName","priceSaid","mapPaid"]);
 
@@ -668,6 +704,56 @@ var MAP_PRICES = {
   "5000":"משרד עם 30 פרויקטים · 3 Call prep and prices, 26.11.2026"
 };
 
+/* The one-page offer, promised twice and written nowhere.
+   The call card ends on „עד מחר אני שולח לך מייל של עמוד אחד עם ההצעה”, and the
+   pushback table answers „שלח הצעה” with „אשלח, עמוד אחד”. Sources for every line
+   below: Play A and Play B from 3 Call prep and prices (26.11.2026) sections 5-6,
+   the scope and the customer's side from Agreement — three parts (skeleton)
+   (26.11.2026), the VAT sentence from Questions for Yani (26.11.2026). */
+var OFFER = {
+  vat:"המחירים אינם כוללים מע״מ. מע״מ יתווסף כדין אם יחול.",
+  srcA:"3 Call prep and prices · 26.11.2026, מסלול A",
+  srcB:"3 Call prep and prices · 26.11.2026, מסלול B",
+  srcScope:"Agreement — three parts (skeleton) · 26.11.2026",
+  srcVat:"Questions for Yani — Atidilabs first customer · 26.11.2026",
+  needs:["איש קשר אחד או שניים מיום החתימה",
+         "זמן לשאלות שלי והתשובות",
+         "גישה לקבצים שעליהם מדובר"],
+  /* how the map is written. Retainer Ladder — pricing method, 14.11.2026 */
+  mapIn:["אני יושב עם שניים-שלושה אנשים אצלכם",
+         "רשימה מדורגת של 4 עד 6 מקומות שבהם הולכים זמן וכסף, עם שווי בשקלים לכל אחד",
+         "כל שורה קטנה מספיק לתיקון בחודש אחד",
+         "השווי של כל שורה מאושר איתכם לפני שהוא נכתב",
+         "הסדר: מה שייתן תוצאה ראשונה מהר, ראשון"],
+  mapRule:"המפה אומרת מה וכמה, לא איך.",
+  mapOut:["אפיון","שמות של כלים","בנייה"],
+  mapNoGet:"לא מתחברים ל-GetStatus. התקנון שלו אוסר את זה.",
+  /* the pilot's scope, as the skeleton fills it for this firm */
+  pilotIn:["בוט שעונה לשאלות של דיירים בבניין אחד",
+           "עד 40 שאלות מאושרות",
+           "ערוץ וואטסאפ",
+           "שאלה שהבוט לא מכיר עוברת לאדם"],
+  pilotOut:["בניינים נוספים","חיבור ל-GetStatus","ערוצים חדשים"]
+};
+
+/* The payment line of the offer. Three notes answer it, and they do not agree:
+   the ladder of 14.11 and the accountant note of 26.11 both have the map paid at
+   the start, the agreement skeleton of the same 26.11 has no advance at all and an
+   invoice at the end of the step. None of the three is confirmed, and Yani has not
+   answered yet. So the tool prints the one Dani picks and names its note. It
+   invents no middle line. */
+var PAY = {
+  "":      { label:"עוד לא נבחר" },
+  "start": { label:"עם החתימה",
+             lineA:"המפה משולמת עם החתימה.",
+             lineB:"חמישים אחוז עם החתימה, חמישים אחוז בסיום הפיילוט.",
+             src:"Retainer Ladder · 14.11.2026 („paid at start”) · Questions for Yani · 26.11.2026 (מפה מראש, פיילוט 50-50)" },
+  "steps": { label:"בסוף השלב",
+             lineA:"בלי מקדמה. ההסכם החתום מתחיל את העבודה. חשבונית בסוף השלב, לתשלום עד 7 ימים.",
+             lineB:"בלי מקדמה. חשבונית בסוף כל שלב, לתשלום עד 7 ימים.",
+             src:"Agreement — three parts (skeleton) · 26.11.2026" }
+};
+
 var LEAK_NAMES = { tenant:"שאלות של דיירים", paper:"הניירת",
   quote:"הצעות מחיר", chase:"רדיפה אחרי אישורים וחשבוניות" };
 
@@ -708,6 +794,7 @@ function blank(){
   v.visitDate=today(); v.hpm=182; v.cutSmall=0.2; v.cutBig=0.5; v.share=50;
   v.showSave=false; v.outcome=""; v.note="";
   v.mode="office"; v.mapPrice="3500";
+  v.offerPlay="a"; v.pay="";
   return v;
 }
 /* The hour that is actually booked: Sunday 6.12.2026, 09:30, on a Meet.
@@ -745,6 +832,8 @@ function readBook(){
       if(!v.id) v.id=newId();
       if(!v.mode) v.mode="office";          /* visits from nights 1-3 are office visits */
       if(!v.mapPrice) v.mapPrice="3500";
+      if(!v.offerPlay) v.offerPlay="a";     /* visits from nights 1-4 had no offer */
+      if(v.pay===undefined) v.pay="";
     });
     if(b.booked===undefined) b.booked="";
     COLD_KEYS.forEach(function(k){ if(b[k]===undefined) b[k]=""; });
@@ -879,6 +968,8 @@ function modelOf(v){
     priceSaid: sv(v,"priceSaid"), mapPaid: sv(v,"mapPaid"),
     mode: sv(v,"mode")==="call" ? "call" : "office",
     mapPrice: nv(v,"mapPrice") || MAP.price,
+    offerPlay: sv(v,"offerPlay")==="b" ? "b" : "a",
+    pay: PAY[sv(v,"pay")] ? sv(v,"pay") : "",
     callWords: CALLW.map(function(k){ return sv(v,k); }),
     getWords: GETS.map(function(k){ return sv(v,k); }),
     ready: !!(cost>0)
@@ -1450,6 +1541,9 @@ function mailText(m){
   if(m.priceSaid==="yes"){
     L.push("המחיר, כמו שאמרתי בשיחה: "+nis(m.mapPrice)+". "+
            "אם ממשיכים לתיקון הראשון בתוך "+MAP.creditDays+" יום, הסכום מתקזז במלואו.");
+    /* the accountant note of 26.11 says this sentence goes in every quote, and
+       that no price is ever written as a final one. Night 4's mail had neither. */
+    L.push(OFFER.vat);
   }
   L.push("");
   L.push(m.nextDate
@@ -1457,6 +1551,217 @@ function mailText(m){
     : "נקבע חצי שעה לסגור את הצעד הראשון. מתי נוח לך?");
   L.push("");
   L.push("דני סופר · Atidilabs · 054-3074547 · atidilabs.com");
+  return L.join("\n");
+}
+
+/* ---------- the one-page offer ----------
+   Everything printed here has a note behind it. The map's own lines come from the
+   ladder of 14.11 and the Hebrew sales sentence of 26.11; the pilot's lines from
+   Play B and from the skeleton's scope table of 26.11; the VAT sentence from the
+   accountant note of 26.11. Nothing on the page is the tool's invention, and the
+   two places where Dani's notes disagree with themselves (the payment line, the
+   map price) are choices on the toolbar, not decisions the tool makes. */
+
+function bullets(arr){
+  return '<ul class="olist">'+arr.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul>';
+}
+
+function payLine(m){
+  var pay = PAY[m.pay] || PAY[""];
+  if(!pay.lineA) return "";
+  return m.offerPlay==="b" ? pay.lineB : pay.lineA;
+}
+
+function renderOffer(m){
+  var el=$("offer");
+  var b = m.offerPlay==="b";
+  var price = b ? PLAY_B.pilot : m.mapPrice;
+
+  /* the number recap. The pushback table is explicit that the page is sent
+     only once two numbers are in: how many a week, and who answers. */
+  var numberBlock;
+  if(m.ready){
+    var rows = m.leaks.map(function(l){
+      return '<tr><td>'+esc(l.name)+'</td>'+
+             (m.mode==="call" ? '<td class="num" data-label="שעות בשבוע">'+h(l.week)+'</td>' : '')+
+             '<td class="num" data-label="שעות בחודש">'+h(l.hours)+'</td>'+
+             '<td class="num" data-label="בחודש"><b>'+nis(l.cost)+'</b></td></tr>';
+    }).join("");
+    numberBlock =
+      '<table><thead><tr><th>איפה</th>'+
+      (m.mode==="call" ? '<th class="num">שעות בשבוע</th>' : '')+
+      '<th class="num">שעות בחודש</th><th class="num">בחודש</th></tr></thead><tbody>'+
+      rows+
+      '<tr class="tot"><td>סך הכל</td>'+
+      (m.mode==="call" ? '<td class="num" data-label="שעות בשבוע">'+h(m.week)+'</td>' : '')+
+      '<td class="num" data-label="שעות בחודש">'+h(m.hours)+'</td>'+
+      '<td class="num" data-label="בחודש">'+nis(m.cost)+'</td></tr></tbody></table>'+
+      '<p class="hint" style="margin:8px 0 0">המספר בנוי מהתשובות שלכם בשיחה. הוא אומדן, לא מדידה.</p>';
+  } else {
+    numberBlock = '<div class="empty">אין עדיין מספר בדף הזה.<br>'+
+      'מלא עלות שעה ולפחות דליפה אחת בטאב „המספר”.</div>';
+  }
+
+  var step = b
+    ? '<div class="box"><h3>הצעד הראשון: בניין אחד</h3>'+
+      '<p>שלושה שבועות, '+nis(PLAY_B.pilot)+', מחיר סגור.</p>'+
+      bullets(OFFER.pilotIn)+
+      '<p style="margin:9px 0 0"><b>מה לא נכנס לפיילוט:</b> '+
+      esc(OFFER.pilotOut.join(" · "))+'.</p></div>'+
+      '<div class="box"><h3>אם הדיירים מקבלים תשובות טובות</h3>'+
+      bullets(["הקמה לכל הבניינים: "+nis(PLAY_B.setupLow)+" עד "+nis(PLAY_B.setupHigh)+", והפיילוט בתוך הסכום",
+               "חודשי: "+nis(PLAY_B.monthLow)+" עד "+nis(PLAY_B.monthHigh)+
+               ", כולל את עלויות הוואטסאפ וה-AI, עדכונים ואיש אחד אחראי"])+'</div>'
+    : '<div class="box"><h3>הצעד הראשון: מיפוי, '+MAP.weeks+' שבועות</h3>'+
+      bullets(OFFER.mapIn)+
+      '<p style="margin:9px 0 0">'+esc(OFFER.mapRule)+
+      ' <b>מה שאין בה:</b> '+esc(OFFER.mapOut.join(", "))+'. '+
+      esc(OFFER.mapNoGet)+'</p></div>'+
+      '<div class="box"><h3>מה יש לכם בסוף</h3>'+
+      '<p>המפה שלכם. אפשר לעצור שם, לשמור אותה, ולא לשלם יותר.</p>'+
+      '<p style="margin:7px 0 0">אם ממשיכים לתיקון הראשון, '+nis(m.mapPrice)+
+      ' נכנסים לתוך המחיר של התיקון. הקיזוז תקף '+MAP.creditDays+' יום מסיום המפה.</p></div>';
+
+  var pl = payLine(m);
+  var priceBox =
+    '<div class="box"><h3>מחיר</h3>'+
+    '<div class="price">'+nis(price)+'</div>'+
+    '<p style="margin:6px 0 0">'+esc(OFFER.vat)+'</p>'+
+    (pl ? '<p style="margin:6px 0 0"><b>תשלום:</b> '+esc(pl)+'</p>' : '')+
+    '</div>';
+
+  var nextLine = m.nextDate
+    ? 'נדבר ב-'+heDate(m.nextDate)+' ונסגור.'
+    : 'חצי שעה לסגור את הצעד הראשון. מתי נוח לכם?';
+
+  el.innerHTML =
+  '<div class="sheet ofr">'+
+    '<div class="sh-top">'+
+      '<div class="who">'+esc(m.biz||"הצעה")+'</div>'+
+      '<div class="when">הצעה · עמוד אחד · '+esc(heDate(m.date))+'</div>'+
+    '</div>'+
+    '<div class="box"><h3>מה מדדנו ביחד</h3>'+numberBlock+'</div>'+
+    step+
+    '<div class="box"><h3>מה אני צריך מכם</h3>'+bullets(OFFER.needs)+'</div>'+
+    priceBox+
+    '<div class="box"><h3>להמשך</h3><p>'+esc(nextLine)+'</p></div>'+
+    '<div class="sh-foot">'+
+      '<div><b>דני סופר</b> · Atidilabs · שירותי פיתוח והטמעה</div>'+
+      '<div>054-3074547 · atidilabs.com</div>'+
+    '</div>'+
+  '</div>';
+
+  renderOfferGate(m);
+}
+
+/* Dani's side of the offer tab. Three things the notes leave open, and one
+   thing that is kept off the page on purpose. */
+function renderOfferGate(m){
+  var b = m.offerPlay==="b";
+  var pay = PAY[m.pay] || PAY[""];
+  var items = [];
+
+  items.push(m.ready
+    ? { ok:true, t:"המספר בדף", e:"נכנס מהתשובות שלו: "+h(m.week)+
+        " שעות בשבוע, "+nis(m.cost)+" בחודש." }
+    : { ok:false, t:"אין מספר בדף", e:"כרטיס השיחה עונה על „שלח הצעה” במשפט "+
+        "„אשלח, עמוד אחד. כדי שתהיה מדויקת אני צריך שני מספרים: כמה פניות בשבוע, ומי עונה”. "+
+        "בלי השניים האלה הדף הוא עוד מצגת." });
+
+  items.push(pay.lineA
+    ? { ok:true, t:"תנאי התשלום נבחרו", e:esc(b?pay.lineB:pay.lineA)+" מקור: "+pay.src }
+    : { ok:false, t:"תנאי התשלום לא נבחרו",
+        e:"שלושה פתקים עונים על זה ולא מסכימים. סולם המחירים של 14.11 כותב „paid at start”, "+
+          "והערת רואה החשבון של 26.11 כותבת מפה מראש ופיילוט 50-50. "+
+          "שלד ההסכם של אותו 26.11 כותב בלי מקדמה בכלל וחשבונית בסוף השלב. "+
+          "אף אחד מהם לא אושר, ויאני עוד לא ענה. הכלי לא בוחר בשבילך." });
+
+  items.push({ ok:null, t:"מע״מ", e:"המשפט בדף הוא הנוסח מהפתק ליאני, 26.11: „"+
+    OFFER.vat+"” בתור עוסק פטור ב-2026 לא מתווסף מע״מ בפועל. "+
+    "יאני עוד לא ענה על ארבע השאלות, כולל תקנה 13." });
+
+  if(!b){
+    items.push({ ok:null, t:"מחיר המפה", e:"הדף הזה מדפיס "+nis(m.mapPrice)+
+      ". הפתקים נותנים שתי נקודות עיגון ואין ביניהן קו: 3,500 מסולם המחירים, "+
+      "5,000 ממשרד עם 30 פרויקטים. בוחרים בטאב „הסגירה”." });
+  } else {
+    items.push({ ok:null, t:"המחירים של מסלול B", e:"8,500 לפיילוט הוא מחיר ההקמה של Standard מהסולם. "+
+      "15,000 עד 25,000 ו-1,500 עד 2,500 הם מחירים של מוכרים, "+
+      "ואף קונה לא דיווח על הצעה שקיבל." });
+  }
+
+  items.push({ ok:null, t:"מה לא נמצא בדף בכוונה",
+    e:"שנים עשר סעיפי ההגנה של שלד ההסכם לא כאן. הן נכנסות להסכם של שני עמודים אחרי ה„כן”, "+
+      "לפי הסדר שבפתק: שיחה, עמוד אחד, כן, הסכם חתום, עבודה מתחילה. "+
+      "גם צורת המסירה של המפה לא כאן: אף פתק בכספת לא קובע אם המפה היא דף, קובץ או פגישה, "+
+      "ולכן הדף מבטיח רשימה מדורגת ולא מבטיח פורמט." });
+
+  $("offerGate").innerHTML =
+    '<div class="mine"><b>המסך הזה שלך.</b> הדף שמעליו הוא מה שהלקוח מקבל. '+
+    'הקופסה הזאת לא נכנסת להדפסה ולא למייל.</div>'+
+    '<section class="card"><h2>לפני ששולחים</h2>'+
+    '<ul class="say">'+items.map(function(x){
+      var mark = x.ok===true ? "✓ " : (x.ok===false ? "✗ " : "· ");
+      return '<li><q>'+mark+esc(x.t)+'</q><em>'+x.e+'</em></li>';
+    }).join("")+'</ul>'+
+    '<span class="src">מקורות: '+esc(OFFER.srcA)+' · '+esc(OFFER.srcB)+' · '+
+    esc(OFFER.srcScope)+' · '+esc(OFFER.srcVat)+'</span></section>';
+}
+
+/* The email the closing line promises: one page, the number and the offer in it.
+   The sheet tab keeps its own shorter summary mail from night 4. */
+function offerMail(m){
+  var b = m.offerPlay==="b";
+  var price = b ? PLAY_B.pilot : m.mapPrice;
+  var L=[];
+  L.push("נושא: "+(m.biz||"הצעה")+", עמוד אחד: המספר מהשיחה והצעד הראשון");
+  L.push("");
+  L.push("שלום,");
+  L.push("");
+  L.push(m.mode==="call" ? "תודה על השלושים הדקות." : "תודה על השעה.");
+  if(m.pain) L.push("אמרת: „"+m.pain+"”. זאת השורה שנשארה איתי.");
+  L.push("");
+  if(m.ready){
+    L.push("מה שספרנו ביחד, מהמספרים שלכם:");
+    m.leaks.forEach(function(l){
+      L.push("· "+l.name+": "+h(l.week)+" שעות בשבוע, בערך "+nis(l.cost)+" בחודש.");
+    });
+    L.push("ביחד: "+h(m.week)+" שעות בשבוע, בערך "+nis(m.cost)+" בחודש.");
+    L.push("המספר בנוי מהתשובות שלכם והוא אומדן, לא מדידה.");
+  } else {
+    L.push("המספר עוד לא מלא אצלי, ואני שולח אותו בנפרד.");
+  }
+  L.push("");
+  if(b){
+    L.push("הצעד הראשון: בניין אחד. שלושה שבועות, "+nis(PLAY_B.pilot)+", מחיר סגור.");
+    OFFER.pilotIn.forEach(function(x){ L.push("· "+x+"."); });
+    L.push("מה לא נכנס לפיילוט: "+OFFER.pilotOut.join(", ")+".");
+    L.push("");
+    L.push("אם הדיירים מקבלים תשובות טובות, מרחיבים: הקמה לכל הבניינים "+
+           nis(PLAY_B.setupLow)+" עד "+nis(PLAY_B.setupHigh)+", והפיילוט בתוך הסכום. "+
+           "חודשי "+nis(PLAY_B.monthLow)+" עד "+nis(PLAY_B.monthHigh)+
+           ", כולל את עלויות הוואטסאפ וה-AI, עדכונים ואיש אחד אחראי.");
+  } else {
+    L.push("הצעד הראשון: "+MAP.weeks+" שבועות של מיפוי.");
+    OFFER.mapIn.forEach(function(x){ L.push("· "+x+"."); });
+    L.push(OFFER.mapRule+" מה שאין בה: "+OFFER.mapOut.join(", ")+". "+OFFER.mapNoGet);
+    L.push("");
+    L.push("בסוף המפה שלכם. אפשר לעצור שם, לשמור אותה, ולא לשלם יותר. "+
+           "אם ממשיכים לתיקון הראשון, "+nis(m.mapPrice)+
+           " נכנסים לתוך המחיר של התיקון, והקיזוז תקף "+MAP.creditDays+" יום מסיום המפה.");
+  }
+  L.push("");
+  L.push("מה אני צריך מכם: "+OFFER.needs.join(", ")+".");
+  L.push("");
+  L.push("מחיר: "+nis(price)+".");
+  L.push(OFFER.vat);
+  var pl = payLine(m);
+  if(pl) L.push("תשלום: "+pl);
+  L.push("");
+  L.push(m.nextDate ? "נדבר ב-"+heDate(m.nextDate)+" ונסגור."
+                    : "חצי שעה לסגור את הצעד הראשון. מתי נוח לכם?");
+  L.push("");
+  L.push("דני סופר · Atidilabs · שירותי פיתוח והטמעה · 054-3074547 · atidilabs.com");
   return L.join("\n");
 }
 
@@ -1499,6 +1804,7 @@ function refresh(){
     : "הכלי של הביקור. שעה אחת במשרד, ובסוף מספר אחד, בנוי מהתשובות שלו, לא משלנו.";
   renderAsk(current,v);
   renderSheet(current);
+  renderOffer(current);
   renderClose(current);
   renderBar();
   renderCompare();
@@ -1514,15 +1820,17 @@ function openVisit(id){
 
 function showTab(which){
   var panes={ words:"pane-words", ask:"pane-ask", sheet:"pane-sheet",
-              close:"pane-close", compare:"pane-compare" };
+              offer:"pane-offer", close:"pane-close", compare:"pane-compare" };
   Object.keys(panes).forEach(function(k){
     $(panes[k]).hidden = (k!==which);
     $("tab-"+k).setAttribute("aria-selected", k===which ? "true":"false");
   });
   /* the live number belongs to the quarter of the hour where the number is asked */
   $("stickyBar").hidden = (which!=="ask");
-  /* the sheet is the one screen he sees. No other office's name on it. */
-  $("visitBar").hidden  = (which==="sheet");
+  /* the sheet and the offer are the screens he sees. No other office's name there. */
+  $("visitBar").hidden  = (which==="sheet" || which==="offer");
+  /* one document prints at a time, and it is the one on screen */
+  document.body.setAttribute("data-print", which==="offer" ? "offer" : "sheet");
   window.scrollTo(0,0);
 }
 
@@ -1537,11 +1845,13 @@ document.addEventListener("change", function(e){
 $("tab-words").addEventListener("click", function(){ showTab("words"); });
 $("tab-ask").addEventListener("click", function(){ showTab("ask"); });
 $("tab-sheet").addEventListener("click", function(){ showTab("sheet"); });
+$("tab-offer").addEventListener("click", function(){ showTab("offer"); });
 $("tab-close").addEventListener("click", function(){ showTab("close"); });
 $("tab-compare").addEventListener("click", function(){ showTab("compare"); });
 $("toSheet").addEventListener("click", function(){ showTab("sheet"); });
 $("backBtn").addEventListener("click", function(){ showTab("ask"); });
 $("printBtn").addEventListener("click", function(){ window.print(); });
+$("offerPrintBtn").addEventListener("click", function(){ window.print(); });
 
 $("visitPick").addEventListener("change", function(){
   openVisit($("visitPick").value);
@@ -1594,6 +1904,15 @@ $("mailBtn").addEventListener("click", function(){
   if(!current){ toast("אין עוד ביקור"); return; }
   var t = mailText(current);
   var done=function(){ toast("המייל הועתק"); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
+  } else { fallback(t,done); }
+});
+
+$("offerMailBtn").addEventListener("click", function(){
+  if(!current){ toast("אין עוד ביקור"); return; }
+  var t = offerMail(current);
+  var done=function(){ toast("מייל ההצעה הועתק"); };
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(t).then(done, function(){ fallback(t,done); });
   } else { fallback(t,done); }

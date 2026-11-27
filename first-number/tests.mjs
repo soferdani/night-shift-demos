@@ -931,6 +931,335 @@ const OFFICE_B = { biz:'משרד ב', visitDate:'2026-11-30', team:'5', rate:'15
   await ctx.close();
 }
 
+/* ───────────── 16. night 5: the one-page offer the call card promises ─────────────
+ * Sources checked against, line by line: Play A and Play B of 3 Call prep and prices
+ * (26.11.2026), the scope and payment tables of Agreement — three parts (skeleton)
+ * (26.11.2026), the map's own rules in Retainer Ladder — pricing method (14.11.2026),
+ * and the VAT sentence in Questions for Yani (26.11.2026).
+ */
+const CALL_V = { biz:'לקוח בדיקה', rate:'180',
+  tenantCount:'25', tenantMin:'12', tenantRate:'120' };
+
+{
+  const { ctx, page, errs } = await fresh();
+  ok('16.1 there is an offer tab', await page.locator('#tab-offer').isVisible());
+  await page.locator('#tab-offer').click();
+  ok('16.2 the offer renders for the sample visit', await page.locator('#offer .sheet').isVisible());
+  ok('16.3 the visit bar is off on the offer, like on the sheet',
+     await page.locator('.visitbar').isHidden());
+  const t = await page.locator('#offer').innerText();
+  ok('16.4 it is one page, and says so', /הצעה · עמוד אחד/.test(t));
+
+  /* the map's five scope lines, from the ladder of 14.11 */
+  ok('16.5 the map says two weeks', /מיפוי, 2 שבועות/.test(t));
+  ok('16.6 it names who is interviewed', /שניים-שלושה אנשים אצלכם/.test(t));
+  ok('16.7 four to six ranked leaks with a shekel value', /4 עד 6 מקומות/.test(t) && /שווי בשקלים/.test(t));
+  ok('16.8 each line is small enough for one month', /לתיקון בחודש אחד/.test(t));
+  ok('16.9 the owner approves each value before it is written', /מאושר איתכם לפני שהוא נכתב/.test(t));
+  ok('16.10 fastest visible result first', /תוצאה ראשונה מהר/.test(t));
+
+  /* what the map is not */
+  ok('16.11 what and how much, not how', /מה וכמה, לא איך/.test(t));
+  ok('16.12 no design, no tool names, no building', /אפיון, שמות של כלים, בנייה/.test(t));
+  ok('16.13 GetStatus is not connected, and the page says why',
+     /לא מתחברים ל-GetStatus/.test(t) && /התקנון/.test(t));
+
+  /* the customer exit, from the ladder's own line */
+  ok('16.14 he can stop after the map and pay nothing more',
+     /אפשר לעצור שם/.test(t) && /ולא לשלם יותר/.test(t));
+  ok('16.15 the credit is the chosen price and 30 days',
+     /₪3,500 נכנסים/.test(t) && /30 יום/.test(t));
+
+  /* the VAT sentence, which every quote must carry */
+  ok('16.16 the VAT sentence is on the page',
+     /המחירים אינם כוללים מע״מ\. מע״מ יתווסף כדין אם יחול\./.test(t));
+  ok('16.17 no price is called final', !/מחיר סופי|כולל מע״מ/.test(t));
+
+  /* no payment line until Dani picks one, because his notes disagree */
+  ok('16.18 no payment line before a choice is made', !/תשלום:/.test(t));
+  const g = await page.locator('#offerGate').innerText();
+  ok('16.19 the gate marks the payment line as open', /✗ תנאי התשלום לא נבחרו/.test(g));
+  ok('16.20 the gate names all three notes that answer it differently',
+     /14\.11/.test(g) && /26\.11/.test(g) && /בלי מקדמה/.test(g));
+  ok('16.21 the gate says the tool does not choose', /לא בוחר בשבילך/.test(g));
+
+  await page.locator('#pay').selectOption('start');
+  ok('16.22 paid at signing prints the ladder line',
+     /תשלום: המפה משולמת עם החתימה\./.test(await page.locator('#offer').innerText()));
+  await page.locator('#pay').selectOption('steps');
+  const t3 = await page.locator('#offer').innerText();
+  ok('16.23 no advance prints the skeleton line',
+     /בלי מקדמה/.test(t3) && /בסוף השלב/.test(t3) && /7 ימים/.test(t3));
+
+  /* the protective clauses belong to the agreement, not to this page */
+  ok('16.24 no liability, interest or penalty clause on the offer',
+     !/אחריות|ריבית|פיצוי|בלעדיות/.test(t3));
+  ok('16.25 the gate says where those clauses live',
+     /הסכם של שני עמודים/.test(await page.locator('#offerGate').innerText()));
+
+  /* the map's delivery form is not defined anywhere, so nothing promises one */
+  ok('16.26 no format is promised for the map', !/PDF|מצגת|עמודים של המפה/.test(t3));
+  ok('16.27 the gate owns up to that gap',
+     /לא קובע אם המפה היא דף/.test(await page.locator('#offerGate').innerText()));
+
+  ok('16.28 the offer carries no em dash', !/—/.test(t3));
+  ok('16.29 no console errors on the offer tab', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the price Dani picks on the close tab is the price the offer prints */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-close').click();
+  await page.locator('#mapPrice').selectOption('5000');
+  await page.locator('#tab-offer').click();
+  const t = await page.locator('#offer').innerText();
+  ok('16.30 the offer prints the price chosen on the close tab', /₪5,000/.test(t));
+  ok('16.31 and the credit is that same number', /₪5,000 נכנסים/.test(t));
+  ok('16.32 the week figure is on the offer for a call', /שעות בשבוע/.test(t));
+  ok('16.33 the gate names the two anchors and no line between them',
+     /3,500/.test(await page.locator('#offerGate').innerText()) &&
+     /5,000/.test(await page.locator('#offerGate').innerText()));
+
+  /* the offer's own arithmetic is the sheet's arithmetic, not a second one */
+  const cells = await page.locator('#offer tr.tot td').allInnerTexts();
+  const offerTotal = cells[cells.length - 1];
+  await page.locator('#tab-sheet').click();
+  const sheetHero = await page.locator('#sheet .hero .v').innerText();
+  ok('16.34 the offer total equals the sheet hero',
+     nisToInt(offerTotal) === nisToInt(sheetHero),
+     `offer ${nisToInt(offerTotal)} sheet ${nisToInt(sheetHero)}`);
+  ok('16.35 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* play B: one building, three weeks, a fixed price */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-offer').click();
+  await page.locator('#offerPlay').selectOption('b');
+  await page.locator('#pay').selectOption('start');
+  const t = await page.locator('#offer').innerText();
+  ok('16.36 the pilot is one building, three weeks, fixed',
+     /בניין אחד/.test(t) && /שלושה שבועות/.test(t) && /מחיר סגור/.test(t));
+  ok('16.37 the pilot price is 8,500', /₪8,500/.test(t));
+  ok('16.38 the pilot scope is the skeleton’s four lines',
+     /עד 40 שאלות מאושרות/.test(t) && /ערוץ וואטסאפ/.test(t) &&
+     /עוברת לאדם/.test(t));
+  ok('16.39 and its three exclusions',
+     /בניינים נוספים/.test(t) && /חיבור ל-GetStatus/.test(t) && /ערוצים חדשים/.test(t));
+  ok('16.40 the expansion range and the month are Play B’s own numbers',
+     /₪15,000 עד ₪25,000/.test(t) && /₪1,500 עד ₪2,500/.test(t));
+  ok('16.41 the month says what it includes', /עלויות הוואטסאפ/.test(t) && /איש אחד אחראי/.test(t));
+  ok('16.42 the pilot is paid fifty-fifty, not like the map',
+     /חמישים אחוז עם החתימה, חמישים אחוז בסיום הפיילוט/.test(t));
+  ok('16.43 the map’s credit is not promised on a pilot', !/נכנסים לתוך המחיר של התיקון/.test(t));
+  ok('16.44 the VAT sentence is here too', /מע״מ יתווסף כדין/.test(t));
+  ok('16.45 no em dash in play B either', !/—/.test(t));
+  const g = await page.locator('#offerGate').innerText();
+  ok('16.46 the gate flags that Play B’s prices are sellers’ prices',
+     /מחירים של מוכרים/.test(g) && /אף קונה לא דיווח/.test(g));
+  ok('16.47 no console errors in play B', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the email the closing line promises by the next day */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-offer').click();
+  await page.locator('#pay').selectOption('start');
+  const mail = await page.evaluate(() => offerMail(current));
+  ok('16.48 the mail is one page with the number and the step',
+     /עמוד אחד/.test(mail) && /הצעד הראשון/.test(mail));
+  ok('16.49 it carries his own week figure', /5 שעות בשבוע/.test(mail));
+  ok('16.50 it says the number is an estimate', /אומדן, לא מדידה/.test(mail));
+  ok('16.51 it carries the price and the VAT sentence',
+     /מחיר: ₪3,500/.test(mail) && /מע״מ יתווסף כדין אם יחול/.test(mail));
+  ok('16.52 it carries the payment line that was chosen',
+     /תשלום: המפה משולמת עם החתימה/.test(mail));
+  ok('16.53 it asks for the half hour', /חצי שעה לסגור/.test(mail));
+  ok('16.54 it signs with the one business phone and the brand', 
+     /054-3074547/.test(mail) && /Atidilabs/.test(mail) && !/Atidi Labs/.test(mail));
+  ok('16.55 no em dash in the mail that goes to a customer', !/—/.test(mail));
+  ok('16.56 no protective clause in the mail either', !/אחריות|ריבית|פיצוי/.test(mail));
+
+  /* a date set on the close tab replaces the open question */
+  await page.locator('#tab-close').click();
+  await page.locator('#nextDate').fill('2026-12-11');
+  await page.locator('#tab-offer').click();
+  const mail2 = await page.evaluate(() => offerMail(current));
+  ok('16.57 a set date replaces the open ask', /נדבר ב-11\.12\.2026/.test(mail2) && !/מתי נוח לכם/.test(mail2));
+  ok('16.58 and the page says the same', /נדבר ב-11\.12\.2026/.test(await page.locator('#offer').innerText()));
+
+  /* play B's mail prices the pilot, not the map */
+  await page.locator('#offerPlay').selectOption('b');
+  const mailB = await page.evaluate(() => offerMail(current));
+  ok('16.59 play B’s mail prices the pilot', /מחיר: ₪8,500/.test(mailB));
+  ok('16.60 and does not promise the map’s credit', !/מתקזז|נכנסים לתוך המחיר/.test(mailB));
+  ok('16.61 no console errors on the mail path', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the VAT sentence was missing from night 4's own summary mail */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-close').click();
+  await page.locator('#priceSaid').selectOption('yes');
+  const mail = await page.evaluate(() => mailText(current));
+  ok('16.62 the summary mail now carries the VAT sentence with the price',
+     /מע״מ יתווסף כדין אם יחול/.test(mail));
+  await page.locator('#priceSaid').selectOption('no');
+  const mail2 = await page.evaluate(() => mailText(current));
+  ok('16.63 and no VAT line where there is no price', !/מע״מ/.test(mail2));
+  ok('16.64 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* an offer with no number refuses to pretend */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await page.locator('#biz').fill('בלי מספר');
+  await page.locator('#tab-offer').click();
+  const t = await page.locator('#offer').innerText();
+  ok('16.65 the page says there is no number yet', /אין עדיין מספר/.test(t));
+  const g = await page.locator('#offerGate').innerText();
+  ok('16.66 the gate quotes the two numbers the card asks for',
+     /כמה פניות בשבוע, ומי עונה/.test(g));
+  const mail = await page.evaluate(() => offerMail(current));
+  ok('16.67 the mail says the number comes separately', /בנפרד/.test(mail));
+  ok('16.68 no console errors with an empty offer', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the choices are part of the visit: they survive a reload, and old visits migrate */
+{
+  const { ctx, page, errs } = await fresh();
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#tab-offer').click();
+  await page.locator('#offerPlay').selectOption('b');
+  await page.locator('#pay').selectOption('steps');
+  await page.reload();
+  await page.locator('#tab-offer').click();
+  eq('16.69 the play survived the reload', await page.locator('#offerPlay').inputValue(), 'b');
+  eq('16.70 the payment choice survived the reload', await page.locator('#pay').inputValue(), 'steps');
+
+  /* a visit saved by night 4 has neither key */
+  await page.evaluate(() => {
+    const b = JSON.parse(localStorage.getItem('atidi-first-number-v2'));
+    b.visits.forEach(v => { delete v.offerPlay; delete v.pay; });
+    localStorage.setItem('atidi-first-number-v2', JSON.stringify(b));
+  });
+  await page.reload();
+  await page.locator('#tab-offer').click();
+  eq('16.71 a night-4 visit opens on the map offer', await page.locator('#offerPlay').inputValue(), 'a');
+  eq('16.72 and with no payment line chosen for it', await page.locator('#pay').inputValue(), '');
+  ok('16.73 nothing was lost in that migration',
+     (await page.locator('#offer').innerText()).includes('הצעה'));
+  ok('16.74 no console errors on the migration path', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* print: the offer is what prints while the offer tab is open, and only it */
+{
+  const { ctx, page, errs } = await fresh({ viewport:{width:1100,height:900} });
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-offer').click();
+  await page.locator('#pay').selectOption('start');
+  await page.emulateMedia({ media:'print' });
+  ok('16.75 the offer prints from the offer tab', await page.locator('#offer .sheet').isVisible());
+  ok('16.76 the owner sheet stays out of that print', await page.locator('#pane-sheet').isHidden());
+  ok('16.77 Dani’s side of the offer never prints', await page.locator('#offerGate').isHidden());
+  ok('16.78 the close tab still never prints', await page.locator('#pane-close').isHidden());
+  const pdfA = await page.pdf({ format:'A4', printBackground:true });
+  eq('16.79 the offer prints on one A4 page',
+     (pdfA.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length, 1);
+  await page.emulateMedia({ media:'screen' });
+  await page.locator('#offerPlay').selectOption('b');
+  await page.emulateMedia({ media:'print' });
+  const pdfB = await page.pdf({ format:'A4', printBackground:true });
+  eq('16.80 play B too', (pdfB.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length, 1);
+
+  /* and the sheet is still what prints from anywhere else */
+  await page.emulateMedia({ media:'screen' });
+  await page.locator('#tab-compare').click();
+  await page.emulateMedia({ media:'print' });
+  ok('16.81 the sheet prints again from another tab', await page.locator('#sheet .sheet').isVisible());
+  ok('16.82 and the offer does not', await page.locator('#pane-offer').isHidden());
+  await page.emulateMedia({ media:'screen' });
+  ok('16.83 no console errors on the print path', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* a full offer with four leaks still fits one page */
+{
+  const { ctx, page } = await fresh({ viewport:{width:1100,height:900} });
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, { biz:'משרד מלא', visitDate:'2026-12-06', team:'12', rate:'180',
+    tenantCount:'30', tenantMin:'15', tenantRate:'120',
+    paperCount:'20', paperMin:'60', paperRate:'180',
+    quoteCount:'9', quoteMin:'150', quoteRate:'180', chaseHours:'12', chaseRate:'110' });
+  await page.locator('#mode').selectOption('call');
+  await page.locator('#tab-offer').click();
+  await page.locator('#pay').selectOption('start');
+  await page.emulateMedia({ media:'print' });
+  const pdf = await page.pdf({ format:'A4', printBackground:true });
+  eq('16.84 four leaks and a payment line still print on one page',
+     (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length, 1);
+  await page.emulateMedia({ media:'screen' });
+  await ctx.close();
+}
+
+/* the phone, and dark mode, on the sixth tab */
+{
+  const { ctx, page, errs } = await fresh({ viewport:{width:390,height:844}, deviceScaleFactor:1,
+                                            colorScheme:'dark' });
+  await page.locator('#clearBtn').click();
+  await fillVisit(page, CALL_V);
+  await page.locator('#tab-offer').click();
+  const over = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  ok('16.85 no sideways scroll on the offer at 390px', over <= 1, 'overflow ' + over);
+  ok('16.86 six tabs still fit on a phone', await page.locator('#tab-offer').isVisible());
+  ok('16.87 the offer reads in dark mode', await page.locator('#offer .sheet').isVisible());
+  ok('16.88 no console errors on a phone', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* the booked Sunday opens the offer in the state it should: nothing presumed */
+{
+  const { ctx, page, errs } = await fresh({ stayOnBootTab:true });
+  await page.locator('#visitPick').selectOption({ index: 1 });
+  await page.locator('#tab-offer').click();
+  eq('16.89 the booked call offers the map, not the pilot',
+     await page.locator('#offerPlay').inputValue(), 'a');
+  eq('16.90 and picks no payment terms for Dani',
+     await page.locator('#pay').inputValue(), '');
+  const t = await page.locator('#offer').innerText();
+  ok('16.91 the booked offer carries the 6.12 date', /06\.12\.2026/.test(t));
+  /* the prospect's own name, not the generic word מפקחים in a question */
+  ok('16.92 no customer name is baked into the public page',
+     !/צ\.ב\.|עידן צפון|מפקחי בניין|דלית/.test(await page.content()));
+  ok('16.93 no cost base on the public page', !/400|700/.test(t));
+  ok('16.94 no console errors', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
 await browser.close();
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
